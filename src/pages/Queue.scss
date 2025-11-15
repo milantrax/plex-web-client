@@ -1,0 +1,462 @@
+/* src/pages/Queue.css */
+
+.queue-page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.queue-header h1 {
+  color: #fff;
+  font-size: 2.5rem;
+  font-weight: 300;
+  margin: 0;
+}
+
+.queue-stats {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.queue-count,
+.queue-duration {
+  color: #888;
+  font-size: 1rem;
+}
+
+.clear-queue-btn {
+  background: #e74c3c;
+  border: none;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.clear-queue-btn:hover {
+  background: #c0392b;
+}
+
+.queue-empty {
+  text-align: center;
+  padding: 60px 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.queue-empty h2 {
+  color: #fff;
+  font-size: 2.2rem;
+  font-weight: 300;
+  margin-bottom: 20px;
+}
+
+.queue-empty > p {
+  color: #888;
+  font-size: 1.2rem;
+  margin-bottom: 40px;
+  line-height: 1.6;
+}
+
+.queue-tips {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 30px;
+  text-align: left;
+}
+
+.queue-tips h3 {
+  color: #fff;
+  margin-bottom: 20px;
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+.queue-tips ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.queue-tips li {
+  color: #888;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  padding-left: 20px;
+}
+
+.queue-tips li:last-child {
+  border-bottom: none;
+}
+
+.queue-tips li::before {
+  content: "•";
+  color: #f0a500;
+  position: absolute;
+  left: 0;
+  font-weight: bold;
+}
+
+.queue-list {
+  width: 100%;
+}
+
+.queue-list-header {
+  display: grid;
+  grid-template-columns: 50px 2fr 2fr 100px 140px 120px;
+  align-items: center;
+  gap: 15px;
+  padding: 8px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #bbbbbb;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.queue-item {
+  display: grid;
+  grid-template-columns: 50px 2fr 2fr 100px 140px 120px;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 15px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  margin-bottom: 2px;
+  position: relative;
+}
+
+.queue-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.queue-item.playing {
+  background-color: rgba(240, 165, 0, 0.1);
+  color: #f0a500;
+}
+
+.queue-item.playing.paused {
+  background-color: rgba(128, 128, 128, 0.1);
+  color: #888;
+}
+
+.queue-col-position {
+  color: #888;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.queue-item.playing .queue-col-position {
+  color: #f0a500;
+  font-weight: bold;
+}
+
+.queue-col-track.clickable {
+  cursor: pointer;
+}
+
+.queue-col-track.clickable:hover {
+  color: #f0a500;
+}
+
+.track-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.play-icon {
+  font-size: 14px;
+  color: #f0a500;
+}
+
+.track-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.album-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.album-title {
+  color: #fff;
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.album-artist {
+  color: #888;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.no-album {
+  color: #666;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.queue-col-duration {
+  color: #888;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.queue-item.playing .queue-col-duration {
+  color: #f0a500;
+}
+
+.queue-col-added {
+  color: #666;
+  font-size: 0.8rem;
+}
+
+.queue-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.move-btn,
+.remove-btn {
+  background: #333;
+  border: 1px solid #555;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.move-btn:hover {
+  background: #f0a500;
+  border-color: #f0a500;
+}
+
+.move-btn:disabled {
+  background: #222;
+  border-color: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.remove-btn {
+  background: #666;
+}
+
+.remove-btn:hover {
+  background: #e74c3c;
+  border-color: #e74c3c;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .queue-list-header,
+  .queue-item {
+    grid-template-columns: 40px 2fr 1.5fr 80px 120px 100px;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 992px) {
+  .queue-list-header,
+  .queue-item {
+    grid-template-columns: 40px 2fr 1fr 80px 90px;
+    gap: 8px;
+  }
+  
+  .queue-col-added {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .queue-page {
+    padding: 15px;
+  }
+  
+  .queue-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .queue-header h1 {
+    font-size: 2rem;
+  }
+  
+  .queue-stats {
+    gap: 15px;
+  }
+  
+  .queue-list-header,
+  .queue-item {
+    grid-template-columns: 30px 2fr 80px 80px;
+    gap: 8px;
+  }
+  
+  .queue-col-album {
+    display: none;
+  }
+  
+  .queue-actions {
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .move-btn,
+  .remove-btn {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .queue-page {
+    padding: 10px;
+  }
+  
+  .queue-header h1 {
+    font-size: 1.6rem;
+  }
+  
+  .queue-list-header,
+  .queue-item {
+    grid-template-columns: 25px 1fr 60px 60px;
+    gap: 5px;
+    padding: 8px 10px;
+  }
+  
+  .queue-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .clear-queue-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+/* Drag and Drop Styles */
+.queue-item {
+  cursor: grab;
+}
+
+.queue-item:active {
+  cursor: grabbing;
+}
+
+.queue-item.dragging {
+  opacity: 0.5;
+  transform: rotate(2deg);
+  z-index: 1000;
+}
+
+.queue-item.drag-over {
+  background-color: rgba(240, 165, 0, 0.15);
+  border: 2px dashed #f0a500;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(240, 165, 0, 0.3);
+}
+
+.queue-item.drag-over::before {
+  content: "Drop here to reorder";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(240, 165, 0, 0.9);
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.drag-handle {
+  color: #666;
+  cursor: grab;
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.drag-handle:hover {
+  color: #f0a500;
+  background: rgba(240, 165, 0, 0.1);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.queue-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.remove-btn {
+  background: #666;
+  border: 1px solid #666;
+  color: #fff;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-btn:hover {
+  background: #e74c3c;
+  border-color: #e74c3c;
+}

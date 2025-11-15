@@ -1,0 +1,68 @@
+// Variables
+$primary-color: #f0a500;
+$bg-color: #282c34;
+$text-color: #ffffff;
+$text-secondary: #bbbbbb;
+$border-color: rgba(255, 255, 255, 0.1);
+$hover-bg: rgba(255, 255, 255, 0.05);
+
+// Mixins
+@mixin grid-layout {
+  display: grid;
+  grid-template-columns: 50px 1fr 100px 60px 60px;
+  align-items: center;
+  gap: 15px;
+  padding: 8px 15px;
+}
+
+.track-list {
+  width: 100%;
+  
+  &--empty {
+    text-align: center;
+    padding: 20px;
+    color: $text-secondary;
+    font-style: italic;
+  }
+  
+  &__header {
+    @include grid-layout;
+    border-bottom: 1px solid $border-color;
+    color: $text-secondary;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    padding-bottom: 10px;
+  }
+  
+  &__item {
+    @include grid-layout;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    
+    &:hover {
+      background-color: $hover-bg;
+      
+      .track-list__title {
+        color: $primary-color;
+      }
+    }
+  }
+  
+  &__number {
+    color: $text-secondary;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  
+  &__title {
+    transition: color 0.2s ease;
+  }
+  
+  &__duration {
+    color: $text-secondary;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+}

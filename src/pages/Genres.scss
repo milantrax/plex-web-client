@@ -1,0 +1,145 @@
+/* src/pages/Genres.css */
+.genres-container {
+  padding: 0 20px 100px 20px;
+  color: #eee;
+  display: grid;
+  grid-template-columns: 250px 1fr;
+  gap: 20px;
+  height: calc(100vh - 60px); /* Account for navbar */
+}
+
+/* Left sidebar for genres */
+.genres-sidebar {
+  background-color: rgba(40, 44, 52, 0.95);
+  border-radius: 8px;
+  padding: 20px;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+.genres-sidebar h3 {
+  color: #f0a500;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  text-align: left;
+}
+
+.genres-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.genre-item {
+  padding: 12px 15px;
+  margin-bottom: 5px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  color: #eee;
+  text-align: left;
+}
+
+.genre-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.genre-item.active {
+  background-color: #f0a500;
+  color: #282c34;
+  font-weight: bold;
+  border-color: #f0a500;
+}
+
+/* Right panel for albums */
+.albums-panel {
+  background-color: rgba(40, 44, 52, 0.95);
+  border-radius: 8px;
+  padding: 20px;
+  height: fit-content;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+}
+
+.albums-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.albums-panel h3 {
+  color: #f0a500;
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.album-count {
+  color: #aaa;
+  font-size: 0.9rem;
+}
+
+.albums-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-width, 180px), 1fr));
+  gap: 10px;
+}
+
+.albums-grid .album-card {
+  width: 100%;
+}
+
+.no-selection, .no-albums, .error-message {
+  text-align: center;
+  color: #aaa;
+  font-style: italic;
+  margin-top: 50px;
+  font-size: 1.1rem;
+}
+
+.error-message {
+  color: #ff6b6b;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .genres-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    height: auto;
+    gap: 15px;
+  }
+  
+  .genres-sidebar {
+    max-height: 200px;
+    padding: 15px;
+  }
+  
+  .genres-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .genre-item {
+    padding: 8px 12px;
+    margin: 0;
+    border-radius: 15px;
+    font-size: 0.9rem;
+  }
+  
+  .albums-panel {
+    padding: 15px;
+    max-height: none;
+  }
+  
+  .albums-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+  }
+}

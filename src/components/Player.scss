@@ -1,0 +1,95 @@
+/* src/components/Player.css */
+.player-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #202020;
+  border-top: 2px solid #f0a500;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box; /* Include padding in width */
+  transition: transform 0.3s ease-in-out;
+  z-index: 1000;
+}
+
+.player-bar.hidden {
+  transform: translateY(100%); /* Hide the player */
+}
+
+.player-track-info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-grow: 1; /* Take available space */
+  overflow: hidden; /* Prevent long text overflowing */
+  margin-right: 20px;
+}
+
+.player-art {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  margin-right: 15px;
+  border-radius: 4px;
+  background-color: #555; /* Placeholder bg */
+}
+
+.player-track-info div {
+  overflow: hidden; /* Hide overflowing text */
+}
+
+.player-title {
+  color: #eee;
+  font-weight: bold;
+  margin: 0 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-artist-album {
+  color: #bbb;
+  font-size: 0.9em;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-controls button {
+  background-color: #f0a500;
+  color: #282c34;
+  border: none;
+  padding: 8px 15px;
+  font-size: 1em;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 0 5px;
+}
+
+.player-controls button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.player-controls button:hover:not(:disabled) {
+  background-color: #ffb703;
+}
+
+.player-mode-toggle {
+  background-color: #444 !important;
+  color: #eee !important;
+  font-size: 0.9em !important;
+}
+
+.player-mode-toggle:hover {
+  background-color: #555 !important;
+}
+
+/* Hide the actual audio element visually */
+.player-bar audio {
+  display: none;
+}

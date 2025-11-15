@@ -1,0 +1,147 @@
+/* src/components/TrackList.css */
+.tracks-list {
+  width: 100%;
+}
+
+.tracks-header {
+  display: grid;
+  grid-template-columns: 50px 1fr 100px 60px 60px;
+  align-items: center;
+  gap: 15px;
+  padding: 8px 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: #bbbbbb;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  padding-bottom: 10px;
+}
+
+.track-item {
+  display: grid;
+  grid-template-columns: 50px 1fr 100px 60px 60px;
+  align-items: center;
+  gap: 15px;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.track-item.playing {
+  background-color: rgba(240, 165, 0, 0.1);
+  color: #f0a500;
+}
+
+.track-item.playing.paused {
+  background-color: rgba(128, 128, 128, 0.1);
+  color: #888;
+}
+
+.track-item.playing .track-number {
+  color: #f0a500;
+}
+
+.track-item.playing.paused .track-number {
+  color: #888;
+}
+
+.track-item.playing .track-duration {
+  color: #f0a500;
+}
+
+.track-item.playing.paused .track-duration {
+  color: #888;
+}
+
+.track-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.track-item:hover .track-title {
+  color: #f0a500;
+}
+
+.track-number {
+  color: #bbbbbb;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.track-title {
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.play-icon {
+  font-size: 0.8em;
+  color: #f0a500;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.track-duration {
+  color: #bbbbbb;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.no-tracks {
+  text-align: center;
+  padding: 20px;
+  color: #bbbbbb;
+  font-style: italic;
+}
+
+.track-download,
+.track-queue {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.download-btn,
+.queue-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #bbbbbb;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.download-btn:hover,
+.queue-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+}
+
+.queue-btn:hover {
+  background-color: rgba(240, 165, 0, 0.2);
+  border-color: #f0a500;
+  color: #f0a500;
+}
+
+.queue-btn.in-queue {
+  background-color: rgba(240, 165, 0, 0.2);
+  border-color: #f0a500;
+  color: #f0a500;
+}
+
+.download-btn:active,
+.queue-btn:active {
+  transform: scale(0.95);
+}

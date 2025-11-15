@@ -1,0 +1,151 @@
+/* src/components/AlbumCard.css */
+.album-card {
+    background-color: #444;
+    border-radius: 8px;
+    overflow: hidden;
+    width: var(--card-width, 180px); /* Use CSS custom property with fallback */
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+  
+.album-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4);
+}
+
+.album-card:hover .album-overlay {
+    opacity: 1;
+}
+  
+.album-card img {
+    width: 100%;
+    height: var(--card-width, 180px); /* Use custom property for square aspect ratio */
+    object-fit: cover; /* Crop image nicely */
+    display: block;
+}
+  
+.album-placeholder {
+    width: 100%;
+    height: var(--card-width, 180px); /* Use custom property for square aspect ratio */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #555;
+    color: #ccc;
+    font-size: 1.2em;
+}
+  
+.album-info {
+    padding: 10px;
+    text-align: left; /* Left align text instead of center */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+  
+.album-title {
+    font-weight: bold;
+    font-size: 0.95em;
+    margin: 0 0 2px 0;
+    color: #eee;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Allow 2 lines for title */
+    line-clamp: 2; /* Standard property for compatibility */
+    -webkit-box-orient: vertical;
+    line-height: 1.2;
+    word-break: break-word; /* Break long words to prevent cutoff */
+}
+  
+.album-artist {
+    font-size: 0.85em;
+    color: #bbb;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 1; /* Single line for artist */
+    line-clamp: 1; /* Standard property for compatibility */
+    -webkit-box-orient: vertical;
+    word-break: break-word; /* Break long words to prevent cutoff */
+}
+
+.album-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--card-width, 180px); /* Match the dynamic image height */
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    gap: 10px;
+}
+
+.play-icon-button {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: rgba(240, 165, 0, 0.5); /* Yellow with 0.5 opacity */
+    color: black;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.play-icon-button:hover {
+    background-color: #ffb800;
+    transform: scale(1.1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.play-icon-button.playing {
+    background-color: #ff6b6b;
+}
+
+.play-icon-button.playing:hover {
+    background-color: #ff5252;
+}
+
+.play-icon-button .play-icon {
+    font-size: 1.8em !important; /* Force override and relative to button size for better scaling */
+    line-height: 1;
+    margin-left: 2px; /* Slight offset for play icon visual centering */
+}
+
+.play-icon-button.playing .play-icon {
+    margin-left: 0; /* No offset needed for pause icon */
+}
+
+.play-button {
+    background-color: #f0a500;
+    color: #282c34;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+}
+
+.view-details-button {
+    display: none; /* Hide the details button */
+}
+
+.play-button:hover {
+    background-color: #ffb800;
+}
