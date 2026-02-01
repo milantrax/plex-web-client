@@ -11,9 +11,9 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.4.1",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4",
-    "sass": "^1.69.5"
+    "react-scripts": "^5.0.1",
+    "sass": "^1.69.5",
+    "web-vitals": "^2.1.4"
   },
   "scripts": {
     "start": "react-scripts start",
