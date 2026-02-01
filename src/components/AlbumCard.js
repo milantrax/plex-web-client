@@ -3,7 +3,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlexImageUrl, getAlbumTracks } from '../api/plexApi';
 import { getAlbumCardWidth } from '../utils/settingsStorage';
-import './AlbumCard.scss';
 
 function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const imageUrl = getPlexImageUrl(album.thumb);
@@ -81,44 +80,60 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
   };
 
   return (
-    <div 
-      className="album-card" 
+    <div
+      className="bg-plex-card rounded-lg overflow-hidden flex flex-col cursor-pointer relative
+                 transition-all duration-200 shadow-[0_2px_5px_rgba(0,0,0,0.3)]
+                 hover:-translate-y-1 hover:shadow-[0_8px_15px_rgba(0,0,0,0.4)]
+                 group m-2.5"
       onClick={handleCardClick}
-      style={{ 
+      style={{
         width: `${cardWidth}px`,
-        '--card-width': `${cardWidth}px`,
-        cursor: 'pointer'
       }}
     >
       {imageUrl ? (
-        <img 
-          src={imageUrl} 
-          alt={`${album.title} cover`} 
+        <img
+          src={imageUrl}
+          alt={`${album.title} cover`}
           loading="lazy"
-          style={{ 
-            width: '100%',
+          className="w-full object-cover block"
+          style={{
             height: `${cardWidth}px`,
-            objectFit: 'cover'
           }}
         />
       ) : (
-        <div 
-          className="album-placeholder"
-          style={{ 
-            width: '100%',
-            height: `${cardWidth}px`
+        <div
+          className="w-full flex items-center justify-center bg-plex-card-hover text-plex-text-secondary text-xl"
+          style={{
+            height: `${cardWidth}px`,
           }}
         >
           No Art
         </div>
       )}
-      <div className="album-info">
-        <p className="album-title">{album.title}</p>
-        <p className="album-artist">{album.parentTitle}</p> {/* Artist Name */}
+      <div className="p-2.5 text-left flex flex-col justify-start">
+        <p className="font-bold text-[0.95em] my-0.5 text-plex-text-primary overflow-hidden text-ellipsis line-clamp-2 leading-tight break-words">
+          {album.title}
+        </p>
+        <p className="text-[0.85em] text-plex-text-secondary m-0 overflow-hidden text-ellipsis line-clamp-1 break-words">
+          {album.parentTitle}
+        </p>
       </div>
-      <div className="album-overlay">
-        <div className={`play-icon-button ${isCurrentAlbum ? 'playing' : ''}`} onClick={handlePlayPauseClick}>
-          <span className="play-icon">
+      <div
+        className="absolute top-0 left-0 w-full bg-black/70 flex flex-col justify-center items-center
+                   opacity-0 transition-opacity duration-300 gap-2.5 group-hover:opacity-100"
+        style={{ height: `${cardWidth}px` }}
+      >
+        <div
+          className={`w-15 h-15 rounded-full border-0 cursor-pointer font-bold
+                     transition-all duration-200 flex items-center justify-center
+                     shadow-[0_4px_12px_rgba(0,0,0,0.3)]
+                     hover:scale-110 hover:shadow-[0_6px_16px_rgba(0,0,0,0.4)]
+                     ${isCurrentAlbum
+                       ? 'bg-[#ff6b6b] hover:bg-[#ff5252]'
+                       : 'bg-plex-accent/50 text-black hover:bg-[#ffb800]'}`}
+          onClick={handlePlayPauseClick}
+        >
+          <span className={`text-[1.8em] leading-none ${showPauseIcon ? '' : 'ml-0.5'}`}>
             {showPauseIcon ? '⏸' : '▶'}
           </span>
         </div>

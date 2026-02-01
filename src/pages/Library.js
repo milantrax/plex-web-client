@@ -3,22 +3,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { getSections, getSectionItems, getGenres, getYears, getLabels, getAlbumsByGenre, getAlbumsByYear, getAlbumsByLabel } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getAlbumCardWidth } from '../utils/settingsStorage';
-import './Library.scss';
 
 function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [musicSectionId, setMusicSectionId] = useState(null);
-  const [cardWidth, setCardWidth] = useState(getAlbumCardWidth());
-  
+
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMorePages, setHasMorePages] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [totalAlbums, setTotalAlbums] = useState(0);
   const ALBUMS_PER_PAGE = 100;
-  
+
   const [genres, setGenres] = useState([]);
   const [years, setYears] = useState([]);
   const [labels, setLabels] = useState([]);
@@ -26,17 +22,6 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedLabel, setSelectedLabel] = useState('');
   const [filtersLoading, setFiltersLoading] = useState(false);
-
-  useEffect(() => {
-    const handleWidthChange = (event) => {
-      setCardWidth(event.detail.width);
-    };
-
-    window.addEventListener('albumCardWidthChanged', handleWidthChange);
-    return () => {
-      window.removeEventListener('albumCardWidthChanged', handleWidthChange);
-    };
-  }, []);
 
   const loadMoreAlbums = useCallback(async () => {
     if (loadingMore || !hasMorePages || !musicSectionId) return;
@@ -58,7 +43,6 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       if (moreAlbums.length > 0) {
         setAlbums(prevAlbums => [...prevAlbums, ...moreAlbums]);
         setCurrentPage(nextPage);
-        setTotalAlbums(prevTotal => prevTotal + moreAlbums.length);
         
         if (moreAlbums.length < ALBUMS_PER_PAGE) {
           setHasMorePages(false);
@@ -127,7 +111,6 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
             const albumData = await getSectionItems(musicSectionId, 9, 0, ALBUMS_PER_PAGE);
             setAlbums(albumData);
             setCurrentPage(0);
-            setTotalAlbums(albumData.length);
             setHasMorePages(albumData.length === ALBUMS_PER_PAGE);
          } catch (err) {
              console.error("Failed to fetch albums:", err);
@@ -256,7 +239,6 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       const albumData = await getSectionItems(musicSectionId, 9, 0, ALBUMS_PER_PAGE);
       setAlbums(albumData);
       setCurrentPage(0);
-      setTotalAlbums(albumData.length);
       setHasMorePages(albumData.length === ALBUMS_PER_PAGE);
     } catch (err) {
       console.error("Failed to reset to first page:", err);
@@ -268,83 +250,99 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div className="error-message">{error}</div>;
-  if (!musicSectionId && !error) return <div className="info-message">No music library found.</div>
-  if (albums.length === 0 && !selectedGenre && !selectedYear && !selectedLabel) return <div className="info-message">No albums found in this library.</div>;
+  if (error) return <div className="text-center py-10 text-plex-error text-lg">{error}</div>;
+  if (!musicSectionId && !error) return <div className="text-center py-10 text-plex-text-secondary text-lg">No music library found.</div>
+  if (albums.length === 0 && !selectedGenre && !selectedYear && !selectedLabel) return <div className="text-center py-10 text-plex-text-secondary text-lg">No albums found in this library.</div>;
 
   return (
-    <div 
-      className="library-container"
-      style={{ '--card-width': `${cardWidth}px` }}
-    >
-      <div className="library-filters">
-        <div className="filter-group">
-          <label htmlFor="genre-filter">Genre:</label>
-          <select 
-            id="genre-filter"
-            value={selectedGenre} 
-            onChange={(e) => handleGenreChange(e.target.value)}
-            disabled={filtersLoading}
-          >
-            <option value="">All Genres</option>
-            {genres.map(genre => (
-              <option key={genre.id} value={genre.tag || genre.title}>
-                {genre.title}
-              </option>
-            ))}
-          </select>
+    <div className="px-5 py-5">
+      <div className="bg-plex-surface rounded-lg p-5 mb-6 border border-plex-border">
+        <div className="flex flex-wrap gap-4 items-end mb-4">
+          <div className="flex flex-col gap-1 min-w-[200px]">
+            <label htmlFor="genre-filter" className="text-plex-text-secondary text-sm font-medium">Genre:</label>
+            <select
+              id="genre-filter"
+              value={selectedGenre}
+              onChange={(e) => handleGenreChange(e.target.value)}
+              disabled={filtersLoading}
+              className="bg-plex-card border border-plex-border text-plex-text-primary px-3 py-2 rounded
+                         cursor-pointer transition-all duration-200 outline-none
+                         hover:border-plex-accent focus:border-plex-accent focus:ring-2 focus:ring-plex-accent/30
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">All Genres</option>
+              {genres.map(genre => (
+                <option key={genre.id} value={genre.tag || genre.title}>
+                  {genre.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1 min-w-[200px]">
+            <label htmlFor="year-filter" className="text-plex-text-secondary text-sm font-medium">Year:</label>
+            <select
+              id="year-filter"
+              value={selectedYear}
+              onChange={(e) => handleYearChange(e.target.value)}
+              disabled={filtersLoading}
+              className="bg-plex-card border border-plex-border text-plex-text-primary px-3 py-2 rounded
+                         cursor-pointer transition-all duration-200 outline-none
+                         hover:border-plex-accent focus:border-plex-accent focus:ring-2 focus:ring-plex-accent/30
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">All Years</option>
+              {years.map(year => (
+                <option key={year.id} value={year.title}>
+                  {year.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1 min-w-[200px]">
+            <label htmlFor="label-filter" className="text-plex-text-secondary text-sm font-medium">Label:</label>
+            <select
+              id="label-filter"
+              value={selectedLabel}
+              onChange={(e) => handleLabelChange(e.target.value)}
+              disabled={filtersLoading}
+              className="bg-plex-card border border-plex-border text-plex-text-primary px-3 py-2 rounded
+                         cursor-pointer transition-all duration-200 outline-none
+                         hover:border-plex-accent focus:border-plex-accent focus:ring-2 focus:ring-plex-accent/30
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <option value="">All Labels</option>
+              {labels.map(label => (
+                <option key={label.id} value={label.tag || label.title}>
+                  {label.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {(selectedGenre || selectedYear || selectedLabel) && (
+            <button
+              className="bg-plex-accent text-plex-button-text px-4 py-2 rounded font-medium
+                         transition-all duration-200 cursor-pointer border-0
+                         hover:bg-plex-accent-hover active:scale-95"
+              onClick={clearFilters}
+            >
+              Clear Filters
+            </button>
+          )}
         </div>
 
-        <div className="filter-group">
-          <label htmlFor="year-filter">Year:</label>
-          <select 
-            id="year-filter"
-            value={selectedYear} 
-            onChange={(e) => handleYearChange(e.target.value)}
-            disabled={filtersLoading}
-          >
-            <option value="">All Years</option>
-            {years.map(year => (
-              <option key={year.id} value={year.title}>
-                {year.title}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label htmlFor="label-filter">Label:</label>
-          <select 
-            id="label-filter"
-            value={selectedLabel} 
-            onChange={(e) => handleLabelChange(e.target.value)}
-            disabled={filtersLoading}
-          >
-            <option value="">All Labels</option>
-            {labels.map(label => (
-              <option key={label.id} value={label.tag || label.title}>
-                {label.title}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {(selectedGenre || selectedYear || selectedLabel) && (
-          <button className="clear-filters-btn" onClick={clearFilters}>
-            Clear Filters
-          </button>
-        )}
-
-        <div className="filter-results">
+        <div className="text-plex-text-secondary text-sm">
           {selectedGenre || selectedYear || selectedLabel ? (
-            <span className="results-count">
+            <span>
               {albums.length} album{albums.length !== 1 ? 's' : ''} found
               {selectedGenre && ` in ${genres.find(g => (g.tag || g.title) === selectedGenre)?.title || 'selected genre'}`}
               {selectedYear && ` from ${years.find(y => y.title === selectedYear)?.title || selectedYear}`}
               {selectedLabel && ` with label ${labels.find(l => (l.tag || l.title) === selectedLabel)?.title || 'selected label'}`}
             </span>
           ) : (
-            <span className="results-count">
+            <span>
               {albums.length} album{albums.length !== 1 ? 's' : ''} loaded
               {hasMorePages && ' (scroll for more)'}
             </span>
@@ -353,26 +351,26 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       </div>
 
       {albums.length === 0 && (selectedGenre || selectedYear || selectedLabel) ? (
-        <div className="no-results-message">
+        <div className="text-center py-10 text-plex-text-secondary text-lg">
           No albums found matching the selected filters.
         </div>
       ) : (
         <>
-          <div className="library-grid">
+          <div className="flex flex-wrap justify-center gap-0">
             {albums.map(album => (
               <AlbumCard key={album.ratingKey} album={album} onPlayTrack={onPlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={onTogglePlayback} />
             ))}
           </div>
-          
+
           {loadingMore && (
-            <div className="loading-more-container">
+            <div className="text-center py-10">
               <LoadingSpinner />
-              <p>Loading more albums...</p>
+              <p className="text-plex-text-secondary mt-4">Loading more albums...</p>
             </div>
           )}
-          
+
           {!hasMorePages && albums.length > 0 && !selectedGenre && !selectedYear && !selectedLabel && (
-            <div className="end-of-results">
+            <div className="text-center py-10 text-plex-text-muted">
               <p>You've reached the end of your library ({albums.length} albums total)</p>
             </div>
           )}

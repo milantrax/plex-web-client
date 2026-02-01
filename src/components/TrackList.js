@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { downloadTrack } from '../api/plexApi';
 import queueManager from '../utils/queueManager';
-import './TrackList.scss';
 
 function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [queuedTracks, setQueuedTracks] = useState(new Set());
@@ -18,7 +17,7 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
   };
 
   if (!tracks || tracks.length === 0) {
-    return <div className="no-tracks">No tracks found</div>;
+    return <div className="text-center py-5 text-plex-text-secondary italic">No tracks found</div>;
   }
 
   const handleTrackClick = (track) => {
@@ -45,13 +44,6 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
 
   const isCurrentTrack = (track) => {
     return currentTrack && currentTrack.ratingKey === track.ratingKey;
-  };
-
-  const getTrackClassName = (track) => {
-    const isCurrent = isCurrentTrack(track);
-    if (!isCurrent) return 'track-item';
-    
-    return `track-item playing${!isPlaying ? ' paused' : ''}`;
   };
 
   const handleDownload = async (event, track) => {
@@ -86,59 +78,87 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
     return queuedTracks.has(track.ratingKey);
   };
 
+  const getTrackClasses = (track) => {
+    const isCurrent = isCurrentTrack(track);
+    const baseClasses = "grid grid-cols-track-list items-center gap-4 px-4 py-2 rounded cursor-pointer transition-colors duration-200 hover:bg-white/5";
+
+    if (!isCurrent) return baseClasses;
+
+    if (isPlaying) {
+      return `${baseClasses} bg-plex-accent/10 text-plex-accent`;
+    } else {
+      return `${baseClasses} bg-gray-500/10 text-plex-text-muted`;
+    }
+  };
+
   return (
-    <div className="tracks-list">
-      <div className="tracks-header">
-        <div className="track-number">#</div>
-        <div className="track-title">Title</div>
-        <div className="track-duration">Duration</div>
-        <div className="track-download">&nbsp;</div>
-        <div className="track-queue">&nbsp;</div>
+    <div className="w-full">
+      <div className="grid grid-cols-track-list items-center gap-4 px-4 py-2 pb-2.5
+                      border-b border-white/10 text-plex-text-secondary text-sm font-medium uppercase">
+        <div className="text-center">#</div>
+        <div>Title</div>
+        <div className="text-right">Duration</div>
+        <div>&nbsp;</div>
+        <div>&nbsp;</div>
       </div>
-      
-      <div className="tracks-items">
-        {tracks.map((track, index) => (
-          <div 
-            key={track.ratingKey || index} 
-            className={getTrackClassName(track)}
-            onClick={() => handleTrackClick(track)}
-          >
-            <div className="track-number">{index + 1}</div>
-            <div className="track-title">
-              {isCurrentTrack(track) && (
-                <span className="play-icon">
-                  {isPlaying ? '⏸' : '▶'}
-                </span>
-              )}
-              {track.title}
+
+      <div>
+        {tracks.map((track, index) => {
+          const isCurrent = isCurrentTrack(track);
+          const inQueue = isTrackInQueue(track);
+
+          return (
+            <div
+              key={track.ratingKey || index}
+              className={getTrackClasses(track)}
+              onClick={() => handleTrackClick(track)}
+            >
+              <div className={`text-center tabular-nums ${isCurrent ? (isPlaying ? 'text-plex-accent' : 'text-plex-text-muted') : 'text-plex-text-secondary'}`}>
+                {index + 1}
+              </div>
+              <div className="transition-colors duration-200 flex items-center gap-2 hover:text-plex-accent">
+                {isCurrent && (
+                  <span className="text-[0.8em] text-plex-accent animate-pulse-icon">
+                    {isPlaying ? '⏸' : '▶'}
+                  </span>
+                )}
+                {track.title}
+              </div>
+              <div className={`text-right tabular-nums ${isCurrent ? (isPlaying ? 'text-plex-accent' : 'text-plex-text-muted') : 'text-plex-text-secondary'}`}>
+                {formatDuration(track.duration || 0)}
+              </div>
+              <div className="flex justify-center items-center">
+                <button
+                  className="bg-transparent border border-white/30 text-plex-text-secondary px-2 py-1.5
+                             rounded cursor-pointer text-sm transition-all duration-200
+                             hover:bg-white/10 hover:border-white/50 hover:text-white
+                             active:scale-95"
+                  onClick={(e) => handleDownload(e, track)}
+                  title="Download track"
+                >
+                  ⬇
+                </button>
+              </div>
+              <div className="flex justify-center items-center">
+                <button
+                  className={`bg-transparent border px-2 py-1.5 rounded cursor-pointer text-sm
+                             transition-all duration-200 active:scale-95
+                             ${inQueue
+                               ? 'bg-plex-accent/20 border-plex-accent text-plex-accent'
+                               : 'border-white/30 text-plex-text-secondary hover:bg-plex-accent/20 hover:border-plex-accent hover:text-plex-accent'}`}
+                  onClick={(e) => handleAddToQueue(e, track)}
+                  title={inQueue ? "Already in queue" : "Add to queue"}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <rect x="2" y="3" width="12" height="2" rx="1"/>
+                    <rect x="2" y="7" width="12" height="2" rx="1"/>
+                    <rect x="2" y="11" width="12" height="2" rx="1"/>
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div className="track-duration">
-              {formatDuration(track.duration || 0)}
-            </div>
-            <div className="track-download">
-              <button
-                className="download-btn"
-                onClick={(e) => handleDownload(e, track)}
-                title="Download track"
-              >
-                ⬇
-              </button>
-            </div>
-            <div className="track-queue">
-              <button
-                className={`queue-btn${isTrackInQueue(track) ? ' in-queue' : ''}`}
-                onClick={(e) => handleAddToQueue(e, track)}
-                title={isTrackInQueue(track) ? "Already in queue" : "Add to queue"}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                  <rect x="2" y="3" width="12" height="2" rx="1"/>
-                  <rect x="2" y="7" width="12" height="2" rx="1"/>
-                  <rect x="2" y="11" width="12" height="2" rx="1"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

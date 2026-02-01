@@ -5,7 +5,6 @@ import { searchAlbumsWithMatchingTracks } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getAlbumCardWidth } from '../utils/settingsStorage';
-import '../styles/Search.scss';
 
 class Search extends React.Component {
   constructor(props) {
@@ -103,29 +102,31 @@ class Search extends React.Component {
     } = this.props;
 
     return (
-      <div className="search-page" style={{'--card-width': `${cardWidth}px`}}>
-        <div className="search-header">
-          {query && (
-            <p className="search-query">
-              Showing results for: <strong>"{query}"</strong>
+      <div className="px-5 py-5" style={{'--card-width': `${cardWidth}px`}}>
+        {query && (
+          <div className="mb-5">
+            <p className="text-plex-text-secondary">
+              Showing results for: <strong className="text-plex-text-primary">"{query}"</strong>
             </p>
-          )}
-        </div>
+          </div>
+        )}
 
         {isLoading && (
-          <div className="search-loading-container">
+          <div className="text-center py-10">
             <LoadingSpinner />
-            <p>Searching for albums and tracks...</p>
+            <p className="text-plex-text-secondary mt-4">Searching for albums and tracks...</p>
           </div>
         )}
 
         {error && (
-          <div className="search-error-container">
-            <div className="search-error">
-              <h3>Search Error</h3>
-              <p>{error}</p>
-              <button 
-                className="retry-btn"
+          <div className="flex justify-center py-10">
+            <div className="bg-plex-surface rounded-lg p-6 max-w-md w-full border border-plex-border">
+              <h3 className="text-xl font-bold text-plex-error mb-3">Search Error</h3>
+              <p className="text-plex-text-secondary mb-4">{error}</p>
+              <button
+                className="bg-plex-accent text-plex-button-text px-4 py-2 rounded font-medium
+                           transition-all duration-200 cursor-pointer border-0
+                           hover:bg-plex-accent-hover active:scale-95 w-full"
                 onClick={() => this.searchAlbums(query)}
               >
                 Try Again
@@ -135,40 +136,42 @@ class Search extends React.Component {
         )}
 
         {!isLoading && !error && albums.length === 0 && query && (
-          <div className="search-no-results">
-            <h3>No Results Found</h3>
-            <p>No albums or tracks found matching "{query}".</p>
-            <p>Try searching with different keywords or check your spelling.</p>
+          <div className="text-center py-10">
+            <h3 className="text-2xl font-bold text-plex-text-primary mb-3">No Results Found</h3>
+            <p className="text-plex-text-secondary mb-2">No albums or tracks found matching "{query}".</p>
+            <p className="text-plex-text-secondary">Try searching with different keywords or check your spelling.</p>
           </div>
         )}
 
         {!isLoading && !error && albums.length > 0 && (
-          <div className="search-results-container">
-            <div className="search-results-header">
-              <p>
-                Found {albums.length} album{albums.length !== 1 ? 's' : ''}
-              </p>
-              <div className="search-results-info">
-                {albums.filter(album => album.matchType === 'album').length > 0 && (
-                  <span className="match-type-info">
-                    {albums.filter(album => album.matchType === 'album').length} album title matches
-                  </span>
-                )}
-                {albums.filter(album => album.matchType === 'track').length > 0 && (
-                  <span className="match-type-info">
-                    {albums.filter(album => album.matchType === 'track').length} albums with matching tracks
-                  </span>
-                )}
+          <div>
+            <div className="bg-plex-surface rounded-lg p-5 mb-5 border border-plex-border">
+              <div className="flex justify-between items-center flex-wrap gap-4">
+                <p className="text-plex-text-primary font-medium">
+                  Found {albums.length} album{albums.length !== 1 ? 's' : ''}
+                </p>
+                <div className="flex gap-4 text-plex-text-secondary text-sm">
+                  {albums.filter(album => album.matchType === 'album').length > 0 && (
+                    <span>
+                      {albums.filter(album => album.matchType === 'album').length} album title matches
+                    </span>
+                  )}
+                  {albums.filter(album => album.matchType === 'track').length > 0 && (
+                    <span>
+                      {albums.filter(album => album.matchType === 'track').length} albums with matching tracks
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="search-results-grid">
+            <div className="flex flex-wrap justify-center gap-0">
               {albums.map(album => {
                 const isExpanded = expandedItems.has(album.ratingKey);
                 const hasTrackMatch = album.matchType === 'track' && album.matchingTrack;
-                
+
                 return (
-                  <div key={album.ratingKey} className="search-result-item">
+                  <div key={album.ratingKey} className="relative">
                     <AlbumCard
                       album={album}
                       currentTrack={currentTrack}
@@ -178,21 +181,26 @@ class Search extends React.Component {
                       onCurrentTrackChange={onCurrentTrackChange}
                     />
                     {hasTrackMatch && (
-                      <div className="match-info-container">
-                        <button 
-                          className={`match-expand-btn ${isExpanded ? 'expanded' : ''}`}
+                      <div className="mt-2 mx-2">
+                        <button
+                          className={`w-full bg-plex-card text-plex-text-primary px-3 py-2 rounded
+                                     transition-all duration-200 cursor-pointer border border-plex-border
+                                     hover:bg-plex-card-hover flex items-center justify-center gap-2
+                                     ${isExpanded ? 'bg-plex-card-hover' : ''}`}
                           onClick={() => this.toggleExpanded(album.ratingKey)}
                           aria-label={isExpanded ? 'Hide track match info' : 'Show track match info'}
                         >
-                          <span className="expand-icon">{isExpanded ? '−' : '+'}</span>
-                          <span className="expand-text">Track Match</span>
+                          <span className="text-plex-accent font-bold text-lg">{isExpanded ? '−' : '+'}</span>
+                          <span className="text-sm">Track Match</span>
                         </button>
                         {isExpanded && (
-                          <div className="match-info">
-                            <span className="match-type-badge">Track Match</span>
-                            <span className="matching-track">
-                              Contains: "{album.matchingTrack}"
+                          <div className="mt-2 bg-plex-surface rounded p-3 border border-plex-border animate-slide-down">
+                            <span className="inline-block bg-plex-accent text-plex-button-text text-xs px-2 py-1 rounded font-medium mb-2">
+                              Track Match
                             </span>
+                            <div className="text-plex-text-secondary text-sm">
+                              Contains: "{album.matchingTrack}"
+                            </div>
                           </div>
                         )}
                       </div>
@@ -205,16 +213,28 @@ class Search extends React.Component {
         )}
 
         {!query && !isLoading && (
-          <div className="search-empty-state">
-            <h2>Search Music</h2>
-            <p>Use the search bar above to find albums and tracks in your Plex library.</p>
-            <div className="search-tips">
-              <h3>Search Tips:</h3>
-              <ul>
-                <li>Search by album name, artist name, or song title</li>
-                <li>Use partial words - "beet" will find "The Beatles"</li>
-                <li>Search is case-insensitive</li>
-                <li>Results include albums that contain matching tracks</li>
+          <div className="text-center py-10">
+            <h2 className="text-2xl font-bold text-plex-text-primary mb-4">Search Music</h2>
+            <p className="text-plex-text-secondary mb-6">Use the search bar above to find albums and tracks in your Plex library.</p>
+            <div className="bg-plex-surface rounded-lg p-6 max-w-2xl mx-auto border border-plex-border">
+              <h3 className="text-xl font-bold text-plex-text-primary mb-4">Search Tips:</h3>
+              <ul className="text-left text-plex-text-secondary space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-plex-accent mt-1">•</span>
+                  <span>Search by album name, artist name, or song title</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-plex-accent mt-1">•</span>
+                  <span>Use partial words - "beet" will find "The Beatles"</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-plex-accent mt-1">•</span>
+                  <span>Search is case-insensitive</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-plex-accent mt-1">•</span>
+                  <span>Results include albums that contain matching tracks</span>
+                </li>
               </ul>
             </div>
           </div>

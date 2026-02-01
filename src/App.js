@@ -12,7 +12,6 @@ import Search from './pages/Search';
 import Settings from './pages/Settings';
 import { initAudioDiagnostics } from './utils/audioDebug';
 import queueManager from './utils/queueManager';
-import './styles/App.scss';
 
 function App() {
   const [currentTrack, setCurrentTrack] = useState(null);
@@ -105,9 +104,9 @@ function App() {
 
   return (
     <Router>
-      <div className="App">
+      <div className="App text-center">
         <NavBar onPlayTrack={handlePlayTrack} />
-        <main className="content">
+        <main className="content h-[calc(100vh-69px)] overflow-y-auto">
           <Routes>
             <Route path="/" element={<Library onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
             <Route path="/playlists" element={<Playlists onPlayTrack={handlePlayTrack} />} />

@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base layer customizations */
+@layer base {
+  body {
+    @apply m-0 bg-plex-bg text-white font-sans antialiased;
+  }
+
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  }
+
+  * {
+    @apply box-border;
+  }
+
+  a {
+    @apply text-plex-accent;
+  }
+}
+
+/* Component layer for reusable patterns */
+@layer components {
+  /* Custom scrollbar styles (webkit only) */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-plex-bg;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-plex-border rounded;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-plex-text-muted;
+  }
+
+  /* Range slider (webkit + firefox) */
+  .range-slider {
+    @apply h-1.5 rounded bg-white/20 outline-none;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .range-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    @apply w-5 h-5 rounded-full bg-plex-accent cursor-pointer;
+  }
+
+  .range-slider::-moz-range-thumb {
+    @apply w-5 h-5 rounded-full bg-plex-accent cursor-pointer border-0;
+  }
+}

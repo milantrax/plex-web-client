@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { plexCache } from '../api/plexApi';
-import '../styles/CacheManager.scss';
 
 const CacheManager = () => {
   const [cacheStats, setCacheStats] = useState({
@@ -62,39 +61,39 @@ const CacheManager = () => {
   };
   
   return (
-    <div className="cache-manager">
-      <h2>Cache Management</h2>
-      
-      <div className="cache-stats">
-        <div className="stat-item">
-          <span className="stat-label">Total Cache Size:</span>
-          <span className="stat-value">{cacheStats.totalSize} KB</span>
+    <div className="p-0 text-plex-text m-0">
+      <h2 className="text-plex-accent mb-5">Cache Management</h2>
+
+      <div className="bg-white/5 rounded-lg p-[15px] mb-[15px] border border-white/10 flex flex-wrap gap-5">
+        <div className="flex-1 min-w-[150px]">
+          <span className="block text-[0.9em] text-plex-text-secondary mb-1.5">Total Cache Size:</span>
+          <span className="text-[1.4em] text-plex-accent font-medium">{cacheStats.totalSize} KB</span>
         </div>
-        <div className="stat-item">
-          <span className="stat-label">Cached Items:</span>
-          <span className="stat-value">{cacheStats.itemCount}</span>
+        <div className="flex-1 min-w-[150px]">
+          <span className="block text-[0.9em] text-plex-text-secondary mb-1.5">Cached Items:</span>
+          <span className="text-[1.4em] text-plex-accent font-medium">{cacheStats.itemCount}</span>
         </div>
       </div>
-      
-      <button 
-        className="clear-cache-btn"
+
+      <button
+        className="bg-plex-danger text-white border-none rounded py-2 px-[15px] cursor-pointer font-medium transition-colors duration-200 ease-in-out hover:bg-[#ff6b7a] mt-[15px]"
         onClick={handleClearAllCache}
       >
         Clear All Cache
       </button>
-      
-      <h3>Cache Details</h3>
+
+      <h3 className="text-plex-text my-[25px_0_15px] text-[1.2em]">Cache Details</h3>
       {cacheStats.items.length > 0 ? (
-        <div className="cache-items-list">
+        <div className="bg-white/5 rounded-lg p-[15px] mb-[15px] border border-white/10">
           {cacheStats.items.map(item => (
-            <div key={item.key} className="cache-item">
-              <div className="cache-item-info">
-                <span className="cache-key">{item.key.replace('plex_', '')}</span>
-                <span className="cache-size">{item.size} KB</span>
-                <span className="cache-expiry">Expires: {item.expires}</span>
+            <div key={item.key} className="flex justify-between items-center py-2 border-b border-plex-border last:border-b-0">
+              <div className="flex flex-col items-start gap-2.5 overflow-hidden">
+                <span className="font-medium mb-1">{item.key.replace('plex_', '')}</span>
+                <span className="text-[0.85em] text-plex-accent">{item.size} KB</span>
+                <span className="text-[0.8em] text-plex-text-secondary">Expires: {item.expires}</span>
               </div>
               <button
-                className="clear-item-btn"
+                className="bg-plex-danger/70 text-white border-none rounded py-1.5 px-2.5 cursor-pointer font-medium text-[0.9em] transition-colors duration-200 ease-in-out hover:bg-plex-danger/85"
                 onClick={() => handleClearCacheItem(item.key)}
               >
                 Clear

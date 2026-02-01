@@ -2,7 +2,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchMusic } from '../api/plexApi';
-import '../styles/SearchBar.scss';
 
 class SearchBar extends React.Component {
   constructor(props) {
@@ -149,8 +148,8 @@ class SearchBar extends React.Component {
     const hasResults = results.albums.length > 0 || results.tracks.length > 0;
 
     return (
-      <div className="search-bar">
-        <div className="search-input-container">
+      <div className="relative w-full max-w-[400px] mx-auto">
+        <div className="relative flex items-center bg-plex-surface border border-plex-border rounded-lg overflow-hidden transition-[border-color] duration-300 ease-in-out focus-within:border-plex-accent focus-within:shadow-[0_0_0_2px_rgba(240,165,0,0.2)]">
           <input
             ref={this.searchInputRef}
             type="text"
@@ -160,23 +159,23 @@ class SearchBar extends React.Component {
             onFocus={this.handleInputFocus}
             onBlur={this.handleInputBlur}
             onKeyDown={this.handleKeyDown}
-            className="search-input"
+            className="flex-1 py-3 px-4 bg-transparent border-none text-plex-text text-sm outline-none placeholder:text-plex-text-muted"
           />
-          
+
           {query && (
-            <button 
-              type="button" 
-              className="search-clear-btn"
+            <button
+              type="button"
+              className="bg-transparent border-none text-plex-text-muted text-lg p-2 cursor-pointer transition-colors duration-300 ease-in-out hover:text-plex-text"
               onClick={this.clearSearch}
               aria-label="Clear search"
             >
               ×
             </button>
           )}
-          
-          <button 
-            type="submit" 
-            className="search-submit-btn"
+
+          <button
+            type="submit"
+            className="bg-plex-accent border-none text-white py-3 px-4 cursor-pointer text-sm transition-colors duration-300 ease-in-out hover:bg-plex-accent-hover disabled:bg-plex-border disabled:cursor-not-allowed"
             onClick={this.handleSubmit}
             disabled={!query.trim()}
             aria-label="Search"
@@ -189,66 +188,66 @@ class SearchBar extends React.Component {
         </div>
 
         {showDropdown && (
-          <div ref={this.dropdownRef} className="search-dropdown">
+          <div ref={this.dropdownRef} className="absolute top-full left-0 right-0 bg-plex-bg border border-plex-border border-t-0 rounded-b-lg shadow-[0_4px_12px_rgba(0,0,0,0.3)] max-h-[400px] overflow-y-auto z-[1000] text-left custom-scrollbar">
             {isLoading && (
-              <div className="search-loading">
+              <div className="p-4 text-center text-plex-text-muted italic">
                 <span>Searching...</span>
               </div>
             )}
 
             {error && (
-              <div className="search-error">
+              <div className="p-4 text-center text-plex-error italic">
                 <span>{error}</span>
               </div>
             )}
 
             {!isLoading && !error && hasResults && (
-              <div className="search-results">
+              <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
                 {results.albums.length > 0 && (
-                  <div className="search-section">
-                    <h4 className="search-section-title">Albums</h4>
+                  <div className="border-b border-plex-border last:border-b-0">
+                    <h4 className="pt-3 px-4 pb-2 m-0 text-xs font-semibold uppercase text-plex-text-muted bg-plex-bg border-b border-plex-border">Albums</h4>
                     {results.albums.slice(0, 5).map(album => (
                       <div
                         key={`album-${album.ratingKey}`}
-                        className="search-result-item"
+                        className="flex items-center justify-between py-3 px-4 cursor-pointer transition-colors duration-300 ease-in-out border-b border-white/5 last:border-b-0 hover:bg-white/10"
                         onClick={() => this.handleResultClick(album, 'album')}
                       >
-                        <div className="search-result-info">
-                          <span className="search-result-title">{album.title}</span>
-                          <span className="search-result-subtitle">
+                        <div className="flex-1 min-w-0">
+                          <span className="block text-plex-text font-medium text-sm mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{album.title}</span>
+                          <span className="block text-plex-text-muted text-xs whitespace-nowrap overflow-hidden text-ellipsis">
                             {album.parentTitle || 'Various Artists'}
                           </span>
                         </div>
-                        <span className="search-result-type">Album</span>
+                        <span className="text-[11px] text-plex-accent bg-plex-accent/10 py-0.5 px-1.5 rounded uppercase font-semibold ml-3 flex-shrink-0">Album</span>
                       </div>
                     ))}
                   </div>
                 )}
 
                 {results.tracks.length > 0 && (
-                  <div className="search-section">
-                    <h4 className="search-section-title">Tracks</h4>
+                  <div className="border-b border-plex-border last:border-b-0">
+                    <h4 className="pt-3 px-4 pb-2 m-0 text-xs font-semibold uppercase text-plex-text-muted bg-plex-bg border-b border-plex-border">Tracks</h4>
                     {results.tracks.slice(0, 5).map(track => (
                       <div
                         key={`track-${track.ratingKey}`}
-                        className="search-result-item"
+                        className="flex items-center justify-between py-3 px-4 cursor-pointer transition-colors duration-300 ease-in-out border-b border-white/5 last:border-b-0 hover:bg-white/10"
                         onClick={() => this.handleResultClick(track, 'track')}
                       >
-                        <div className="search-result-info">
-                          <span className="search-result-title">{track.title}</span>
-                          <span className="search-result-subtitle">
+                        <div className="flex-1 min-w-0">
+                          <span className="block text-plex-text font-medium text-sm mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{track.title}</span>
+                          <span className="block text-plex-text-muted text-xs whitespace-nowrap overflow-hidden text-ellipsis">
                             {track.grandparentTitle} • {track.parentTitle}
                           </span>
                         </div>
-                        <span className="search-result-type">Track</span>
+                        <span className="text-[11px] text-plex-accent bg-plex-accent/10 py-0.5 px-1.5 rounded uppercase font-semibold ml-3 flex-shrink-0">Track</span>
                       </div>
                     ))}
                   </div>
                 )}
 
-                <div className="search-footer">
-                  <button 
-                    className="search-view-all-btn"
+                <div className="p-3 border-t border-plex-border bg-plex-bg">
+                  <button
+                    className="w-full bg-plex-accent border-none text-white py-2 px-4 rounded cursor-pointer text-xs font-semibold uppercase transition-colors duration-300 ease-in-out hover:bg-plex-accent-hover"
                     onClick={this.handleSubmit}
                   >
                     View all results
@@ -258,7 +257,7 @@ class SearchBar extends React.Component {
             )}
 
             {!isLoading && !error && !hasResults && query.trim().length >= 2 && (
-              <div className="search-no-results">
+              <div className="p-4 text-center text-plex-text-muted italic">
                 <span>No results found for "{query}"</span>
               </div>
             )}

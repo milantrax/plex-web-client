@@ -4,7 +4,6 @@ import { getPlaylists, getPlaylistItems } from '../api/plexApi';
 import { PLEX_URL, PLEX_TOKEN } from '../config';
 import LoadingSpinner from '../components/LoadingSpinner';
 import TrackList from '../components/TrackList';
-import './Playlists.scss';
 
 function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [playlists, setPlaylists] = useState([]);
@@ -79,66 +78,77 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div className="error-message">{error}</div>;
-  if (playlists.length === 0) return <div className="info-message">No audio playlists found.</div>;
+  if (error) return <div className="text-center py-10 text-plex-error text-lg">{error}</div>;
+  if (playlists.length === 0) return <div className="text-center py-10 text-plex-text-secondary text-lg">No audio playlists found.</div>;
 
   return (
-    <div className="playlists-container">
-      <div className="playlists-layout">
-        <div className="playlists-sidebar">
-          <div className="playlists-list">
+    <div className="px-5 py-5">
+      <div className="flex gap-5">
+        <div className="w-[250px] bg-plex-surface rounded-lg border border-plex-border h-fit sticky top-5">
+          <div className="custom-scrollbar max-h-[calc(100vh-120px)] overflow-y-auto">
             {playlists.map(playlist => (
-              <div 
-                key={playlist.ratingKey} 
-                className={`playlist-item ${selectedPlaylist?.ratingKey === playlist.ratingKey ? 'selected' : ''}`}
+              <div
+                key={playlist.ratingKey}
+                className={`px-4 py-3 cursor-pointer border-b border-plex-border transition-colors duration-200
+                           ${selectedPlaylist?.ratingKey === playlist.ratingKey
+                             ? 'bg-plex-accent text-plex-button-text font-bold'
+                             : 'hover:bg-plex-card-hover text-plex-text-primary'
+                           }`}
                 onClick={() => handlePlaylistClick(playlist)}
               >
-                <div className="playlist-info">
-                  <span className="playlist-title">{playlist.title}</span>
-                  <span className="playlist-count">{playlist.leafCount} tracks</span>
+                <div className="flex flex-col gap-1">
+                  <span className="font-medium">{playlist.title}</span>
+                  <span className={`text-sm ${selectedPlaylist?.ratingKey === playlist.ratingKey ? 'text-plex-button-text/80' : 'text-plex-text-secondary'}`}>
+                    {playlist.leafCount} tracks
+                  </span>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="tracks-panel">
+        <div className="flex-1">
           {selectedPlaylist ? (
             <>
-              <div className="playlist-tracks-header">
-                <div className="header-info">
-                  <h2>{selectedPlaylist.title}</h2>
-                  <span className="tracks-count">{playlistTracks.length} tracks</span>
+              <div className="bg-plex-surface rounded-lg p-5 mb-5 border border-plex-border">
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                  <div className="flex flex-col gap-1">
+                    <h2 className="text-2xl font-bold text-plex-text-primary">{selectedPlaylist.title}</h2>
+                    <span className="text-plex-text-secondary">{playlistTracks.length} tracks</span>
+                  </div>
+                  <button
+                    className="bg-plex-accent text-plex-button-text px-4 py-2 rounded font-medium
+                               transition-all duration-200 cursor-pointer border-0
+                               hover:bg-plex-accent-hover active:scale-95
+                               disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={exportPlaylistAsM3U}
+                    disabled={playlistTracks.length === 0}
+                    title="Export playlist as M3U file"
+                  >
+                    Export M3U
+                  </button>
                 </div>
-                <button 
-                  className="export-playlist-btn" 
-                  onClick={exportPlaylistAsM3U}
-                  disabled={playlistTracks.length === 0}
-                  title="Export playlist as M3U file"
-                >
-                  Export M3U
-                </button>
               </div>
-              
+
               {loadingTracks ? (
                 <LoadingSpinner />
               ) : playlistTracks.length === 0 ? (
-                <div className="no-tracks">This playlist is empty</div>
+                <div className="text-center py-10 text-plex-text-secondary text-lg">This playlist is empty</div>
               ) : (
-                <TrackList 
-                  tracks={playlistTracks} 
-                  albumData={selectedPlaylist} 
-                  onPlayTrack={onPlayTrack} 
-                  currentTrack={currentTrack} 
-                  isPlaying={isPlaying} 
-                  onTogglePlayback={onTogglePlayback} 
+                <TrackList
+                  tracks={playlistTracks}
+                  albumData={selectedPlaylist}
+                  onPlayTrack={onPlayTrack}
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  onTogglePlayback={onTogglePlayback}
                 />
               )}
             </>
           ) : (
-            <div className="no-playlist-selected">
-              <h3>Select a playlist</h3>
-              <p>Choose a playlist from the sidebar to view its tracks</p>
+            <div className="text-center py-20">
+              <h3 className="text-2xl font-bold text-plex-text-primary mb-3">Select a playlist</h3>
+              <p className="text-plex-text-secondary">Choose a playlist from the sidebar to view its tracks</p>
             </div>
           )}
         </div>

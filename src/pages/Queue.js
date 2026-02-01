@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import queueManager from '../utils/queueManager';
 import LoadingSpinner from '../components/LoadingSpinner';
-import './Queue.scss';
 
 function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [queue, setQueue] = useState([]);
@@ -127,21 +126,6 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     return currentTrack && currentTrack.ratingKey === track.ratingKey;
   };
 
-  const getTrackClassName = (track, index) => {
-    const isCurrent = isCurrentTrack(track);
-    let className = 'queue-item';
-    
-    if (isCurrent) {
-      className += ` playing${!isPlaying ? ' paused' : ''}`;
-    }
-    
-    if (dragOverIndex === index) {
-      className += ' drag-over';
-    }
-    
-    return className;
-  };
-
   const formatDuration = (milliseconds) => {
     const minutes = Math.floor(milliseconds / 60000);
     const seconds = ((milliseconds % 60000) / 1000).toFixed(0);
@@ -159,13 +143,20 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="queue-page">
-      <div className="queue-header">
-        <div className="queue-stats">
-          <span className="queue-count">{queueStats.totalTracks} tracks</span>
-          <span className="queue-duration">Total: {queueStats.totalDurationFormatted}</span>
+    <div className="px-5 py-5">
+      <div className="bg-plex-surface rounded-lg p-5 mb-6 border border-plex-border">
+        <div className="flex justify-between items-center flex-wrap gap-4">
+          <div className="flex gap-4 items-center text-plex-text-secondary">
+            <span className="font-medium text-plex-text-primary">{queueStats.totalTracks} tracks</span>
+            <span>Total: {queueStats.totalDurationFormatted}</span>
+          </div>
           {queue.length > 0 && (
-            <button className="clear-queue-btn" onClick={handleClearQueue}>
+            <button
+              className="bg-plex-danger text-plex-text px-4 py-2 rounded font-medium
+                         transition-all duration-200 cursor-pointer border-0
+                         hover:bg-red-600 active:scale-95"
+              onClick={handleClearQueue}
+            >
               Clear All
             </button>
           )}
@@ -173,36 +164,57 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       </div>
 
       {queue.length === 0 ? (
-        <div className="queue-empty">
-          <h2>Queue is empty</h2>
-          <p>Add tracks to your queue from album pages to start building your playlist.</p>
-          <div className="queue-tips">
-            <h3>How to use the queue:</h3>
-            <ul>
-              <li>Browse to an album page</li>
-              <li>Click the queue button (⊞) next to any track</li>
-              <li>Tracks will appear here in the order you add them</li>
-              <li>Click any track to start playing</li>
-              <li>Drag tracks to reorder them in the queue</li>
+        <div className="text-center py-10">
+          <h2 className="text-2xl font-bold text-plex-text-primary mb-4">Queue is empty</h2>
+          <p className="text-plex-text-secondary mb-6">Add tracks to your queue from album pages to start building your playlist.</p>
+          <div className="bg-plex-surface rounded-lg p-6 max-w-2xl mx-auto border border-plex-border">
+            <h3 className="text-xl font-bold text-plex-text-primary mb-4">How to use the queue:</h3>
+            <ul className="text-left text-plex-text-secondary space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="text-plex-accent mt-1">•</span>
+                <span>Browse to an album page</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-plex-accent mt-1">•</span>
+                <span>Click the queue button (⊞) next to any track</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-plex-accent mt-1">•</span>
+                <span>Tracks will appear here in the order you add them</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-plex-accent mt-1">•</span>
+                <span>Click any track to start playing</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-plex-accent mt-1">•</span>
+                <span>Drag tracks to reorder them in the queue</span>
+              </li>
             </ul>
           </div>
         </div>
       ) : (
-        <div className="queue-list">
-          <div className="queue-list-header">
-            <div className="queue-col-position">#</div>
-            <div className="queue-col-track">Track</div>
-            <div className="queue-col-album">Album</div>
-            <div className="queue-col-duration">Duration</div>
-            <div className="queue-col-added">Added</div>
-            <div className="queue-col-actions">Actions</div>
+        <div className="bg-plex-surface rounded-lg border border-plex-border overflow-hidden">
+          <div className="grid grid-cols-[50px_1fr_1fr_100px_150px_100px] gap-4 px-4 py-3 bg-plex-card border-b border-plex-border text-plex-text-secondary text-sm font-medium">
+            <div className="text-center">#</div>
+            <div>Track</div>
+            <div>Album</div>
+            <div className="text-center">Duration</div>
+            <div className="text-center">Added</div>
+            <div className="text-center">Actions</div>
           </div>
-          
-          <div className="queue-items">
+
+          <div className="custom-scrollbar max-h-[calc(100vh-300px)] overflow-y-auto">
             {queue.map((queueItem, index) => (
-              <div 
-                key={queueItem.id} 
-                className={getTrackClassName(queueItem.track, index)}
+              <div
+                key={queueItem.id}
+                className={`grid grid-cols-[50px_1fr_1fr_100px_150px_100px] gap-4 px-4 py-3 border-b border-plex-border
+                           transition-colors duration-200 cursor-move
+                           ${isCurrentTrack(queueItem.track)
+                             ? `bg-plex-accent/20 border-l-4 border-l-plex-accent ${!isPlaying ? 'opacity-70' : ''}`
+                             : 'hover:bg-plex-card-hover'
+                           }
+                           ${dragOverIndex === index ? 'border-t-2 border-t-plex-accent' : ''}`}
                 draggable="true"
                 onDragStart={(e) => handleDragStart(e, queueItem, index)}
                 onDragEnd={handleDragEnd}
@@ -211,58 +223,57 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, index)}
               >
-                <div className="queue-col-position">
+                <div className="text-center text-plex-text-secondary">
                   {index + 1}
                 </div>
-                
-                <div 
-                  className="queue-col-track clickable"
+
+                <div
+                  className="cursor-pointer"
                   onClick={() => handleTrackClick(queueItem)}
                 >
-                  <div className="track-info">
+                  <div className="flex items-center gap-2">
                     {isCurrentTrack(queueItem.track) && (
-                      <span className="play-icon">
+                      <span className="text-plex-accent text-lg">
                         {isPlaying ? '⏸' : '▶'}
                       </span>
                     )}
-                    <span className="track-title">{queueItem.track.title}</span>
+                    <span className="text-plex-text-primary">{queueItem.track.title}</span>
                   </div>
                 </div>
-                
-                <div className="queue-col-album">
+
+                <div className="text-plex-text-secondary">
                   {queueItem.album ? (
-                    <div className="album-info">
-                      <span className="album-title">{queueItem.album.title}</span>
+                    <div className="flex flex-col">
+                      <span className="text-plex-text-primary">{queueItem.album.title}</span>
                       {queueItem.album.artist && (
-                        <span className="album-artist">by {queueItem.album.artist}</span>
+                        <span className="text-sm">by {queueItem.album.artist}</span>
                       )}
                     </div>
                   ) : (
-                    <span className="no-album">Unknown Album</span>
+                    <span className="text-plex-text-muted">Unknown Album</span>
                   )}
                 </div>
-                
-                <div className="queue-col-duration">
+
+                <div className="text-center text-plex-text-secondary">
                   {formatDuration(queueItem.track.duration || 0)}
                 </div>
-                
-                <div className="queue-col-added">
+
+                <div className="text-center text-plex-text-secondary text-sm">
                   {formatDate(queueItem.addedAt)}
                 </div>
-                
-                <div className="queue-col-actions">
-                  <div className="queue-actions">
-                    <div className="drag-handle" title="Drag to reorder">
-                      ⋮⋮
-                    </div>
-                    <button
-                      className="remove-btn"
-                      onClick={() => handleRemoveFromQueue(queueItem.id)}
-                      title="Remove from queue"
-                    >
-                      ✕
-                    </button>
+
+                <div className="flex items-center justify-center gap-2">
+                  <div className="text-plex-text-muted cursor-move select-none text-lg" title="Drag to reorder">
+                    ⋮⋮
                   </div>
+                  <button
+                    className="text-plex-danger hover:text-red-600 font-bold text-lg px-2 py-1 rounded
+                               transition-colors duration-200 cursor-pointer border-0 bg-transparent"
+                    onClick={() => handleRemoveFromQueue(queueItem.id)}
+                    title="Remove from queue"
+                  >
+                    ✕
+                  </button>
                 </div>
               </div>
             ))}

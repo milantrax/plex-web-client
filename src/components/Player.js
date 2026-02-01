@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { getPlexAudioUrl, getPlexTranscodeUrl, getPlexImageUrl } from '../api/plexApi';
 import queueManager from '../utils/queueManager';
-import '../styles/Player.scss';
 
 const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPlayNext, onPlayPrevious }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -219,67 +218,67 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
   const hasPrevious = currentTrack ? queueManager.hasPreviousTrack(currentTrack.ratingKey) : false;
 
   return (
-    <div className={`player-bar ${!trackInfo ? 'hidden' : ''}`}>
+    <div className={`fixed bottom-0 left-0 w-full bg-plex-player border-t-2 border-plex-accent px-5 py-2.5 flex items-center justify-between box-border transition-transform duration-300 ease-in-out z-[1000] ${!trackInfo ? 'translate-y-full' : ''}`}>
       {trackInfo && (
-        <div className="player-track-info">
-          {trackInfo.artUrl && <img src={trackInfo.artUrl} alt="Track art" className="player-art"/>}
-          <div>
-            <p className="player-title">{trackInfo.title}</p>
-            <p className="player-artist-album">{trackInfo.artist} - {trackInfo.album}</p>
+        <div className="flex items-center justify-start text-left flex-grow-0 min-w-[200px] overflow-hidden mr-5">
+          {trackInfo.artUrl && <img src={trackInfo.artUrl} alt="Track art" className="w-[50px] h-[50px] object-cover mr-[15px] rounded bg-plex-disabled"/>}
+          <div className="overflow-hidden text-left">
+            <p className="text-plex-text-primary font-bold m-0 mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{trackInfo.title}</p>
+            <p className="text-plex-text-secondary text-[0.9em] m-0 whitespace-nowrap overflow-hidden text-ellipsis">{trackInfo.artist} - {trackInfo.album}</p>
           </div>
         </div>
       )}
-      
-      <div className="player-progress-container">
-        <div 
-          className="player-progress-bar" 
+
+      <div className="flex-grow flex flex-col mx-[15px]">
+        <div
+          className="w-full h-1.5 bg-white/10 rounded-[3px] cursor-pointer relative"
           onClick={handleProgressClick}
           ref={progressBarRef}
         >
-          <div 
-            className="progress-fill" 
+          <div
+            className="h-full bg-plex-accent rounded-[3px] absolute left-0 top-0 transition-[width] duration-100 ease-linear"
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
-        <div className="progress-time-container">
-          <span className="player-time current-time">{formatTime(currentTime)}</span>
-          <span className="player-time total-time">{formatTime(duration)}</span>
+        <div className="flex items-center justify-between mt-1.5 gap-2.5">
+          <span className="text-plex-text-secondary text-[0.8em] font-[tabular-nums]">{formatTime(currentTime)}</span>
+          <span className="text-plex-text-secondary text-[0.8em] font-[tabular-nums]">{formatTime(duration)}</span>
         </div>
       </div>
-      
-      <div className="player-controls">
-        <button 
-          onClick={playPreviousTrack} 
+
+      <div className="flex items-center justify-start mx-2.5 gap-2">
+        <button
+          onClick={playPreviousTrack}
           disabled={!hasPrevious}
-          className="nav-btn previous-btn"
+          className="py-1.5 px-2.5 text-[1.2em] bg-plex-toggle text-plex-text-primary border-none rounded cursor-pointer transition-colors duration-300 ease-in-out hover:bg-plex-toggle-hover disabled:bg-[#3d3d3d] disabled:text-[#777] disabled:cursor-not-allowed disabled:opacity-50"
           title="Previous track"
         >
           ⏮
         </button>
-        
-        <button onClick={togglePlayPause} disabled={!audioSrc} className="play-pause-btn">
+
+        <button onClick={togglePlayPause} disabled={!audioSrc} className="bg-plex-accent text-plex-button-text border-none py-2.5 px-4 text-[1.4em] rounded cursor-pointer my-0 mx-2 transition-colors duration-300 ease-in-out hover:bg-[#f5b733] disabled:bg-plex-disabled disabled:cursor-not-allowed disabled:opacity-50">
           {isPlaying ? '⏸' : '▶'}
         </button>
-        
-        <button 
-          onClick={playNextTrack} 
+
+        <button
+          onClick={playNextTrack}
           disabled={!hasNext}
-          className="nav-btn next-btn"
+          className="py-1.5 px-2.5 text-[1.2em] bg-plex-toggle text-plex-text-primary border-none rounded cursor-pointer transition-colors duration-300 ease-in-out hover:bg-plex-toggle-hover disabled:bg-[#3d3d3d] disabled:text-[#777] disabled:cursor-not-allowed disabled:opacity-50"
           title="Next track"
         >
           ⏭
         </button>
-        
+
         {audioError && (
-          <button 
-            onClick={() => setUseTranscode(!useTranscode)} 
-            className="player-mode-toggle"
+          <button
+            onClick={() => setUseTranscode(!useTranscode)}
+            className="bg-plex-toggle text-plex-text-primary py-2 px-[15px] text-[0.9em] border-none rounded cursor-pointer transition-colors duration-300 ease-in-out hover:bg-plex-toggle-hover"
           >
             Try {useTranscode ? 'Direct Play' : 'Transcode'}
           </button>
         )}
       </div>
-      
+
       <audio
         ref={audioRef}
         src={audioSrc || ''}
@@ -290,6 +289,7 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleMetadataLoaded}
         preload="auto"
+        className="hidden"
       />
     </div>
   );

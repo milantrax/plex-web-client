@@ -3,10 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { getSections, getGenres, getAlbumsByGenre } from '../api/plexApi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AlbumCard from '../components/AlbumCard';
-import { getAlbumCardWidth } from '../utils/settingsStorage';
-import './Genres.scss';
 
-function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) { 
+function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState(null);
   const [albums, setAlbums] = useState([]);
@@ -14,18 +12,6 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [loadingAlbums, setLoadingAlbums] = useState(false);
   const [error, setError] = useState(null);
   const [musicSectionId, setMusicSectionId] = useState(null);
-  const [cardWidth, setCardWidth] = useState(getAlbumCardWidth());
-
-  useEffect(() => {
-    const handleWidthChange = (event) => {
-      setCardWidth(event.detail.width);
-    };
-
-    window.addEventListener('albumCardWidthChanged', handleWidthChange);
-    return () => {
-      window.removeEventListener('albumCardWidthChanged', handleWidthChange);
-    };
-  }, []);
 
    useEffect(() => {
     const fetchMusicSection = async () => {
@@ -89,19 +75,23 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     setSelectedGenre(genre);
   };
 
-  if (loading) return <LoadingSpinner />; // Loading sections/genres
-  if (error && !loadingAlbums) return <div className="error-message">{error}</div>; // Show general errors if not loading albums
-  if (!musicSectionId && !error) return <div className="info-message">No music library found.</div>
-  if (genres.length === 0 && !error) return <div className="info-message">No genres found in this library.</div>;
+  if (loading) return <LoadingSpinner />;
+  if (error && !loadingAlbums) return <div className="text-center py-10 text-plex-error text-lg">{error}</div>;
+  if (!musicSectionId && !error) return <div className="text-center py-10 text-plex-text-secondary text-lg">No music library found.</div>
+  if (genres.length === 0 && !error) return <div className="text-center py-10 text-plex-text-secondary text-lg">No genres found in this library.</div>;
 
   return (
-    <div className="genres-container" style={{'--card-width': `${cardWidth}px`}}>
-      <div className="genres-sidebar">
-        <ul className="genres-list">
+    <div className="flex gap-5 p-5 h-full md:flex-col">
+      <div className="w-[250px] bg-plex-surface rounded-lg border border-plex-border overflow-hidden md:w-full md:max-h-[200px]">
+        <ul className="list-none m-0 p-0 overflow-y-auto h-full custom-scrollbar">
           {genres.map(genre => (
-            <li 
-              key={genre.key} 
-              className={`genre-item ${selectedGenre?.key === genre.key ? 'active' : ''}`}
+            <li
+              key={genre.key}
+              className={`px-4 py-3 cursor-pointer transition-all duration-200 border-b border-plex-border
+                         hover:bg-plex-card-hover
+                         ${selectedGenre?.key === genre.key
+                           ? 'bg-plex-accent text-plex-button-text font-bold'
+                           : 'text-plex-text-primary'}`}
               onClick={() => handleGenreClick(genre)}
             >
               {genre.title}
@@ -110,37 +100,37 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
         </ul>
       </div>
 
-      <div className="albums-panel">
+      <div className="flex-1 bg-plex-surface rounded-lg border border-plex-border p-5 overflow-y-auto custom-scrollbar">
         {selectedGenre ? (
           <>
-            <div className="albums-panel-header">
-              <h3>{selectedGenre.title}</h3>
-              <span className="album-count">{albums.length} albums</span>
+            <div className="flex justify-between items-center mb-5 pb-4 border-b border-plex-border">
+              <h3 className="text-2xl font-bold text-plex-text-primary m-0">{selectedGenre.title}</h3>
+              <span className="text-plex-text-secondary">{albums.length} album{albums.length !== 1 ? 's' : ''}</span>
             </div>
-            
+
             {loadingAlbums ? (
               <LoadingSpinner />
             ) : albums.length === 0 ? (
-              <div className="no-albums">No albums found for this genre</div>
+              <div className="text-center py-10 text-plex-text-secondary text-lg">No albums found for this genre</div>
             ) : (
-              <div className="albums-grid">
+              <div className="flex flex-wrap justify-center gap-0">
                 {albums.map(album => (
-                  <AlbumCard 
-                    key={album.ratingKey} 
-                    album={album} 
-                    onPlayTrack={onPlayTrack} 
-                    currentTrack={currentTrack} 
-                    isPlaying={isPlaying} 
-                    onTogglePlayback={onTogglePlayback} 
+                  <AlbumCard
+                    key={album.ratingKey}
+                    album={album}
+                    onPlayTrack={onPlayTrack}
+                    currentTrack={currentTrack}
+                    isPlaying={isPlaying}
+                    onTogglePlayback={onTogglePlayback}
                   />
                 ))}
               </div>
             )}
           </>
         ) : (
-          <div className="no-selection">
-            <h3>Select a genre</h3>
-            <p>Choose a genre from the sidebar to view its albums</p>
+          <div className="text-center py-20 text-plex-text-secondary">
+            <h3 className="text-xl font-bold mb-2">Select a genre</h3>
+            <p className="m-0">Choose a genre from the sidebar to view its albums</p>
           </div>
         )}
       </div>
