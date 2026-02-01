@@ -144,17 +144,15 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
   return (
     <div className="px-5 py-5">
-      <div className="bg-plex-surface rounded-lg p-5 mb-6 border border-plex-border">
+      <div className="card bg-base-200 shadow-xl p-5 mb-6">
         <div className="flex justify-between items-center flex-wrap gap-4">
-          <div className="flex gap-4 items-center text-plex-text-secondary">
-            <span className="font-medium text-plex-text-primary">{queueStats.totalTracks} tracks</span>
+          <div className="flex gap-4 items-center text-base-content/60">
+            <span className="font-medium text-base-content">{queueStats.totalTracks} tracks</span>
             <span>Total: {queueStats.totalDurationFormatted}</span>
           </div>
           {queue.length > 0 && (
             <button
-              className="bg-plex-danger text-plex-text px-4 py-2 rounded font-medium
-                         transition-all duration-200 cursor-pointer border-0
-                         hover:bg-red-600 active:scale-95"
+              className="btn btn-error"
               onClick={handleClearQueue}
             >
               Clear All
@@ -165,37 +163,39 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
       {queue.length === 0 ? (
         <div className="text-center py-10">
-          <h2 className="text-2xl font-bold text-plex-text-primary mb-4">Queue is empty</h2>
-          <p className="text-plex-text-secondary mb-6">Add tracks to your queue from album pages to start building your playlist.</p>
-          <div className="bg-plex-surface rounded-lg p-6 max-w-2xl mx-auto border border-plex-border">
-            <h3 className="text-xl font-bold text-plex-text-primary mb-4">How to use the queue:</h3>
-            <ul className="text-left text-plex-text-secondary space-y-2">
-              <li className="flex items-start gap-2">
-                <span className="text-plex-accent mt-1">•</span>
-                <span>Browse to an album page</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-plex-accent mt-1">•</span>
-                <span>Click the queue button (⊞) next to any track</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-plex-accent mt-1">•</span>
-                <span>Tracks will appear here in the order you add them</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-plex-accent mt-1">•</span>
-                <span>Click any track to start playing</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-plex-accent mt-1">•</span>
-                <span>Drag tracks to reorder them in the queue</span>
-              </li>
-            </ul>
+          <h2 className="text-2xl font-bold text-base-content mb-4">Queue is empty</h2>
+          <p className="text-base-content/70 mb-6">Add tracks to your queue from album pages to start building your playlist.</p>
+          <div className="card bg-base-200 shadow-xl p-6 max-w-2xl mx-auto">
+            <div className="card-body">
+              <h3 className="card-title text-xl mb-4">How to use the queue:</h3>
+              <ul className="text-left text-base-content/70 space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>Browse to an album page</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>Click the queue button (⊞) next to any track</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>Tracks will appear here in the order you add them</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>Click any track to start playing</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-1">•</span>
+                  <span>Drag tracks to reorder them in the queue</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="bg-plex-surface rounded-lg border border-plex-border overflow-hidden">
-          <div className="grid grid-cols-[50px_1fr_1fr_100px_150px_100px] gap-4 px-4 py-3 bg-plex-card border-b border-plex-border text-plex-text-secondary text-sm font-medium">
+        <div className="card bg-base-200 shadow-xl overflow-hidden">
+          <div className="grid grid-cols-[50px_1fr_1fr_100px_150px_100px] gap-4 px-4 py-3 bg-base-300 border-b border-base-300 text-base-content/60 text-sm font-medium">
             <div className="text-center">#</div>
             <div>Track</div>
             <div>Album</div>
@@ -208,13 +208,13 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
             {queue.map((queueItem, index) => (
               <div
                 key={queueItem.id}
-                className={`grid grid-cols-[50px_1fr_1fr_100px_150px_100px] gap-4 px-4 py-3 border-b border-plex-border
+                className={`grid grid-cols-[50px_1fr_1fr_100px_150px_100px] gap-4 px-4 py-3 border-b border-base-300
                            transition-colors duration-200 cursor-move
                            ${isCurrentTrack(queueItem.track)
-                             ? `bg-plex-accent/20 border-l-4 border-l-plex-accent ${!isPlaying ? 'opacity-70' : ''}`
-                             : 'hover:bg-plex-card-hover'
+                             ? `bg-primary/20 border-l-4 border-l-primary ${!isPlaying ? 'opacity-70' : ''}`
+                             : 'hover:bg-base-300'
                            }
-                           ${dragOverIndex === index ? 'border-t-2 border-t-plex-accent' : ''}`}
+                           ${dragOverIndex === index ? 'border-t-2 border-t-primary' : ''}`}
                 draggable="true"
                 onDragStart={(e) => handleDragStart(e, queueItem, index)}
                 onDragEnd={handleDragEnd}
@@ -223,7 +223,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, index)}
               >
-                <div className="text-center text-plex-text-secondary">
+                <div className="text-center text-base-content/60">
                   {index + 1}
                 </div>
 
@@ -233,42 +233,41 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                 >
                   <div className="flex items-center gap-2">
                     {isCurrentTrack(queueItem.track) && (
-                      <span className="text-plex-accent text-lg">
+                      <span className="text-primary text-lg">
                         {isPlaying ? '⏸' : '▶'}
                       </span>
                     )}
-                    <span className="text-plex-text-primary">{queueItem.track.title}</span>
+                    <span className="text-base-content">{queueItem.track.title}</span>
                   </div>
                 </div>
 
-                <div className="text-plex-text-secondary">
+                <div className="text-base-content/60">
                   {queueItem.album ? (
                     <div className="flex flex-col">
-                      <span className="text-plex-text-primary">{queueItem.album.title}</span>
+                      <span className="text-base-content">{queueItem.album.title}</span>
                       {queueItem.album.artist && (
                         <span className="text-sm">by {queueItem.album.artist}</span>
                       )}
                     </div>
                   ) : (
-                    <span className="text-plex-text-muted">Unknown Album</span>
+                    <span className="text-base-content/50">Unknown Album</span>
                   )}
                 </div>
 
-                <div className="text-center text-plex-text-secondary">
+                <div className="text-center text-base-content/60">
                   {formatDuration(queueItem.track.duration || 0)}
                 </div>
 
-                <div className="text-center text-plex-text-secondary text-sm">
+                <div className="text-center text-base-content/60 text-sm">
                   {formatDate(queueItem.addedAt)}
                 </div>
 
                 <div className="flex items-center justify-center gap-2">
-                  <div className="text-plex-text-muted cursor-move select-none text-lg" title="Drag to reorder">
+                  <div className="text-base-content/50 cursor-move select-none text-lg" title="Drag to reorder">
                     ⋮⋮
                   </div>
                   <button
-                    className="text-plex-danger hover:text-red-600 font-bold text-lg px-2 py-1 rounded
-                               transition-colors duration-200 cursor-pointer border-0 bg-transparent"
+                    className="btn btn-ghost btn-sm text-error hover:text-error/80"
                     onClick={() => handleRemoveFromQueue(queueItem.id)}
                     title="Remove from queue"
                   >

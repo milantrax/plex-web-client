@@ -61,45 +61,47 @@ const CacheManager = () => {
   };
   
   return (
-    <div className="p-0 text-plex-text m-0">
-      <h2 className="text-plex-accent mb-5">Cache Management</h2>
+    <div className="p-0 text-base-content m-0">
+      <h2 className="text-primary mb-5">Cache Management</h2>
 
-      <div className="bg-white/5 rounded-lg p-[15px] mb-[15px] border border-white/10 flex flex-wrap gap-5">
-        <div className="flex-1 min-w-[150px]">
-          <span className="block text-[0.9em] text-plex-text-secondary mb-1.5">Total Cache Size:</span>
-          <span className="text-[1.4em] text-plex-accent font-medium">{cacheStats.totalSize} KB</span>
+      <div className="stats shadow bg-base-200 mb-4">
+        <div className="stat">
+          <div className="stat-title">Total Cache Size</div>
+          <div className="stat-value text-primary">{cacheStats.totalSize} KB</div>
         </div>
-        <div className="flex-1 min-w-[150px]">
-          <span className="block text-[0.9em] text-plex-text-secondary mb-1.5">Cached Items:</span>
-          <span className="text-[1.4em] text-plex-accent font-medium">{cacheStats.itemCount}</span>
+        <div className="stat">
+          <div className="stat-title">Cached Items</div>
+          <div className="stat-value text-primary">{cacheStats.itemCount}</div>
         </div>
       </div>
 
       <button
-        className="bg-plex-danger text-white border-none rounded py-2 px-[15px] cursor-pointer font-medium transition-colors duration-200 ease-in-out hover:bg-[#ff6b7a] mt-[15px]"
+        className="btn btn-error mt-4"
         onClick={handleClearAllCache}
       >
         Clear All Cache
       </button>
 
-      <h3 className="text-plex-text my-[25px_0_15px] text-[1.2em]">Cache Details</h3>
+      <h3 className="text-base-content my-6 text-[1.2em]">Cache Details</h3>
       {cacheStats.items.length > 0 ? (
-        <div className="bg-white/5 rounded-lg p-[15px] mb-[15px] border border-white/10">
-          {cacheStats.items.map(item => (
-            <div key={item.key} className="flex justify-between items-center py-2 border-b border-plex-border last:border-b-0">
-              <div className="flex flex-col items-start gap-2.5 overflow-hidden">
-                <span className="font-medium mb-1">{item.key.replace('plex_', '')}</span>
-                <span className="text-[0.85em] text-plex-accent">{item.size} KB</span>
-                <span className="text-[0.8em] text-plex-text-secondary">Expires: {item.expires}</span>
+        <div className="card bg-base-200 shadow-xl">
+          <div className="card-body p-4">
+            {cacheStats.items.map(item => (
+              <div key={item.key} className="flex justify-between items-center py-2 border-b border-base-300 last:border-b-0">
+                <div className="flex flex-col items-start gap-1 overflow-hidden">
+                  <span className="font-medium mb-1">{item.key.replace('plex_', '')}</span>
+                  <span className="text-[0.85em] text-primary">{item.size} KB</span>
+                  <span className="text-[0.8em] text-base-content/60">Expires: {item.expires}</span>
+                </div>
+                <button
+                  className="btn btn-error btn-sm"
+                  onClick={() => handleClearCacheItem(item.key)}
+                >
+                  Clear
+                </button>
               </div>
-              <button
-                className="bg-plex-danger/70 text-white border-none rounded py-1.5 px-2.5 cursor-pointer font-medium text-[0.9em] transition-colors duration-200 ease-in-out hover:bg-plex-danger/85"
-                onClick={() => handleClearCacheItem(item.key)}
-              >
-                Clear
-              </button>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       ) : (
         <p>No cached items found.</p>

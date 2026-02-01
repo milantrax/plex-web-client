@@ -15,21 +15,21 @@ const Settings = () => {
       case 'display':
         return (
           <div>
-            <h3 className="text-2xl font-bold text-plex-text-primary mb-5">Display Settings</h3>
+            <h3 className="text-2xl font-bold text-base-content mb-5">Display Settings</h3>
             <AlbumCardSettings />
           </div>
         );
       case 'cache':
         return (
           <div>
-            <h3 className="text-2xl font-bold text-plex-text-primary mb-5">Cache Management</h3>
+            <h3 className="text-2xl font-bold text-base-content mb-5">Cache Management</h3>
             <CacheManager />
           </div>
         );
       default:
         return (
           <div>
-            <h3 className="text-2xl font-bold text-plex-text-primary mb-5">Display Settings</h3>
+            <h3 className="text-2xl font-bold text-base-content mb-5">Display Settings</h3>
             <AlbumCardSettings />
           </div>
         );
@@ -39,22 +39,21 @@ const Settings = () => {
   return (
     <div className="px-5 py-5">
       <div className="flex gap-5">
-        <div className="w-[250px] bg-plex-surface rounded-lg border border-plex-border h-fit sticky top-5">
-          <div className="custom-scrollbar max-h-[calc(100vh-120px)] overflow-y-auto">
+        <div className="w-[250px] card bg-base-200 shadow-xl h-fit sticky top-5">
+          <ul className="menu p-0 custom-scrollbar max-h-[calc(100vh-120px)] overflow-y-auto">
             {settingSections.map(section => (
-              <div
-                key={section.id}
-                className={`px-4 py-3 cursor-pointer border-b border-plex-border transition-colors duration-200
-                           ${activeSection === section.id
-                             ? 'bg-plex-accent text-plex-button-text font-bold'
-                             : 'hover:bg-plex-card-hover text-plex-text-primary'
-                           }`}
-                onClick={() => setActiveSection(section.id)}
-              >
-                <span>{section.title}</span>
-              </div>
+              <li key={section.id}>
+                {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+                <a
+                  href="#"
+                  className={`${activeSection === section.id ? 'active' : ''}`}
+                  onClick={(e) => { e.preventDefault(); setActiveSection(section.id); }}
+                >
+                  {section.title}
+                </a>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
 
         <div className="flex-1">

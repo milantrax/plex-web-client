@@ -81,9 +81,9 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
 
   return (
     <div
-      className="bg-plex-card rounded-lg overflow-hidden flex flex-col cursor-pointer relative
-                 transition-all duration-200 shadow-[0_2px_5px_rgba(0,0,0,0.3)]
-                 hover:-translate-y-1 hover:shadow-[0_8px_15px_rgba(0,0,0,0.4)]
+      className="card bg-base-200 shadow-xl cursor-pointer relative
+                 transition-all duration-200
+                 hover:-translate-y-1 hover:shadow-2xl
                  group m-2.5"
       onClick={handleCardClick}
       style={{
@@ -102,7 +102,7 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
         />
       ) : (
         <div
-          className="w-full flex items-center justify-center bg-plex-card-hover text-plex-text-secondary text-xl"
+          className="w-full flex items-center justify-center bg-base-300 text-base-content/60 text-xl"
           style={{
             height: `${cardWidth}px`,
           }}
@@ -110,11 +110,11 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
           No Art
         </div>
       )}
-      <div className="p-2.5 text-left flex flex-col justify-start">
-        <p className="font-bold text-[0.95em] my-0.5 text-plex-text-primary overflow-hidden text-ellipsis line-clamp-2 leading-tight break-words">
+      <div className="card-body p-2.5 text-left">
+        <h2 className="card-title text-[0.95em] font-bold my-0.5 overflow-hidden text-ellipsis line-clamp-2 leading-tight break-words">
           {album.title}
-        </p>
-        <p className="text-[0.85em] text-plex-text-secondary m-0 overflow-hidden text-ellipsis line-clamp-1 break-words">
+        </h2>
+        <p className="text-[0.85em] text-base-content/70 m-0 overflow-hidden text-ellipsis line-clamp-1 break-words">
           {album.parentTitle}
         </p>
       </div>
@@ -126,11 +126,11 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
         <div
           className={`w-15 h-15 rounded-full border-0 cursor-pointer font-bold
                      transition-all duration-200 flex items-center justify-center
-                     shadow-[0_4px_12px_rgba(0,0,0,0.3)]
-                     hover:scale-110 hover:shadow-[0_6px_16px_rgba(0,0,0,0.4)]
+                     shadow-lg
+                     hover:scale-110 hover:shadow-xl
                      ${isCurrentAlbum
-                       ? 'bg-[#ff6b6b] hover:bg-[#ff5252]'
-                       : 'bg-plex-accent/50 text-black hover:bg-[#ffb800]'}`}
+                       ? 'bg-error hover:bg-error/80'
+                       : 'bg-primary/50 text-primary-content hover:bg-primary'}`}
           onClick={handlePlayPauseClick}
         >
           <span className={`text-[1.8em] leading-none ${showPauseIcon ? '' : 'ml-0.5'}`}>

@@ -78,49 +78,45 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div className="text-center py-10 text-plex-error text-lg">{error}</div>;
-  if (playlists.length === 0) return <div className="text-center py-10 text-plex-text-secondary text-lg">No audio playlists found.</div>;
+  if (error) return <div className="alert alert-error text-center py-10 text-lg max-w-2xl mx-auto my-10">{error}</div>;
+  if (playlists.length === 0) return <div className="text-center py-10 text-base-content/60 text-lg">No audio playlists found.</div>;
 
   return (
     <div className="px-5 py-5">
       <div className="flex gap-5">
-        <div className="w-[250px] bg-plex-surface rounded-lg border border-plex-border h-fit sticky top-5">
-          <div className="custom-scrollbar max-h-[calc(100vh-120px)] overflow-y-auto">
+        <div className="w-[250px] card bg-base-200 shadow-xl h-fit sticky top-5">
+          <ul className="menu p-0 custom-scrollbar max-h-[calc(100vh-120px)] overflow-y-auto">
             {playlists.map(playlist => (
-              <div
-                key={playlist.ratingKey}
-                className={`px-4 py-3 cursor-pointer border-b border-plex-border transition-colors duration-200
-                           ${selectedPlaylist?.ratingKey === playlist.ratingKey
-                             ? 'bg-plex-accent text-plex-button-text font-bold'
-                             : 'hover:bg-plex-card-hover text-plex-text-primary'
-                           }`}
-                onClick={() => handlePlaylistClick(playlist)}
-              >
-                <div className="flex flex-col gap-1">
-                  <span className="font-medium">{playlist.title}</span>
-                  <span className={`text-sm ${selectedPlaylist?.ratingKey === playlist.ratingKey ? 'text-plex-button-text/80' : 'text-plex-text-secondary'}`}>
-                    {playlist.leafCount} tracks
-                  </span>
-                </div>
-              </div>
+              <li key={playlist.ratingKey}>
+                {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+                <a
+                  href="#"
+                  className={`${selectedPlaylist?.ratingKey === playlist.ratingKey ? 'active' : ''}`}
+                  onClick={(e) => { e.preventDefault(); handlePlaylistClick(playlist); }}
+                >
+                  <div className="flex flex-col gap-1">
+                    <span className="font-medium">{playlist.title}</span>
+                    <span className="text-sm opacity-70">
+                      {playlist.leafCount} tracks
+                    </span>
+                  </div>
+                </a>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
 
         <div className="flex-1">
           {selectedPlaylist ? (
             <>
-              <div className="bg-plex-surface rounded-lg p-5 mb-5 border border-plex-border">
+              <div className="card bg-base-200 shadow-xl p-5 mb-5">
                 <div className="flex justify-between items-center flex-wrap gap-4">
                   <div className="flex flex-col gap-1">
-                    <h2 className="text-2xl font-bold text-plex-text-primary">{selectedPlaylist.title}</h2>
-                    <span className="text-plex-text-secondary">{playlistTracks.length} tracks</span>
+                    <h2 className="card-title text-2xl">{selectedPlaylist.title}</h2>
+                    <span className="badge badge-primary">{playlistTracks.length} tracks</span>
                   </div>
                   <button
-                    className="bg-plex-accent text-plex-button-text px-4 py-2 rounded font-medium
-                               transition-all duration-200 cursor-pointer border-0
-                               hover:bg-plex-accent-hover active:scale-95
-                               disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="btn btn-primary"
                     onClick={exportPlaylistAsM3U}
                     disabled={playlistTracks.length === 0}
                     title="Export playlist as M3U file"
@@ -133,7 +129,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
               {loadingTracks ? (
                 <LoadingSpinner />
               ) : playlistTracks.length === 0 ? (
-                <div className="text-center py-10 text-plex-text-secondary text-lg">This playlist is empty</div>
+                <div className="text-center py-10 text-base-content/60 text-lg">This playlist is empty</div>
               ) : (
                 <TrackList
                   tracks={playlistTracks}
@@ -147,8 +143,8 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
             </>
           ) : (
             <div className="text-center py-20">
-              <h3 className="text-2xl font-bold text-plex-text-primary mb-3">Select a playlist</h3>
-              <p className="text-plex-text-secondary">Choose a playlist from the sidebar to view its tracks</p>
+              <h3 className="text-2xl font-bold text-base-content mb-3">Select a playlist</h3>
+              <p className="text-base-content/60">Choose a playlist from the sidebar to view its tracks</p>
             </div>
           )}
         </div>

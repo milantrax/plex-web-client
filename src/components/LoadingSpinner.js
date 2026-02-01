@@ -3,7 +3,9 @@ import React from 'react';
 
 function LoadingSpinner() {
   return (
-    <div className="w-10 h-10 border-4 border-white/30 border-t-plex-accent rounded-full animate-spin mx-auto my-10" />
+    <div className="flex justify-center items-center my-10">
+      <span className="loading loading-spinner loading-lg text-primary"></span>
+    </div>
   );
 }
 

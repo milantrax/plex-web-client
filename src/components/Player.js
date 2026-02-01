@@ -218,31 +218,31 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
   const hasPrevious = currentTrack ? queueManager.hasPreviousTrack(currentTrack.ratingKey) : false;
 
   return (
-    <div className={`fixed bottom-0 left-0 w-full bg-plex-player border-t-2 border-plex-accent px-5 py-2.5 flex items-center justify-between box-border transition-transform duration-300 ease-in-out z-[1000] ${!trackInfo ? 'translate-y-full' : ''}`}>
+    <div className={`fixed bottom-0 left-0 w-full bg-base-300 border-t-2 border-primary px-5 py-2.5 flex items-center justify-between box-border transition-transform duration-300 ease-in-out z-[1000] ${!trackInfo ? 'translate-y-full' : ''}`}>
       {trackInfo && (
         <div className="flex items-center justify-start text-left flex-grow-0 min-w-[200px] overflow-hidden mr-5">
-          {trackInfo.artUrl && <img src={trackInfo.artUrl} alt="Track art" className="w-[50px] h-[50px] object-cover mr-[15px] rounded bg-plex-disabled"/>}
+          {trackInfo.artUrl && <img src={trackInfo.artUrl} alt="Track art" className="w-[50px] h-[50px] object-cover mr-[15px] rounded bg-base-200"/>}
           <div className="overflow-hidden text-left">
-            <p className="text-plex-text-primary font-bold m-0 mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{trackInfo.title}</p>
-            <p className="text-plex-text-secondary text-[0.9em] m-0 whitespace-nowrap overflow-hidden text-ellipsis">{trackInfo.artist} - {trackInfo.album}</p>
+            <p className="text-base-content font-bold m-0 mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{trackInfo.title}</p>
+            <p className="text-base-content/70 text-[0.9em] m-0 whitespace-nowrap overflow-hidden text-ellipsis">{trackInfo.artist} - {trackInfo.album}</p>
           </div>
         </div>
       )}
 
       <div className="flex-grow flex flex-col mx-[15px]">
         <div
-          className="w-full h-1.5 bg-white/10 rounded-[3px] cursor-pointer relative"
+          className="w-full h-1.5 bg-base-200 rounded-[3px] cursor-pointer relative"
           onClick={handleProgressClick}
           ref={progressBarRef}
         >
           <div
-            className="h-full bg-plex-accent rounded-[3px] absolute left-0 top-0 transition-[width] duration-100 ease-linear"
+            className="h-full bg-primary rounded-[3px] absolute left-0 top-0 transition-[width] duration-100 ease-linear"
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
         <div className="flex items-center justify-between mt-1.5 gap-2.5">
-          <span className="text-plex-text-secondary text-[0.8em] font-[tabular-nums]">{formatTime(currentTime)}</span>
-          <span className="text-plex-text-secondary text-[0.8em] font-[tabular-nums]">{formatTime(duration)}</span>
+          <span className="text-base-content/60 text-[0.8em] font-[tabular-nums]">{formatTime(currentTime)}</span>
+          <span className="text-base-content/60 text-[0.8em] font-[tabular-nums]">{formatTime(duration)}</span>
         </div>
       </div>
 
@@ -250,20 +250,20 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
         <button
           onClick={playPreviousTrack}
           disabled={!hasPrevious}
-          className="py-1.5 px-2.5 text-[1.2em] bg-plex-toggle text-plex-text-primary border-none rounded cursor-pointer transition-colors duration-300 ease-in-out hover:bg-plex-toggle-hover disabled:bg-[#3d3d3d] disabled:text-[#777] disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn btn-ghost text-[1.2em]"
           title="Previous track"
         >
           ⏮
         </button>
 
-        <button onClick={togglePlayPause} disabled={!audioSrc} className="bg-plex-accent text-plex-button-text border-none py-2.5 px-4 text-[1.4em] rounded cursor-pointer my-0 mx-2 transition-colors duration-300 ease-in-out hover:bg-[#f5b733] disabled:bg-plex-disabled disabled:cursor-not-allowed disabled:opacity-50">
+        <button onClick={togglePlayPause} disabled={!audioSrc} className="btn btn-primary text-[1.4em] mx-2">
           {isPlaying ? '⏸' : '▶'}
         </button>
 
         <button
           onClick={playNextTrack}
           disabled={!hasNext}
-          className="py-1.5 px-2.5 text-[1.2em] bg-plex-toggle text-plex-text-primary border-none rounded cursor-pointer transition-colors duration-300 ease-in-out hover:bg-plex-toggle-hover disabled:bg-[#3d3d3d] disabled:text-[#777] disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn btn-ghost text-[1.2em]"
           title="Next track"
         >
           ⏭
@@ -272,7 +272,7 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
         {audioError && (
           <button
             onClick={() => setUseTranscode(!useTranscode)}
-            className="bg-plex-toggle text-plex-text-primary py-2 px-[15px] text-[0.9em] border-none rounded cursor-pointer transition-colors duration-300 ease-in-out hover:bg-plex-toggle-hover"
+            className="btn btn-ghost text-[0.9em]"
           >
             Try {useTranscode ? 'Direct Play' : 'Transcode'}
           </button>

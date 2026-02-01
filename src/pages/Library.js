@@ -250,25 +250,24 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div className="text-center py-10 text-plex-error text-lg">{error}</div>;
-  if (!musicSectionId && !error) return <div className="text-center py-10 text-plex-text-secondary text-lg">No music library found.</div>
-  if (albums.length === 0 && !selectedGenre && !selectedYear && !selectedLabel) return <div className="text-center py-10 text-plex-text-secondary text-lg">No albums found in this library.</div>;
+  if (error) return <div className="alert alert-error text-center py-10 text-lg max-w-2xl mx-auto my-10">{error}</div>;
+  if (!musicSectionId && !error) return <div className="text-center py-10 text-base-content/60 text-lg">No music library found.</div>
+  if (albums.length === 0 && !selectedGenre && !selectedYear && !selectedLabel) return <div className="text-center py-10 text-base-content/60 text-lg">No albums found in this library.</div>;
 
   return (
     <div className="px-5 py-5">
-      <div className="bg-plex-surface rounded-lg p-5 mb-6 border border-plex-border">
+      <div className="card bg-base-200 shadow-xl p-5 mb-6">
         <div className="flex flex-wrap gap-4 items-end mb-4">
-          <div className="flex flex-col gap-1 min-w-[200px]">
-            <label htmlFor="genre-filter" className="text-plex-text-secondary text-sm font-medium">Genre:</label>
+          <div className="form-control min-w-[200px]">
+            <label htmlFor="genre-filter" className="label">
+              <span className="label-text">Genre:</span>
+            </label>
             <select
               id="genre-filter"
               value={selectedGenre}
               onChange={(e) => handleGenreChange(e.target.value)}
               disabled={filtersLoading}
-              className="bg-plex-card border border-plex-border text-plex-text-primary px-3 py-2 rounded
-                         cursor-pointer transition-all duration-200 outline-none
-                         hover:border-plex-accent focus:border-plex-accent focus:ring-2 focus:ring-plex-accent/30
-                         disabled:opacity-50 disabled:cursor-not-allowed"
+              className="select select-bordered w-full"
             >
               <option value="">All Genres</option>
               {genres.map(genre => (
@@ -279,17 +278,16 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1 min-w-[200px]">
-            <label htmlFor="year-filter" className="text-plex-text-secondary text-sm font-medium">Year:</label>
+          <div className="form-control min-w-[200px]">
+            <label htmlFor="year-filter" className="label">
+              <span className="label-text">Year:</span>
+            </label>
             <select
               id="year-filter"
               value={selectedYear}
               onChange={(e) => handleYearChange(e.target.value)}
               disabled={filtersLoading}
-              className="bg-plex-card border border-plex-border text-plex-text-primary px-3 py-2 rounded
-                         cursor-pointer transition-all duration-200 outline-none
-                         hover:border-plex-accent focus:border-plex-accent focus:ring-2 focus:ring-plex-accent/30
-                         disabled:opacity-50 disabled:cursor-not-allowed"
+              className="select select-bordered w-full"
             >
               <option value="">All Years</option>
               {years.map(year => (
@@ -300,17 +298,16 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
             </select>
           </div>
 
-          <div className="flex flex-col gap-1 min-w-[200px]">
-            <label htmlFor="label-filter" className="text-plex-text-secondary text-sm font-medium">Label:</label>
+          <div className="form-control min-w-[200px]">
+            <label htmlFor="label-filter" className="label">
+              <span className="label-text">Label:</span>
+            </label>
             <select
               id="label-filter"
               value={selectedLabel}
               onChange={(e) => handleLabelChange(e.target.value)}
               disabled={filtersLoading}
-              className="bg-plex-card border border-plex-border text-plex-text-primary px-3 py-2 rounded
-                         cursor-pointer transition-all duration-200 outline-none
-                         hover:border-plex-accent focus:border-plex-accent focus:ring-2 focus:ring-plex-accent/30
-                         disabled:opacity-50 disabled:cursor-not-allowed"
+              className="select select-bordered w-full"
             >
               <option value="">All Labels</option>
               {labels.map(label => (
@@ -323,9 +320,7 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
           {(selectedGenre || selectedYear || selectedLabel) && (
             <button
-              className="bg-plex-accent text-plex-button-text px-4 py-2 rounded font-medium
-                         transition-all duration-200 cursor-pointer border-0
-                         hover:bg-plex-accent-hover active:scale-95"
+              className="btn btn-primary"
               onClick={clearFilters}
             >
               Clear Filters
@@ -333,7 +328,7 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           )}
         </div>
 
-        <div className="text-plex-text-secondary text-sm">
+        <div className="text-base-content/60 text-sm">
           {selectedGenre || selectedYear || selectedLabel ? (
             <span>
               {albums.length} album{albums.length !== 1 ? 's' : ''} found
@@ -351,7 +346,7 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       </div>
 
       {albums.length === 0 && (selectedGenre || selectedYear || selectedLabel) ? (
-        <div className="text-center py-10 text-plex-text-secondary text-lg">
+        <div className="text-center py-10 text-base-content/60 text-lg">
           No albums found matching the selected filters.
         </div>
       ) : (
@@ -365,12 +360,12 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           {loadingMore && (
             <div className="text-center py-10">
               <LoadingSpinner />
-              <p className="text-plex-text-secondary mt-4">Loading more albums...</p>
+              <p className="text-base-content/60 mt-4">Loading more albums...</p>
             </div>
           )}
 
           {!hasMorePages && albums.length > 0 && !selectedGenre && !selectedYear && !selectedLabel && (
-            <div className="text-center py-10 text-plex-text-muted">
+            <div className="text-center py-10 text-base-content/50">
               <p>You've reached the end of your library ({albums.length} albums total)</p>
             </div>
           )}

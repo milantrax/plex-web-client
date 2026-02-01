@@ -32,64 +32,58 @@ const AlbumCardSettings = () => {
   };
 
   return (
-    <div className="album-card-settings">
-      <h3>Album Card Settings</h3>
-      
-      <div className="setting-group">
-        <label htmlFor="album-width">Album Card Width:</label>
-        <div className="width-control">
-          <input
-            type="range"
-            id="album-width"
-            min="120"
-            max="300"
-            value={width}
-            onChange={handleWidthChange}
-            className="width-slider"
-          />
-          <span className="width-value">{width}px</span>
+    <div className="space-y-6">
+      <h3 className="text-xl font-bold">Album Card Settings</h3>
+
+      <div className="form-control w-full max-w-xs">
+        <label className="label" htmlFor="album-width">
+          <span className="label-text">Album Card Width:</span>
+          <span className="label-text-alt">{width}px</span>
+        </label>
+        <input
+          type="range"
+          id="album-width"
+          min="120"
+          max="300"
+          value={width}
+          onChange={handleWidthChange}
+          className="range range-primary"
+        />
+        <div className="w-full flex justify-between text-xs px-2 mt-2">
+          <span>120px</span>
+          <span>210px</span>
+          <span>300px</span>
         </div>
-        
+
         {isChanged && (
-          <button 
+          <button
             onClick={handleReset}
-            className="reset-button"
+            className="btn btn-ghost btn-sm mt-2"
           >
             Reset to Default (180px)
           </button>
         )}
       </div>
-      
-      <div className="setting-preview">
-        <p>Preview:</p>
-        <div 
-          className="preview-card"
+
+      <div className="space-y-2">
+        <p className="font-medium">Preview:</p>
+        <div
+          className="card bg-base-200 shadow-xl"
           style={{
             width: `${width}px`,
-            height: `${width + 60}px`, // Add space for text
-            backgroundColor: '#444',
-            borderRadius: '8px',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden'
           }}
         >
-          <div 
+          <div
+            className="bg-base-300 flex items-center justify-center text-base-content/60 text-xs"
             style={{
               width: '100%',
               height: `${width}px`,
-              backgroundColor: '#666',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ccc',
-              fontSize: '12px'
             }}
           >
             Album Cover
           </div>
-          <div style={{ padding: '8px', fontSize: '12px', color: '#fff' }}>
-            Album Title
+          <div className="card-body p-2">
+            <p className="text-xs">Album Title</p>
           </div>
         </div>
       </div>

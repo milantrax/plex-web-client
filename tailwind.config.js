@@ -90,6 +90,27 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [require("daisyui")],
+  daisyui: {
+    themes: [
+      {
+        plex: {
+          "primary": "#f0a500",
+          "primary-content": "#282c34",
+          "secondary": "#e67e22",
+          "accent": "#f0a500",
+          "neutral": "#333",
+          "base-100": "#282c34",
+          "base-200": "#1a1a1a",
+          "base-300": "#202020",
+          "base-content": "#ffffff",
+          "info": "#3abff8",
+          "success": "#36d399",
+          "warning": "#fbbd23",
+          "error": "#e74c3c",
+        },
+      },
+    ],
+  },
 }
 

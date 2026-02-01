@@ -51,11 +51,12 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
   if (error || !album) {
     return (
       <div className="px-5 py-10 text-center">
-        <p className="text-plex-error text-lg mb-5">{error || 'Album not found'}</p>
+        <div className="alert alert-error max-w-md mx-auto mb-5">
+          <span>{error || 'Album not found'}</span>
+        </div>
         <Link
           to="/"
-          className="inline-block bg-plex-accent text-plex-button-text px-5 py-2.5 rounded font-medium
-                     no-underline transition-all duration-200 hover:bg-plex-accent-hover active:scale-95"
+          className="btn btn-primary no-underline"
         >
           Back to Library
         </Link>
@@ -70,8 +71,7 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
       <div className="mb-6">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-plex-accent no-underline text-base
-                     transition-colors duration-200 hover:text-plex-accent-hover"
+          className="btn btn-ghost inline-flex items-center gap-2 no-underline"
         >
           &larr; Back to Library
         </Link>
@@ -83,22 +83,22 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
             <img
               src={albumArtUrl}
               alt={album.title}
-              className="w-[300px] h-[300px] rounded-lg shadow-lg object-cover"
+              className="w-[300px] h-[300px] rounded-lg shadow-xl object-cover"
             />
           ) : (
-            <div className="w-[300px] h-[300px] rounded-lg bg-plex-card flex items-center justify-center
-                           text-plex-text-muted text-xl">
+            <div className="w-[300px] h-[300px] rounded-lg bg-base-200 flex items-center justify-center
+                           text-base-content/50 text-xl">
               No Cover
             </div>
           )}
         </div>
 
         <div className="flex-1 flex flex-col justify-center">
-          <h1 className="text-4xl font-bold text-plex-text-primary mb-2 mt-0">{album.title}</h1>
-          <h2 className="text-2xl text-plex-text-secondary mb-4 mt-0 font-normal">
+          <h1 className="text-4xl font-bold text-base-content mb-2 mt-0">{album.title}</h1>
+          <h2 className="text-2xl text-base-content/70 mb-4 mt-0 font-normal">
             {album.parentTitle || 'Unknown Artist'}
           </h2>
-          <div className="flex gap-4 text-plex-text-muted">
+          <div className="flex gap-4 text-base-content/50">
             <span>{album.year || 'Unknown Year'}</span>
             <span>•</span>
             <span>{tracks.length} Track{tracks.length !== 1 ? 's' : ''}</span>
@@ -106,7 +106,7 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
         </div>
       </div>
 
-      <div className="bg-plex-surface rounded-lg p-5 border border-plex-border">
+      <div className="card bg-base-200 shadow-xl p-5">
         <TrackList
           tracks={tracks}
           albumData={album}
