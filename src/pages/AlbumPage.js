@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Typography, Card, CardContent, Divider, Stack } from '@mui/material';
+import { Box, Typography, Card, CardContent, Divider, Stack, Button, Snackbar, Alert, Chip, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import { getPlexImageUrl, getAlbumTracks } from '../api/plexApi';
 import axios from 'axios';
 import TrackList from '../components/TrackList';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { PLEX_URL, PLEX_TOKEN } from '../config';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
+import queueManager from '../utils/queueManager';
+import QueueMusicIcon from '@mui/icons-material/QueueMusic';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 
 const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) => {
   const { albumId } = useParams();
@@ -14,6 +18,9 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
   const [tracks, setTracks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [anchorEl, setAnchorEl] = useState(null);
+  const menuOpen = Boolean(anchorEl);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -45,6 +52,101 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
 
     fetchAlbumData();
   }, [albumId]);
+
+  const handleEnqueueAlbum = () => {
+    if (!tracks || tracks.length === 0) {
+      setSnackbar({
+        open: true,
+        message: 'No tracks available to enqueue',
+        severity: 'warning'
+      });
+      return;
+    }
+
+    console.log('Enqueueing album:', album);
+    console.log('Tracks to enqueue:', tracks);
+
+    const result = queueManager.addMultipleToQueue(tracks, album);
+
+    console.log('Enqueue result:', result);
+    console.log('Current queue after enqueue:', queueManager.getQueue());
+
+    if (result.success) {
+      setSnackbar({
+        open: true,
+        message: `Added ${result.addedCount} track${result.addedCount !== 1 ? 's' : ''} to queue${result.skippedCount > 0 ? ` (${result.skippedCount} already in queue)` : ''}`,
+        severity: 'success'
+      });
+    } else {
+      setSnackbar({
+        open: true,
+        message: 'All tracks are already in the queue',
+        severity: 'info'
+      });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handleOpenMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handlePlayAlbum = () => {
+    handleCloseMenu();
+
+    if (!tracks || tracks.length === 0) {
+      setSnackbar({
+        open: true,
+        message: 'No tracks available to play',
+        severity: 'warning'
+      });
+      return;
+    }
+
+    console.log('Playing album - clearing queue and adding tracks');
+
+    // Clear existing queue
+    queueManager.clearQueue();
+
+    // Add all album tracks
+    const result = queueManager.addMultipleToQueue(tracks, album);
+
+    console.log('Play album result:', result);
+
+    if (result.success) {
+      // Sort tracks by index to get the first track
+      const sortedTracks = [...tracks].sort((a, b) => (a.index || 0) - (b.index || 0));
+      const firstTrack = sortedTracks[0];
+
+      // Start playing the first track
+      if (onPlayTrack && firstTrack) {
+        onPlayTrack(firstTrack);
+        setSnackbar({
+          open: true,
+          message: `Playing album: ${album.title}`,
+          severity: 'success'
+        });
+      }
+    } else {
+      setSnackbar({
+        open: true,
+        message: 'Failed to play album',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleEnqueueAlbumFromMenu = () => {
+    handleCloseMenu();
+    handleEnqueueAlbum();
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -160,16 +262,37 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
               </Typography>
             </Box>
 
-            {album.genre && (
+            {(album.genre || album.Genre) && (
               <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
-                  Genre
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', mb: 1, display: 'block' }}>
+                  Genre{Array.isArray(album.Genre) && album.Genre.length > 1 ? 's' : ''}
                 </Typography>
-                <Typography variant="body2">
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
                   {Array.isArray(album.Genre)
-                    ? album.Genre.map(g => g.tag).join(', ')
-                    : album.genre}
-                </Typography>
+                    ? album.Genre.map((g, index) => (
+                        <Chip
+                          key={index}
+                          label={g.tag}
+                          size="small"
+                          sx={{
+                            fontWeight: 500,
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                      ))
+                    : album.genre.split(',').map((genre, index) => (
+                        <Chip
+                          key={index}
+                          label={genre.trim()}
+                          size="small"
+                          sx={{
+                            fontWeight: 500,
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                      ))
+                  }
+                </Box>
               </Box>
             )}
 
@@ -184,6 +307,57 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
               </Box>
             )}
           </Stack>
+
+          <Divider />
+
+          <Button
+            variant="contained"
+            fullWidth
+            endIcon={<ArrowDropDownIcon />}
+            onClick={handleOpenMenu}
+            sx={{
+              py: 1.5,
+              fontWeight: 600,
+              textTransform: 'none',
+              fontSize: '0.95rem'
+            }}
+          >
+            Album Actions
+          </Button>
+
+          <Menu
+            anchorEl={anchorEl}
+            open={menuOpen}
+            onClose={handleCloseMenu}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'center',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'center',
+            }}
+            PaperProps={{
+              sx: { width: anchorEl?.offsetWidth || 'auto' }
+            }}
+          >
+            <MenuItem onClick={handlePlayAlbum}>
+              <ListItemIcon>
+                <PlayArrowIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>
+                Play Now
+              </ListItemText>
+            </MenuItem>
+            <MenuItem onClick={handleEnqueueAlbumFromMenu}>
+              <ListItemIcon>
+                <QueueMusicIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>
+                Enqueue Album
+              </ListItemText>
+            </MenuItem>
+          </Menu>
         </Stack>
       </Box>
 
@@ -215,6 +389,22 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
           </CardContent>
         </Card>
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -175,7 +175,16 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ px: 2.5, pt: `${NAVBAR_HEIGHT + 20}px`, pb: `${PLAYER_HEIGHT + 20}px` }}>
+    <Box
+      sx={{
+        height: '100%',
+        overflowY: 'auto',
+        px: 2.5,
+        pt: `${NAVBAR_HEIGHT + 20}px`,
+        pb: `${PLAYER_HEIGHT + 20}px`
+      }}
+      className="custom-scrollbar"
+    >
       <Card sx={{ mb: 3, boxShadow: 3 }}>
         <CardContent sx={{ p: 2.5 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2}>
@@ -202,51 +211,9 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
       {queue.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 10 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-            Playback Queue is empty
+          <Typography variant="h5" sx={{ fontWeight: 400}}>
+            Playback queue is empty
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            Add tracks to your queue from album pages to start building your playlist.
-          </Typography>
-          <Card sx={{ maxWidth: 600, mx: 'auto', boxShadow: 3 }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                How to use playback queue:
-              </Typography>
-              <Stack spacing={1} sx={{ textAlign: 'left' }}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
-                  <Typography color="text.secondary">
-                    Browse to an album page
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
-                  <Typography color="text.secondary">
-                    Click the queue button (⊞) next to any track
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
-                  <Typography color="text.secondary">
-                    Tracks will appear here in the order you add them
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
-                  <Typography color="text.secondary">
-                    Click any track to start playing
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                  <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
-                  <Typography color="text.secondary">
-                    Drag tracks to reorder them in the queue
-                  </Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
         </Box>
       ) : (
         <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
@@ -273,7 +240,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                 </TableCell>
               </TableRow>
             </TableHead>
-            <TableBody sx={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
+            <TableBody>
               {queue.map((queueItem, index) => (
                 <TableRow
                   key={queueItem.id}

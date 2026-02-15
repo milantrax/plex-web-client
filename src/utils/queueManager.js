@@ -47,8 +47,8 @@ class QueueManager {
   addToQueue(track, albumData = null) {
     try {
       const queue = this.getQueue();
-      
-      const existingIndex = queue.findIndex(queueItem => 
+
+      const existingIndex = queue.findIndex(queueItem =>
         queueItem.track.ratingKey === track.ratingKey
       );
 
@@ -78,11 +78,89 @@ class QueueManager {
       };
 
       queue.push(queueItem);
-      
+
       return this.saveQueue(queue);
     } catch (error) {
       console.error('Error adding track to queue:', error);
       return false;
+    }
+  }
+
+  /**
+   * Add multiple tracks to the queue (e.g., entire album)
+   * @param {Array} tracks - Array of track objects to add
+   * @param {Object} albumData - Album data for context
+   * @returns {Object} Result with success status and count of added tracks
+   */
+  addMultipleToQueue(tracks, albumData = null) {
+    try {
+      console.log('addMultipleToQueue called with:', { tracksCount: tracks.length, albumData });
+      const queue = this.getQueue();
+      console.log('Current queue before adding:', queue);
+      let addedCount = 0;
+
+      const sortedTracks = [...tracks].sort((a, b) =>
+        (a.index || 0) - (b.index || 0)
+      );
+
+      console.log('Sorted tracks:', sortedTracks);
+
+      sortedTracks.forEach((track, idx) => {
+        console.log(`Processing track ${idx}:`, track);
+        const existingIndex = queue.findIndex(queueItem =>
+          queueItem.track.ratingKey === track.ratingKey
+        );
+
+        if (existingIndex === -1) {
+          const queueItem = {
+            id: Date.now() + Math.random() + idx,
+            addedAt: new Date().toISOString(),
+            track: {
+              ...track,
+              ratingKey: track.ratingKey,
+              title: track.title,
+              duration: track.duration,
+              index: track.index,
+              key: track.key
+            },
+            album: albumData ? {
+              title: albumData.title,
+              artist: albumData.parentTitle || albumData.artist,
+              thumb: albumData.thumb,
+              ratingKey: albumData.ratingKey,
+              year: albumData.year
+            } : null
+          };
+
+          console.log('Adding queue item:', queueItem);
+          queue.push(queueItem);
+          addedCount++;
+        } else {
+          console.log(`Track ${track.title} already in queue at index ${existingIndex}`);
+        }
+      });
+
+      if (addedCount > 0) {
+        console.log('Saving queue with', addedCount, 'new tracks');
+        const saveResult = this.saveQueue(queue);
+        console.log('Save result:', saveResult);
+      }
+
+      const result = {
+        success: addedCount > 0,
+        addedCount,
+        skippedCount: tracks.length - addedCount
+      };
+      console.log('Final result:', result);
+
+      return result;
+    } catch (error) {
+      console.error('Error adding multiple tracks to queue:', error);
+      return {
+        success: false,
+        addedCount: 0,
+        skippedCount: tracks.length
+      };
     }
   }
 
