@@ -339,7 +339,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
                   <TableCell align="center">
                     <Typography variant="body2" color="text.secondary">
-                      {formatDate(queueItem.addedAt)}
+                      {formatRelativeTime(queueItem.addedAt)}
                     </Typography>
                   </TableCell>
 
