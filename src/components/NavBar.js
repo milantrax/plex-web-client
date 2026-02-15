@@ -77,6 +77,12 @@ function NavBar({ onPlayTrack }) {
         borderBottom: 2,
         borderColor: 'primary.main',
         zIndex: 1000,
+        backgroundColor: (theme) =>
+          theme.palette.mode === 'dark'
+            ? 'rgba(26, 26, 26, 0.8)'
+            : 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
       }}
     >
       <Toolbar sx={{ gap: 2, justifyContent: 'space-between' }}>

@@ -7,6 +7,7 @@ import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import queueManager from '../utils/queueManager';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { getPlexImageUrl } from '../api/plexApi';
 
 function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [queue, setQueue] = useState([]);
@@ -309,6 +310,19 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                     sx={{ cursor: 'pointer' }}
                   >
                     <Stack direction="row" alignItems="center" spacing={1}>
+                      {queueItem.album && queueItem.album.thumb && (
+                        <Box
+                          component="img"
+                          src={getPlexImageUrl(queueItem.album.thumb)}
+                          alt={queueItem.album.title}
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 1,
+                            objectFit: 'cover'
+                          }}
+                        />
+                      )}
                       {isCurrentTrack(queueItem.track) && (
                         <Box sx={{ color: '#000000', display: 'flex', alignItems: 'center' }}>
                           {isPlaying ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}

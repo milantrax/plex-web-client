@@ -238,6 +238,12 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
         transition: 'transform 0.3s ease-in-out',
         transform: !trackInfo ? 'translateY(100%)' : 'translateY(0)',
         zIndex: 1000,
+        backgroundColor: (theme) =>
+          theme.palette.mode === 'dark'
+            ? 'rgba(26, 26, 26, 0.8)'
+            : 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
       }}
     >
       <Toolbar sx={{ gap: 2, justifyContent: 'space-between' }}>
