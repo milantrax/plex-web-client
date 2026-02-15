@@ -61,6 +61,7 @@ function NavBar({ onPlayTrack }) {
     { label: 'Library', path: '/', end: true },
     { label: 'Playlists', path: '/playlists' },
     { label: 'Genres', path: '/genres' },
+    { label: 'Artists', path: '/artists' },
   ];
 
   const NavButton = ({ item }) => (

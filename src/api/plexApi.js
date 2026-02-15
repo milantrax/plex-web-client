@@ -16,7 +16,9 @@ const CACHE_CONFIG = {
     albumsByYear: 'plex_albums_by_year_',
     labels: 'plex_labels_',
     albumsByLabel: 'plex_albums_by_label_',
-    search: 'plex_search_'
+    search: 'plex_search_',
+    artists: 'plex_artists_',
+    artistAlbums: 'plex_artist_albums_'
   }
 };
 
@@ -898,10 +900,76 @@ export const getAlbumsByLabel = async (sectionId, label, type = 9, useCache = tr
     }
     
     cacheHelpers.saveToCache(cacheKey, albums, 120);
-    
+
     return albums;
   } catch (error) {
     console.error(`Error fetching albums for label ${label} in section ${sectionId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Get all artists from a music section
+ * @param {string} sectionId - The section ID
+ * @param {number} [start=0] - Start index for pagination
+ * @param {number} [size=null] - Number of items to fetch
+ * @param {boolean} [useCache=true] - Whether to use cache if available
+ * @returns {Promise<Array>} Artists
+ */
+export const getArtists = async (sectionId, start = 0, size = null, useCache = true) => {
+  const cacheKey = `${CACHE_CONFIG.keys.artists}${sectionId}_${start}_${size}`;
+
+  try {
+    if (useCache) {
+      const cachedData = cacheHelpers.getFromCache(cacheKey);
+      if (cachedData) {
+        console.log(`Using cached artists for section ${sectionId}`);
+        return cachedData;
+      }
+    }
+
+    let url = `/library/sections/${sectionId}/all?type=8`;
+    if (start) url += `&X-Plex-Container-Start=${start}`;
+    if (size) url += `&X-Plex-Container-Size=${size}`;
+
+    const response = await plexApi.get(url);
+    const artists = response.data.MediaContainer.Metadata || [];
+
+    cacheHelpers.saveToCache(cacheKey, artists, 120);
+
+    return artists;
+  } catch (error) {
+    console.error(`Error fetching artists for section ${sectionId}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Get all albums for a specific artist
+ * @param {string} artistRatingKey - The artist's rating key
+ * @param {boolean} [useCache=true] - Whether to use cache if available
+ * @returns {Promise<Array>} Artist's albums
+ */
+export const getArtistAlbums = async (artistRatingKey, useCache = true) => {
+  const cacheKey = `${CACHE_CONFIG.keys.artistAlbums}${artistRatingKey}`;
+
+  try {
+    if (useCache) {
+      const cachedData = cacheHelpers.getFromCache(cacheKey);
+      if (cachedData) {
+        console.log(`Using cached albums for artist ${artistRatingKey}`);
+        return cachedData;
+      }
+    }
+
+    const response = await plexApi.get(`/library/metadata/${artistRatingKey}/children`);
+    const albums = response.data.MediaContainer.Metadata || [];
+
+    cacheHelpers.saveToCache(cacheKey, albums, 120);
+
+    return albums;
+  } catch (error) {
+    console.error(`Error fetching albums for artist ${artistRatingKey}:`, error);
     throw error;
   }
 };

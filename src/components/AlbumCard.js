@@ -14,8 +14,8 @@ import {
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 
-function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
-  const imageUrl = getPlexImageUrl(album.thumb);
+function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayback, isArtist = false }) {
+  const imageUrl = getPlexImageUrl(album.thumb || album.art);
   const navigate = useNavigate();
   const actionInProgress = useRef(false);
   const [cardWidth, setCardWidth] = useState(getAlbumCardWidth());
@@ -85,7 +85,11 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
   };
 
   const handleCardClick = () => {
-    navigate(`/album/${album.ratingKey}`);
+    if (isArtist) {
+      navigate(`/artist/${album.ratingKey}`);
+    } else {
+      navigate(`/album/${album.ratingKey}`);
+    }
   };
 
   return (
@@ -136,48 +140,50 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
         </Box>
       )}
 
-      {/* Play/Pause Overlay */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: cardWidth,
-          height: cardWidth,
-          bgcolor: 'rgba(0, 0, 0, 0.7)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: isHovered || isCurrentAlbum ? 1 : 0,
-          transition: 'opacity 0.3s ease-in-out',
-          pointerEvents: isHovered || isCurrentAlbum ? 'auto' : 'none',
-        }}
-      >
-        <IconButton
-          onClick={handlePlayPauseClick}
+      {/* Play/Pause Overlay - Only for albums, not artists */}
+      {!isArtist && (
+        <Box
           sx={{
-            width: 60,
-            height: 60,
-            bgcolor: isCurrentAlbum ? 'error.main' : 'primary.main',
-            color: 'white',
-            '&:hover': {
-              bgcolor: isCurrentAlbum ? 'error.dark' : 'primary.dark',
-              transform: 'scale(1.1)',
-            },
-            transition: 'all 0.2s ease-in-out',
-            boxShadow: 3,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: cardWidth,
+            height: cardWidth,
+            bgcolor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            opacity: isHovered || isCurrentAlbum ? 1 : 0,
+            transition: 'opacity 0.3s ease-in-out',
+            pointerEvents: isHovered || isCurrentAlbum ? 'auto' : 'none',
           }}
         >
-          {showPauseIcon ? (
-            <PauseIcon sx={{ fontSize: '2rem' }} />
-          ) : (
-            <PlayArrowIcon sx={{ fontSize: '2rem' }} />
-          )}
-        </IconButton>
-      </Box>
+          <IconButton
+            onClick={handlePlayPauseClick}
+            sx={{
+              width: 60,
+              height: 60,
+              bgcolor: isCurrentAlbum ? 'error.main' : 'primary.main',
+              color: 'white',
+              '&:hover': {
+                bgcolor: isCurrentAlbum ? 'error.dark' : 'primary.dark',
+                transform: 'scale(1.1)',
+              },
+              transition: 'all 0.2s ease-in-out',
+              boxShadow: 3,
+            }}
+          >
+            {showPauseIcon ? (
+              <PauseIcon sx={{ fontSize: '2rem' }} />
+            ) : (
+              <PlayArrowIcon sx={{ fontSize: '2rem' }} />
+            )}
+          </IconButton>
+        </Box>
+      )}
 
-      {/* Album Info */}
+      {/* Album/Artist Info */}
       <CardContent sx={{ p: 1.25, textAlign: 'left' }}>
         <Typography
           variant="body2"
@@ -196,20 +202,22 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
         >
           {album.title}
         </Typography>
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{
-            m: 0,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            display: 'block',
-            wordBreak: 'break-word',
-          }}
-        >
-          {album.parentTitle}
-        </Typography>
+        {!isArtist && (
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              m: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'block',
+              wordBreak: 'break-word',
+            }}
+          >
+            {album.parentTitle}
+          </Typography>
+        )}
       </CardContent>
     </Card>
   );

@@ -7,8 +7,10 @@ import Player from './components/Player';
 import Library from './pages/Library';
 import Playlists from './pages/Playlists';
 import Genres from './pages/Genres';
+import Artists from './pages/Artists';
 import Queue from './pages/Queue';
 import AlbumPage from './pages/AlbumPage';
+import ArtistPage from './pages/ArtistPage';
 import Search from './pages/Search';
 import Settings from './pages/Settings';
 import { initAudioDiagnostics } from './utils/audioDebug';
@@ -119,6 +121,8 @@ function App() {
             <Route path="/" element={<Library onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
             <Route path="/playlists" element={<Playlists onPlayTrack={handlePlayTrack} />} />
             <Route path="/genres" element={<Genres onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
+            <Route path="/artists" element={<Artists />} />
+            <Route path="/artist/:artistId" element={<ArtistPage onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
             <Route path="/queue" element={<Queue onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
             <Route path="/album/:albumId" element={<AlbumPage onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
             <Route path="/search" element={<Search onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} onCurrentTrackChange={setCurrentTrack} />} />
