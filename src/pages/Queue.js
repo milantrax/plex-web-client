@@ -1,5 +1,8 @@
 // src/pages/Queue.js
 import React, { useState, useEffect } from 'react';
+import { Box, Card, CardContent, Button, Typography, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import CloseIcon from '@mui/icons-material/Close';
 import queueManager from '../utils/queueManager';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -43,7 +46,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
   const handleClearQueue = () => {
     if (queue.length === 0) return;
-    
+
     const confirmed = window.confirm('Are you sure you want to clear the entire queue?');
     if (confirmed) {
       const success = queueManager.clearQueue();
@@ -87,7 +90,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
     setDragOverIndex(null);
-    
+
     if (!draggedItem || draggedItem.index === dropIndex) {
       return;
     }
@@ -102,21 +105,21 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const handleTrackClick = (queueItem) => {
     const track = queueItem.track;
     const isCurrentlyPlaying = isCurrentTrack(track);
-    
+
     if (isCurrentlyPlaying && isPlaying) {
       if (onTogglePlayback) {
         onTogglePlayback(); // Pause current track
       }
       return;
     }
-    
+
     if (isCurrentlyPlaying && !isPlaying) {
       if (onTogglePlayback) {
         onTogglePlayback();
       }
       return;
     }
-    
+
     if (onPlayTrack) {
       onPlayTrack(track);
     }
@@ -134,152 +137,212 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="px-5 py-5">
-      <div className="card bg-base-200 shadow-xl p-5 mb-6">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <div className="flex gap-4 items-center text-base-content/60">
-            <span className="font-medium text-base-content">{queueStats.totalTracks} tracks</span>
-            <span>Total: {queueStats.totalDurationFormatted}</span>
-          </div>
-          {queue.length > 0 && (
-            <button
-              className="btn btn-error"
-              onClick={handleClearQueue}
-            >
-              Clear All
-            </button>
-          )}
-        </div>
-      </div>
+    <Box sx={{ px: 2.5, py: 2.5 }}>
+      <Card sx={{ mb: 3, boxShadow: 3 }}>
+        <CardContent sx={{ p: 2.5 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2}>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Typography sx={{ fontWeight: 500 }}>
+                {queueStats.totalTracks} tracks
+              </Typography>
+              <Typography color="text.secondary">
+                Total: {queueStats.totalDurationFormatted}
+              </Typography>
+            </Stack>
+            {queue.length > 0 && (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleClearQueue}
+              >
+                Clear All
+              </Button>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
 
       {queue.length === 0 ? (
-        <div className="text-center py-10">
-          <h2 className="text-2xl font-bold text-base-content mb-4">Queue is empty</h2>
-          <p className="text-base-content/70 mb-6">Add tracks to your queue from album pages to start building your playlist.</p>
-          <div className="card bg-base-200 shadow-xl p-6 max-w-2xl mx-auto">
-            <div className="card-body">
-              <h3 className="card-title text-xl mb-4">How to use the queue:</h3>
-              <ul className="text-left text-base-content/70 space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Browse to an album page</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Click the queue button (⊞) next to any track</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Tracks will appear here in the order you add them</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Click any track to start playing</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-primary mt-1">•</span>
-                  <span>Drag tracks to reorder them in the queue</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <Box sx={{ textAlign: 'center', py: 10 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+            Queue is empty
+          </Typography>
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Add tracks to your queue from album pages to start building your playlist.
+          </Typography>
+          <Card sx={{ maxWidth: 600, mx: 'auto', boxShadow: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                How to use the queue:
+              </Typography>
+              <Stack spacing={1} sx={{ textAlign: 'left' }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
+                  <Typography color="text.secondary">
+                    Browse to an album page
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
+                  <Typography color="text.secondary">
+                    Click the queue button (⊞) next to any track
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
+                  <Typography color="text.secondary">
+                    Tracks will appear here in the order you add them
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
+                  <Typography color="text.secondary">
+                    Click any track to start playing
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
+                  <Typography color="text.secondary">
+                    Drag tracks to reorder them in the queue
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Box>
       ) : (
-        <div className="card bg-base-200 shadow-xl overflow-hidden">
-          <div className="grid grid-cols-[50px_1fr_1fr_100px_150px_100px] gap-4 px-4 py-3 bg-base-300 border-b border-base-300 text-base-content/60 text-sm font-medium">
-            <div className="text-center">#</div>
-            <div>Track</div>
-            <div>Album</div>
-            <div className="text-center">Duration</div>
-            <div className="text-center">Added</div>
-            <div className="text-center">Actions</div>
-          </div>
-
-          <div className="custom-scrollbar max-h-[calc(100vh-300px)] overflow-y-auto">
-            {queue.map((queueItem, index) => (
-              <div
-                key={queueItem.id}
-                className={`grid grid-cols-[50px_1fr_1fr_100px_150px_100px] gap-4 px-4 py-3 border-b border-base-300
-                           transition-colors duration-200 cursor-move
-                           ${isCurrentTrack(queueItem.track)
-                             ? `bg-primary/20 border-l-4 border-l-primary ${!isPlaying ? 'opacity-70' : ''}`
-                             : 'hover:bg-base-300'
-                           }
-                           ${dragOverIndex === index ? 'border-t-2 border-t-primary' : ''}`}
-                draggable="true"
-                onDragStart={(e) => handleDragStart(e, queueItem, index)}
-                onDragEnd={handleDragEnd}
-                onDragOver={handleDragOver}
-                onDragEnter={(e) => handleDragEnter(e, index)}
-                onDragLeave={handleDragLeave}
-                onDrop={(e) => handleDrop(e, index)}
-              >
-                <div className="text-center text-base-content/60">
-                  {index + 1}
-                </div>
-
-                <div
-                  className="cursor-pointer"
-                  onClick={() => handleTrackClick(queueItem)}
+        <TableContainer component={Paper} sx={{ boxShadow: 3 }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'action.hover' }}>
+                <TableCell align="center" sx={{ width: 50, fontWeight: 600, color: 'text.secondary' }}>
+                  #
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                  Track
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>
+                  Album
+                </TableCell>
+                <TableCell align="center" sx={{ width: 100, fontWeight: 600, color: 'text.secondary' }}>
+                  Duration
+                </TableCell>
+                <TableCell align="center" sx={{ width: 150, fontWeight: 600, color: 'text.secondary' }}>
+                  Added
+                </TableCell>
+                <TableCell align="center" sx={{ width: 100, fontWeight: 600, color: 'text.secondary' }}>
+                  Actions
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody sx={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
+              {queue.map((queueItem, index) => (
+                <TableRow
+                  key={queueItem.id}
+                  draggable="true"
+                  onDragStart={(e) => handleDragStart(e, queueItem, index)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                  onDragEnter={(e) => handleDragEnter(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, index)}
+                  sx={{
+                    cursor: 'move',
+                    transition: 'all 0.2s',
+                    bgcolor: isCurrentTrack(queueItem.track)
+                      ? 'primary.light'
+                      : 'inherit',
+                    opacity: isCurrentTrack(queueItem.track) && !isPlaying ? 0.7 : 1,
+                    borderLeft: isCurrentTrack(queueItem.track) ? 4 : 0,
+                    borderLeftColor: 'primary.main',
+                    borderTop: dragOverIndex === index ? 2 : 0,
+                    borderTopColor: 'primary.main',
+                    '&:hover': {
+                      bgcolor: isCurrentTrack(queueItem.track)
+                        ? 'primary.light'
+                        : 'action.hover'
+                    }
+                  }}
                 >
-                  <div className="flex items-center gap-2">
-                    {isCurrentTrack(queueItem.track) && (
-                      <span className="text-primary text-lg">
-                        {isPlaying ? '⏸' : '▶'}
-                      </span>
-                    )}
-                    <span className="text-base-content">{queueItem.track.title}</span>
-                  </div>
-                </div>
+                  <TableCell align="center" sx={{ color: 'text.secondary' }}>
+                    {index + 1}
+                  </TableCell>
 
-                <div className="text-base-content/60">
-                  {queueItem.album ? (
-                    <div className="flex flex-col">
-                      <span className="text-base-content">{queueItem.album.title}</span>
-                      {queueItem.album.artist && (
-                        <span className="text-sm">by {queueItem.album.artist}</span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-base-content/50">Unknown Album</span>
-                  )}
-                </div>
-
-                <div className="text-center text-base-content/60">
-                  {formatDuration(queueItem.track.duration || 0)}
-                </div>
-
-                <div className="text-center text-base-content/60 text-sm">
-                  {formatDate(queueItem.addedAt)}
-                </div>
-
-                <div className="flex items-center justify-center gap-2">
-                  <div className="text-base-content/50 cursor-move select-none text-lg" title="Drag to reorder">
-                    ⋮⋮
-                  </div>
-                  <button
-                    className="btn btn-ghost btn-sm text-error hover:text-error/80"
-                    onClick={() => handleRemoveFromQueue(queueItem.id)}
-                    title="Remove from queue"
+                  <TableCell
+                    onClick={() => handleTrackClick(queueItem)}
+                    sx={{ cursor: 'pointer' }}
                   >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      {isCurrentTrack(queueItem.track) && (
+                        <Typography color="primary" sx={{ fontSize: '1.125rem' }}>
+                          {isPlaying ? '⏸' : '▶'}
+                        </Typography>
+                      )}
+                      <Typography>{queueItem.track.title}</Typography>
+                    </Stack>
+                  </TableCell>
+
+                  <TableCell>
+                    {queueItem.album ? (
+                      <Box>
+                        <Typography>{queueItem.album.title}</Typography>
+                        {queueItem.album.artist && (
+                          <Typography variant="body2" color="text.secondary">
+                            by {queueItem.album.artist}
+                          </Typography>
+                        )}
+                      </Box>
+                    ) : (
+                      <Typography color="text.secondary">Unknown Album</Typography>
+                    )}
+                  </TableCell>
+
+                  <TableCell align="center" sx={{ color: 'text.secondary' }}>
+                    {formatDuration(queueItem.track.duration || 0)}
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <Typography variant="body2" color="text.secondary">
+                      {formatDate(queueItem.addedAt)}
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell align="center">
+                    <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                      <DragIndicatorIcon
+                        sx={{
+                          color: 'text.secondary',
+                          cursor: 'move',
+                          userSelect: 'none'
+                        }}
+                        titleAccess="Drag to reorder"
+                      />
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleRemoveFromQueue(queueItem.id)}
+                        title="Remove from queue"
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
-    </div>
+    </Box>
   );
 }
 

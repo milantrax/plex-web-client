@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip } from '@mui/material';
 import CacheManager from '../components/CacheManager';
 import AlbumCardSettings from '../components/AlbumCardSettings';
+import { SIDEBAR_WIDTH } from '../theme/theme';
 
 const Settings = () => {
   const [activeSection, setActiveSection] = useState('display');
@@ -14,53 +16,96 @@ const Settings = () => {
     switch (activeSection) {
       case 'display':
         return (
-          <div>
-            <h3 className="text-2xl font-bold text-base-content mb-5">Display Settings</h3>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 2.5 }}>
+              Display Settings
+            </Typography>
             <AlbumCardSettings />
-          </div>
+          </Box>
         );
       case 'cache':
         return (
-          <div>
-            <h3 className="text-2xl font-bold text-base-content mb-5">Cache Management</h3>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 2.5 }}>
+              Cache Management
+            </Typography>
             <CacheManager />
-          </div>
+          </Box>
         );
       default:
         return (
-          <div>
-            <h3 className="text-2xl font-bold text-base-content mb-5">Display Settings</h3>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 2.5 }}>
+              Display Settings
+            </Typography>
             <AlbumCardSettings />
-          </div>
+          </Box>
         );
     }
   };
 
   return (
-    <div className="px-5 py-5">
-      <div className="flex gap-5">
-        <div className="w-[250px] card bg-base-200 shadow-xl h-fit sticky top-5">
-          <ul className="menu p-0 custom-scrollbar max-h-[calc(100vh-120px)] overflow-y-auto">
-            {settingSections.map(section => (
-              <li key={section.id}>
-                {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-                <a
-                  href="#"
-                  className={`${activeSection === section.id ? 'active' : ''}`}
-                  onClick={(e) => { e.preventDefault(); setActiveSection(section.id); }}
-                >
-                  {section.title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100%',
+        overflow: 'hidden'
+      }}
+    >
+      {/* Sidebar */}
+      <Box
+        sx={{
+          width: SIDEBAR_WIDTH,
+          height: '100%',
+          borderRight: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          display: { xs: 'none', md: 'block' }
+        }}
+      >
+        <List sx={{ height: '100%', overflowY: 'auto', p: 0 }} className="custom-scrollbar">
+          {settingSections.map(section => (
+            <ListItem key={section.id} disablePadding>
+              <ListItemButton
+                selected={activeSection === section.id}
+                onClick={() => setActiveSection(section.id)}
+              >
+                <ListItemText primary={section.title} />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
 
-        <div className="flex-1">
-          {renderSettingsContent()}
-        </div>
-      </div>
-    </div>
+      {/* Mobile Settings Selector */}
+      <Box sx={{ display: { xs: 'block', md: 'none' }, width: '100%', p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>Settings:</Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {settingSections.map(section => (
+            <Chip
+              key={section.id}
+              label={section.title}
+              onClick={() => setActiveSection(section.id)}
+              color={activeSection === section.id ? 'primary' : 'default'}
+              variant={activeSection === section.id ? 'filled' : 'outlined'}
+            />
+          ))}
+        </Box>
+      </Box>
+
+      {/* Main Content */}
+      <Box
+        sx={{
+          flex: 1,
+          height: '100%',
+          overflowY: 'auto',
+          p: 2.5
+        }}
+        className="custom-scrollbar"
+      >
+        {renderSettingsContent()}
+      </Box>
+    </Box>
   );
 };
 

@@ -1,5 +1,6 @@
 // src/pages/Library.js
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Box, Card, CardContent, FormControl, InputLabel, Select, MenuItem, Button, Typography, Stack } from '@mui/material';
 import { getSections, getSectionItems, getGenres, getYears, getLabels, getAlbumsByGenre, getAlbumsByYear, getAlbumsByLabel } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -23,6 +24,8 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [selectedLabel, setSelectedLabel] = useState('');
   const [filtersLoading, setFiltersLoading] = useState(false);
 
+  const scrollContainerRef = useRef(null);
+
   const loadMoreAlbums = useCallback(async () => {
     if (loadingMore || !hasMorePages || !musicSectionId) return;
 
@@ -30,9 +33,9 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     try {
       const nextPage = currentPage + 1;
       const startIndex = nextPage * ALBUMS_PER_PAGE;
-      
+
       let moreAlbums;
-      
+
       if (selectedGenre || selectedYear || selectedLabel) {
         setHasMorePages(false);
         return;
@@ -43,7 +46,7 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       if (moreAlbums.length > 0) {
         setAlbums(prevAlbums => [...prevAlbums, ...moreAlbums]);
         setCurrentPage(nextPage);
-        
+
         if (moreAlbums.length < ALBUMS_PER_PAGE) {
           setHasMorePages(false);
         }
@@ -62,17 +65,23 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     const handleScroll = () => {
       if (loadingMore || !hasMorePages) return;
 
-      const scrollTop = window.pageYOffset;
-      const windowHeight = window.innerHeight;
-      const docHeight = document.documentElement.offsetHeight;
+      const container = scrollContainerRef.current;
+      if (!container) return;
 
-      if (scrollTop + windowHeight >= docHeight - 200) {
+      const scrollTop = container.scrollTop;
+      const scrollHeight = container.scrollHeight;
+      const clientHeight = container.clientHeight;
+
+      if (scrollTop + clientHeight >= scrollHeight - 200) {
         loadMoreAlbums();
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll);
+      return () => container.removeEventListener('scroll', handleScroll);
+    }
   }, [loadMoreAlbums, loadingMore, hasMorePages]);
 
   useEffect(() => {
@@ -126,7 +135,7 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   useEffect(() => {
     const fetchFilters = async () => {
       if (!musicSectionId) return;
-      
+
       setFiltersLoading(true);
       try {
         console.log('Fetching filters for music section:', musicSectionId);
@@ -212,9 +221,9 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
         });
 
         const filterResults = await Promise.all(filterPromises);
-        
-        filteredAlbums = filterResults[0].filter(album => 
-          filterResults.every(result => 
+
+        filteredAlbums = filterResults[0].filter(album =>
+          filterResults.every(result =>
             result.some(resultAlbum => resultAlbum.ratingKey === album.ratingKey)
           )
         );
@@ -233,7 +242,7 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     setSelectedGenre('');
     setSelectedYear('');
     setSelectedLabel('');
-    
+
     setLoading(true);
     try {
       const albumData = await getSectionItems(musicSectionId, 9, 0, ALBUMS_PER_PAGE);
@@ -250,128 +259,161 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div className="alert alert-error text-center py-10 text-lg max-w-2xl mx-auto my-10">{error}</div>;
-  if (!musicSectionId && !error) return <div className="text-center py-10 text-base-content/60 text-lg">No music library found.</div>
-  if (albums.length === 0 && !selectedGenre && !selectedYear && !selectedLabel) return <div className="text-center py-10 text-base-content/60 text-lg">No albums found in this library.</div>;
+  if (error) return (
+    <Box sx={{ textAlign: 'center', py: 10, px: 2 }}>
+      <Typography color="error" variant="h6" sx={{ maxWidth: 600, mx: 'auto' }}>
+        {error}
+      </Typography>
+    </Box>
+  );
+  if (!musicSectionId && !error) return (
+    <Box sx={{ textAlign: 'center', py: 10 }}>
+      <Typography color="text.secondary" variant="h6">
+        No music library found.
+      </Typography>
+    </Box>
+  );
+  if (albums.length === 0 && !selectedGenre && !selectedYear && !selectedLabel) return (
+    <Box sx={{ textAlign: 'center', py: 10 }}>
+      <Typography color="text.secondary" variant="h6">
+        No albums found in this library.
+      </Typography>
+    </Box>
+  );
 
   return (
-    <div className="px-5 py-5">
-      <div className="card bg-base-200 shadow-xl p-5 mb-6">
-        <div className="flex flex-wrap gap-4 items-end mb-4">
-          <div className="form-control min-w-[200px]">
-            <label htmlFor="genre-filter" className="label">
-              <span className="label-text">Genre:</span>
-            </label>
-            <select
-              id="genre-filter"
-              value={selectedGenre}
-              onChange={(e) => handleGenreChange(e.target.value)}
-              disabled={filtersLoading}
-              className="select select-bordered w-full"
-            >
-              <option value="">All Genres</option>
-              {genres.map(genre => (
-                <option key={genre.id} value={genre.tag || genre.title}>
-                  {genre.title}
-                </option>
-              ))}
-            </select>
-          </div>
+    <Box
+      ref={scrollContainerRef}
+      sx={{
+        height: '100%',
+        overflowY: 'auto',
+        px: 2.5,
+        py: 2.5
+      }}
+      className="custom-scrollbar"
+    >
+      <Card sx={{ mb: 3, boxShadow: 3 }}>
+        <CardContent sx={{ p: 2.5 }}>
+          <Stack direction="row" flexWrap="wrap" spacing={2} alignItems="flex-end" sx={{ mb: 2 }}>
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel id="genre-filter-label">Genre</InputLabel>
+              <Select
+                labelId="genre-filter-label"
+                id="genre-filter"
+                value={selectedGenre}
+                label="Genre"
+                onChange={(e) => handleGenreChange(e.target.value)}
+                disabled={filtersLoading}
+              >
+                <MenuItem value="">All Genres</MenuItem>
+                {genres.map(genre => (
+                  <MenuItem key={genre.id} value={genre.tag || genre.title}>
+                    {genre.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-          <div className="form-control min-w-[200px]">
-            <label htmlFor="year-filter" className="label">
-              <span className="label-text">Year:</span>
-            </label>
-            <select
-              id="year-filter"
-              value={selectedYear}
-              onChange={(e) => handleYearChange(e.target.value)}
-              disabled={filtersLoading}
-              className="select select-bordered w-full"
-            >
-              <option value="">All Years</option>
-              {years.map(year => (
-                <option key={year.id} value={year.title}>
-                  {year.title}
-                </option>
-              ))}
-            </select>
-          </div>
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel id="year-filter-label">Year</InputLabel>
+              <Select
+                labelId="year-filter-label"
+                id="year-filter"
+                value={selectedYear}
+                label="Year"
+                onChange={(e) => handleYearChange(e.target.value)}
+                disabled={filtersLoading}
+              >
+                <MenuItem value="">All Years</MenuItem>
+                {years.map(year => (
+                  <MenuItem key={year.id} value={year.title}>
+                    {year.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-          <div className="form-control min-w-[200px]">
-            <label htmlFor="label-filter" className="label">
-              <span className="label-text">Label:</span>
-            </label>
-            <select
-              id="label-filter"
-              value={selectedLabel}
-              onChange={(e) => handleLabelChange(e.target.value)}
-              disabled={filtersLoading}
-              className="select select-bordered w-full"
-            >
-              <option value="">All Labels</option>
-              {labels.map(label => (
-                <option key={label.id} value={label.tag || label.title}>
-                  {label.title}
-                </option>
-              ))}
-            </select>
-          </div>
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel id="label-filter-label">Label</InputLabel>
+              <Select
+                labelId="label-filter-label"
+                id="label-filter"
+                value={selectedLabel}
+                label="Label"
+                onChange={(e) => handleLabelChange(e.target.value)}
+                disabled={filtersLoading}
+              >
+                <MenuItem value="">All Labels</MenuItem>
+                {labels.map(label => (
+                  <MenuItem key={label.id} value={label.tag || label.title}>
+                    {label.title}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
-          {(selectedGenre || selectedYear || selectedLabel) && (
-            <button
-              className="btn btn-primary"
-              onClick={clearFilters}
-            >
-              Clear Filters
-            </button>
-          )}
-        </div>
+            {(selectedGenre || selectedYear || selectedLabel) && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={clearFilters}
+              >
+                Clear Filters
+              </Button>
+            )}
+          </Stack>
 
-        <div className="text-base-content/60 text-sm">
-          {selectedGenre || selectedYear || selectedLabel ? (
-            <span>
-              {albums.length} album{albums.length !== 1 ? 's' : ''} found
-              {selectedGenre && ` in ${genres.find(g => (g.tag || g.title) === selectedGenre)?.title || 'selected genre'}`}
-              {selectedYear && ` from ${years.find(y => y.title === selectedYear)?.title || selectedYear}`}
-              {selectedLabel && ` with label ${labels.find(l => (l.tag || l.title) === selectedLabel)?.title || 'selected label'}`}
-            </span>
-          ) : (
-            <span>
-              {albums.length} album{albums.length !== 1 ? 's' : ''} loaded
-              {hasMorePages && ' (scroll for more)'}
-            </span>
-          )}
-        </div>
-      </div>
+          <Typography variant="body2" color="text.secondary">
+            {selectedGenre || selectedYear || selectedLabel ? (
+              <span>
+                {albums.length} album{albums.length !== 1 ? 's' : ''} found
+                {selectedGenre && ` in ${genres.find(g => (g.tag || g.title) === selectedGenre)?.title || 'selected genre'}`}
+                {selectedYear && ` from ${years.find(y => y.title === selectedYear)?.title || selectedYear}`}
+                {selectedLabel && ` with label ${labels.find(l => (l.tag || l.title) === selectedLabel)?.title || 'selected label'}`}
+              </span>
+            ) : (
+              <span>
+                {albums.length} album{albums.length !== 1 ? 's' : ''} loaded
+                {hasMorePages && ' (scroll for more)'}
+              </span>
+            )}
+          </Typography>
+        </CardContent>
+      </Card>
 
       {albums.length === 0 && (selectedGenre || selectedYear || selectedLabel) ? (
-        <div className="text-center py-10 text-base-content/60 text-lg">
-          No albums found matching the selected filters.
-        </div>
+        <Box sx={{ textAlign: 'center', py: 10 }}>
+          <Typography color="text.secondary" variant="h6">
+            No albums found matching the selected filters.
+          </Typography>
+        </Box>
       ) : (
         <>
-          <div className="flex flex-wrap justify-center gap-0">
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
             {albums.map(album => (
               <AlbumCard key={album.ratingKey} album={album} onPlayTrack={onPlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={onTogglePlayback} />
             ))}
-          </div>
+          </Box>
 
           {loadingMore && (
-            <div className="text-center py-10">
+            <Box sx={{ textAlign: 'center', py: 10 }}>
               <LoadingSpinner />
-              <p className="text-base-content/60 mt-4">Loading more albums...</p>
-            </div>
+              <Typography color="text.secondary" sx={{ mt: 2 }}>
+                Loading more albums...
+              </Typography>
+            </Box>
           )}
 
           {!hasMorePages && albums.length > 0 && !selectedGenre && !selectedYear && !selectedLabel && (
-            <div className="text-center py-10 text-base-content/50">
-              <p>You've reached the end of your library ({albums.length} albums total)</p>
-            </div>
+            <Box sx={{ textAlign: 'center', py: 10 }}>
+              <Typography color="text.secondary">
+                You've reached the end of your library ({albums.length} albums total)
+              </Typography>
+            </Box>
           )}
         </>
       )}
-    </div>
+    </Box>
   );
 }
 

@@ -15,10 +15,11 @@ const COLORS = {
 };
 
 // ============================================
-// THEME CONSTANTS
+// THEME CONSTANTS - Exported for layout calculations
 // ============================================
-const NAVBAR_HEIGHT = 64;
-const PLAYER_HEIGHT = 100;
+export const NAVBAR_HEIGHT = 64;
+export const PLAYER_HEIGHT = 100;
+export const SIDEBAR_WIDTH = 250;
 
 // ============================================
 // LIGHT THEME

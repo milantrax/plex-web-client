@@ -1,6 +1,7 @@
 // src/pages/Search.js
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Box, Card, CardContent, Button, Typography, Chip, Stack } from '@mui/material';
 import { searchAlbumsWithMatchingTracks } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -17,7 +18,7 @@ class Search extends React.Component {
       expandedItems: new Set(),
       cardWidth: getAlbumCardWidth()
     };
-    
+
     this.searchAlbums = this.searchAlbums.bind(this);
     this.toggleExpanded = this.toggleExpanded.bind(this);
     this.handleWidthChange = this.handleWidthChange.bind(this);
@@ -26,7 +27,7 @@ class Search extends React.Component {
   componentDidMount() {
     const urlParams = new URLSearchParams(this.props.location.search);
     const query = urlParams.get('q');
-    
+
     if (query) {
       this.setState({ query });
       this.searchAlbums(query);
@@ -48,7 +49,7 @@ class Search extends React.Component {
     const currentParams = new URLSearchParams(this.props.location.search);
     const prevQuery = prevParams.get('q');
     const currentQuery = currentParams.get('q');
-    
+
     if (prevQuery !== currentQuery && currentQuery) {
       this.setState({ query: currentQuery });
       this.searchAlbums(currentQuery);
@@ -65,13 +66,13 @@ class Search extends React.Component {
 
     try {
       const albums = await searchAlbumsWithMatchingTracks(query);
-      this.setState({ 
-        albums, 
-        isLoading: false 
+      this.setState({
+        albums,
+        isLoading: false
       });
     } catch (error) {
       console.error('Search error:', error);
-      this.setState({ 
+      this.setState({
         error: 'Failed to search albums. Please try again.',
         isLoading: false,
         albums: []
@@ -93,85 +94,107 @@ class Search extends React.Component {
 
   render() {
     const { albums, isLoading, error, query, expandedItems, cardWidth } = this.state;
-    const { 
-      currentTrack, 
-      isPlaying, 
-      onPlayTrack, 
-      onTogglePlayback, 
-      onCurrentTrackChange 
+    const {
+      currentTrack,
+      isPlaying,
+      onPlayTrack,
+      onTogglePlayback,
+      onCurrentTrackChange
     } = this.props;
 
     return (
-      <div className="px-5 py-5" style={{'--card-width': `${cardWidth}px`}}>
+      <Box sx={{ px: 2.5, py: 2.5 }} style={{'--card-width': `${cardWidth}px`}}>
         {query && (
-          <div className="mb-5">
-            <p className="text-base-content/60">
-              Showing results for: <strong className="text-base-content">"{query}"</strong>
-            </p>
-          </div>
+          <Box sx={{ mb: 2.5 }}>
+            <Typography color="text.secondary">
+              Showing results for: <strong style={{ color: 'inherit' }}>"{query}"</strong>
+            </Typography>
+          </Box>
         )}
 
         {isLoading && (
-          <div className="text-center py-10">
+          <Box sx={{ textAlign: 'center', py: 10 }}>
             <LoadingSpinner />
-            <p className="text-base-content/60 mt-4">Searching for albums and tracks...</p>
-          </div>
+            <Typography color="text.secondary" sx={{ mt: 2 }}>
+              Searching for albums and tracks...
+            </Typography>
+          </Box>
         )}
 
         {error && (
-          <div className="flex justify-center py-10">
-            <div className="card bg-base-200 shadow-xl p-6 max-w-md w-full">
-              <div className="card-body">
-                <h3 className="card-title text-error">Search Error</h3>
-                <p className="text-base-content/60 mb-4">{error}</p>
-                <button
-                  className="btn btn-primary w-full"
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+            <Card sx={{ maxWidth: 400, width: '100%', boxShadow: 3 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" color="error" sx={{ mb: 2 }}>
+                  Search Error
+                </Typography>
+                <Typography color="text.secondary" sx={{ mb: 2 }}>
+                  {error}
+                </Typography>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  fullWidth
                   onClick={() => this.searchAlbums(query)}
                 >
                   Try Again
-                </button>
-              </div>
-            </div>
-          </div>
+                </Button>
+              </CardContent>
+            </Card>
+          </Box>
         )}
 
         {!isLoading && !error && albums.length === 0 && query && (
-          <div className="text-center py-10">
-            <h3 className="text-2xl font-bold text-base-content mb-3">No Results Found</h3>
-            <p className="text-base-content/60 mb-2">No albums or tracks found matching "{query}".</p>
-            <p className="text-base-content/60">Try searching with different keywords or check your spelling.</p>
-          </div>
+          <Box sx={{ textAlign: 'center', py: 10 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5 }}>
+              No Results Found
+            </Typography>
+            <Typography color="text.secondary" sx={{ mb: 1 }}>
+              No albums or tracks found matching "{query}".
+            </Typography>
+            <Typography color="text.secondary">
+              Try searching with different keywords or check your spelling.
+            </Typography>
+          </Box>
         )}
 
         {!isLoading && !error && albums.length > 0 && (
-          <div>
-            <div className="card bg-base-200 shadow-xl p-5 mb-5">
-              <div className="flex justify-between items-center flex-wrap gap-4">
-                <p className="text-base-content font-medium">
-                  Found {albums.length} album{albums.length !== 1 ? 's' : ''}
-                </p>
-                <div className="flex gap-4 text-base-content/60 text-sm">
-                  {albums.filter(album => album.matchType === 'album').length > 0 && (
-                    <span className="badge badge-primary badge-outline">
-                      {albums.filter(album => album.matchType === 'album').length} album title matches
-                    </span>
-                  )}
-                  {albums.filter(album => album.matchType === 'track').length > 0 && (
-                    <span className="badge badge-primary badge-outline">
-                      {albums.filter(album => album.matchType === 'track').length} albums with matching tracks
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
+          <Box>
+            <Card sx={{ mb: 2.5, boxShadow: 3 }}>
+              <CardContent sx={{ p: 2.5 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2}>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    Found {albums.length} album{albums.length !== 1 ? 's' : ''}
+                  </Typography>
+                  <Stack direction="row" spacing={2}>
+                    {albums.filter(album => album.matchType === 'album').length > 0 && (
+                      <Chip
+                        label={`${albums.filter(album => album.matchType === 'album').length} album title matches`}
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                      />
+                    )}
+                    {albums.filter(album => album.matchType === 'track').length > 0 && (
+                      <Chip
+                        label={`${albums.filter(album => album.matchType === 'track').length} albums with matching tracks`}
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                      />
+                    )}
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
 
-            <div className="flex flex-wrap justify-center gap-0">
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
               {albums.map(album => {
                 const isExpanded = expandedItems.has(album.ratingKey);
                 const hasTrackMatch = album.matchType === 'track' && album.matchingTrack;
 
                 return (
-                  <div key={album.ratingKey} className="relative">
+                  <Box key={album.ratingKey} sx={{ position: 'relative' }}>
                     <AlbumCard
                       album={album}
                       currentTrack={currentTrack}
@@ -181,65 +204,95 @@ class Search extends React.Component {
                       onCurrentTrackChange={onCurrentTrackChange}
                     />
                     {hasTrackMatch && (
-                      <div className="mt-2 mx-2">
-                        <button
-                          className={`btn btn-ghost w-full flex items-center justify-center gap-2
-                                     ${isExpanded ? 'btn-active' : ''}`}
+                      <Box sx={{ mt: 1, mx: 1 }}>
+                        <Button
+                          variant="text"
+                          fullWidth
                           onClick={() => this.toggleExpanded(album.ratingKey)}
-                          aria-label={isExpanded ? 'Hide track match info' : 'Show track match info'}
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 1
+                          }}
                         >
-                          <span className="text-primary font-bold text-lg">{isExpanded ? '−' : '+'}</span>
-                          <span className="text-sm">Track Match</span>
-                        </button>
+                          <Typography
+                            component="span"
+                            color="primary"
+                            sx={{ fontWeight: 700, fontSize: '1.125rem' }}
+                          >
+                            {isExpanded ? '−' : '+'}
+                          </Typography>
+                          <Typography variant="body2">Track Match</Typography>
+                        </Button>
                         {isExpanded && (
-                          <div className="mt-2 card bg-base-200 shadow p-3 animate-slide-down">
-                            <span className="badge badge-primary mb-2">
-                              Track Match
-                            </span>
-                            <div className="text-base-content/60 text-sm">
-                              Contains: "{album.matchingTrack}"
-                            </div>
-                          </div>
+                          <Card sx={{ mt: 1, boxShadow: 2 }}>
+                            <CardContent sx={{ p: 1.5 }}>
+                              <Chip
+                                label="Track Match"
+                                color="primary"
+                                size="small"
+                                sx={{ mb: 1 }}
+                              />
+                              <Typography variant="body2" color="text.secondary">
+                                Contains: "{album.matchingTrack}"
+                              </Typography>
+                            </CardContent>
+                          </Card>
                         )}
-                      </div>
+                      </Box>
                     )}
-                  </div>
+                  </Box>
                 );
               })}
-            </div>
-          </div>
+            </Box>
+          </Box>
         )}
 
         {!query && !isLoading && (
-          <div className="text-center py-10">
-            <h2 className="text-2xl font-bold text-base-content mb-4">Search Music</h2>
-            <p className="text-base-content/60 mb-6">Use the search bar above to find albums and tracks in your Plex library.</p>
-            <div className="card bg-base-200 shadow-xl p-6 max-w-2xl mx-auto">
-              <div className="card-body">
-                <h3 className="card-title mb-4">Search Tips:</h3>
-                <ul className="text-left text-base-content/60 space-y-2">
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    <span>Search by album name, artist name, or song title</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    <span>Use partial words - "beet" will find "The Beatles"</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    <span>Search is case-insensitive</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-primary mt-1">•</span>
-                    <span>Results include albums that contain matching tracks</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+          <Box sx={{ textAlign: 'center', py: 10 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
+              Search Music
+            </Typography>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
+              Use the search bar above to find albums and tracks in your Plex library.
+            </Typography>
+            <Card sx={{ maxWidth: 600, mx: 'auto', boxShadow: 3 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Search Tips:
+                </Typography>
+                <Stack spacing={1} sx={{ textAlign: 'left' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
+                    <Typography color="text.secondary">
+                      Search by album name, artist name, or song title
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
+                    <Typography color="text.secondary">
+                      Use partial words - "beet" will find "The Beatles"
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
+                    <Typography color="text.secondary">
+                      Search is case-insensitive
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <Typography color="primary" sx={{ mt: 0.5 }}>•</Typography>
+                    <Typography color="text.secondary">
+                      Results include albums that contain matching tracks
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Box>
         )}
-      </div>
+      </Box>
     );
   }
 }
@@ -247,11 +300,11 @@ class Search extends React.Component {
 const SearchWithRouter = (props) => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   const location = {
     search: `?${searchParams.toString()}`
   };
-  
+
   return <Search {...props} location={location} navigate={navigate} />;
 };
 

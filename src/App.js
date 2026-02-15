@@ -1,6 +1,7 @@
 // src/App.js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Box } from '@mui/material';
 import NavBar from './components/NavBar';
 import Player from './components/Player';
 import Library from './pages/Library';
@@ -12,6 +13,7 @@ import Search from './pages/Search';
 import Settings from './pages/Settings';
 import { initAudioDiagnostics } from './utils/audioDebug';
 import queueManager from './utils/queueManager';
+import { NAVBAR_HEIGHT, PLAYER_HEIGHT } from './theme/theme';
 
 function App() {
   const [currentTrack, setCurrentTrack] = useState(null);
@@ -42,9 +44,9 @@ function App() {
 
   const handleTrackEnded = useCallback((endedTrack) => {
     console.log('Track ended:', endedTrack);
-    
+
     const nextTrack = queueManager.getNextTrack(endedTrack.ratingKey);
-    
+
     if (nextTrack) {
       console.log('Playing next track from queue:', nextTrack);
       handlePlayTrack(nextTrack);
@@ -104,9 +106,17 @@ function App() {
 
   return (
     <Router>
-      <div className="App text-center">
+      <Box className="App" sx={{ textAlign: 'center', height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <NavBar onPlayTrack={handlePlayTrack} />
-        <main className="content h-[calc(100vh-69px)] overflow-y-auto">
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            height: `calc(100vh - ${NAVBAR_HEIGHT}px - ${PLAYER_HEIGHT}px)`,
+            overflow: 'hidden',
+            position: 'relative'
+          }}
+        >
           <Routes>
             <Route path="/" element={<Library onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
             <Route path="/playlists" element={<Playlists onPlayTrack={handlePlayTrack} />} />
@@ -116,9 +126,9 @@ function App() {
             <Route path="/search" element={<Search onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} onCurrentTrackChange={setCurrentTrack} />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
-        </main>
+        </Box>
         <Player ref={playerRef} currentTrack={currentTrack} onPlayStateChange={handlePlayStateChange} onTrackEnded={handleTrackEnded} onPlayNext={handlePlayNext} onPlayPrevious={handlePlayPrevious} />
-      </div>
+      </Box>
     </Router>
   );
 }

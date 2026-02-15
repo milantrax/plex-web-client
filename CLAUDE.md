@@ -178,7 +178,7 @@ Cache can be cleared via:
 - **React 19.1.0** with hooks
 - **React Router DOM 7.4.1** for routing
 - **Axios 1.8.4** for HTTP requests
-- **Sass 1.69.5** for styling
+- **MUI** for UI
 - **Create React App 5.0.1** tooling
 - **Testing Library** for component tests
 
@@ -188,3 +188,9 @@ The project uses React Testing Library and Jest (via Create React App):
 - Test files follow the `*.test.js` convention
 - Setup configured in `src/setupTests.js`
 - Run tests with `npm test`
+
+## Code style
+Do not comment every line of code!!!
+- Comment only main functions, explaining purpose, input parameters, output parameters
+
+

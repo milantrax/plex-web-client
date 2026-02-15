@@ -1,8 +1,10 @@
 // src/pages/Genres.js
 import React, { useState, useEffect } from 'react';
+import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip, Stack } from '@mui/material';
 import { getSections, getGenres, getAlbumsByGenre } from '../api/plexApi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AlbumCard from '../components/AlbumCard';
+import { SIDEBAR_WIDTH } from '../theme/theme';
 
 function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [genres, setGenres] = useState([]);
@@ -36,8 +38,8 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
   useEffect(() => {
     const fetchGenres = async () => {
-      if (!musicSectionId) return; // Wait for section ID
-      setError(null); // Clear previous errors
+      if (!musicSectionId) return;
+      setError(null);
       try {
           const genreData = await getGenres(musicSectionId, 9);
           setGenres(genreData);
@@ -76,43 +78,120 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error && !loadingAlbums) return <div className="alert alert-error text-center py-10 text-lg max-w-2xl mx-auto my-10">{error}</div>;
-  if (!musicSectionId && !error) return <div className="text-center py-10 text-base-content/60 text-lg">No music library found.</div>
-  if (genres.length === 0 && !error) return <div className="text-center py-10 text-base-content/60 text-lg">No genres found in this library.</div>;
+  if (error && !loadingAlbums) return (
+    <Box sx={{ textAlign: 'center', py: 10, px: 2 }}>
+      <Typography color="error" variant="h6" sx={{ maxWidth: 600, mx: 'auto' }}>
+        {error}
+      </Typography>
+    </Box>
+  );
+  if (!musicSectionId && !error) return (
+    <Box sx={{ textAlign: 'center', py: 10 }}>
+      <Typography color="text.secondary" variant="h6">
+        No music library found.
+      </Typography>
+    </Box>
+  );
+  if (genres.length === 0 && !error) return (
+    <Box sx={{ textAlign: 'center', py: 10 }}>
+      <Typography color="text.secondary" variant="h6">
+        No genres found in this library.
+      </Typography>
+    </Box>
+  );
 
   return (
-    <div className="flex gap-5 p-5 h-full md:flex-col">
-      <div className="w-[250px] bg-base-200 rounded-lg shadow-xl overflow-hidden md:w-full md:max-h-[200px]">
-        <ul className="menu p-0 overflow-y-auto h-full custom-scrollbar">
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100%',
+        overflow: 'hidden'
+      }}
+    >
+      {/* Sidebar */}
+      <Box
+        sx={{
+          width: SIDEBAR_WIDTH,
+          height: '100%',
+          borderRight: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          display: { xs: 'none', md: 'block' }
+        }}
+      >
+        <List sx={{ height: '100%', overflowY: 'auto', p: 0 }} className="custom-scrollbar">
           {genres.map(genre => (
-            <li key={genre.key}>
-              {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-              <a
-                href="#"
-                className={`${selectedGenre?.key === genre.key ? 'active' : ''}`}
-                onClick={(e) => { e.preventDefault(); handleGenreClick(genre); }}
+            <ListItem key={genre.key} disablePadding>
+              <ListItemButton
+                selected={selectedGenre?.key === genre.key}
+                onClick={() => handleGenreClick(genre)}
               >
-                {genre.title}
-              </a>
-            </li>
+                <ListItemText primary={genre.title} />
+              </ListItemButton>
+            </ListItem>
           ))}
-        </ul>
-      </div>
+        </List>
+      </Box>
 
-      <div className="flex-1 card bg-base-200 shadow-xl p-5 overflow-y-auto custom-scrollbar">
+      {/* Mobile Genres Dropdown */}
+      <Box sx={{ display: { xs: 'block', md: 'none' }, width: '100%', p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>Select Genre:</Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {genres.map(genre => (
+            <Chip
+              key={genre.key}
+              label={genre.title}
+              onClick={() => handleGenreClick(genre)}
+              color={selectedGenre?.key === genre.key ? 'primary' : 'default'}
+              variant={selectedGenre?.key === genre.key ? 'filled' : 'outlined'}
+            />
+          ))}
+        </Box>
+      </Box>
+
+      {/* Main Content */}
+      <Box
+        sx={{
+          flex: 1,
+          height: '100%',
+          overflowY: 'auto',
+          p: 2.5
+        }}
+        className="custom-scrollbar"
+      >
         {selectedGenre ? (
           <>
-            <div className="flex justify-between items-center mb-5 pb-4 border-b border-base-300">
-              <h3 className="text-2xl font-bold text-base-content m-0">{selectedGenre.title}</h3>
-              <span className="badge badge-primary">{albums.length} album{albums.length !== 1 ? 's' : ''}</span>
-            </div>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{
+                mb: 2.5,
+                pb: 2,
+                borderBottom: 1,
+                borderColor: 'divider'
+              }}
+            >
+              <Typography variant="h5" component="h3" sx={{ fontWeight: 700, m: 0 }}>
+                {selectedGenre.title}
+              </Typography>
+              <Chip
+                label={`${albums.length} album${albums.length !== 1 ? 's' : ''}`}
+                color="primary"
+                size="small"
+              />
+            </Stack>
 
             {loadingAlbums ? (
               <LoadingSpinner />
             ) : albums.length === 0 ? (
-              <div className="text-center py-10 text-base-content/60 text-lg">No albums found for this genre</div>
+              <Box sx={{ textAlign: 'center', py: 10 }}>
+                <Typography color="text.secondary" variant="h6">
+                  No albums found for this genre
+                </Typography>
+              </Box>
             ) : (
-              <div className="flex flex-wrap justify-center gap-0">
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
                 {albums.map(album => (
                   <AlbumCard
                     key={album.ratingKey}
@@ -123,17 +202,21 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                     onTogglePlayback={onTogglePlayback}
                   />
                 ))}
-              </div>
+              </Box>
             )}
           </>
         ) : (
-          <div className="text-center py-20 text-base-content/60">
-            <h3 className="text-xl font-bold mb-2">Select a genre</h3>
-            <p className="m-0">Choose a genre from the sidebar to view its albums</p>
-          </div>
+          <Box sx={{ textAlign: 'center', py: 20 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+              Select a genre
+            </Typography>
+            <Typography color="text.secondary" sx={{ m: 0 }}>
+              Choose a genre from the sidebar to view its albums
+            </Typography>
+          </Box>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }
 

@@ -1,9 +1,11 @@
 // src/pages/Playlists.js
 import React, { useState, useEffect } from 'react';
+import { Box, List, ListItem, ListItemButton, ListItemText, Card, CardContent, Button, Typography, Chip, Stack } from '@mui/material';
 import { getPlaylists, getPlaylistItems } from '../api/plexApi';
 import { PLEX_URL, PLEX_TOKEN } from '../config';
 import LoadingSpinner from '../components/LoadingSpinner';
 import TrackList from '../components/TrackList';
+import { SIDEBAR_WIDTH } from '../theme/theme';
 
 function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [playlists, setPlaylists] = useState([]);
@@ -34,7 +36,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     setSelectedPlaylist(playlist);
     setLoadingTracks(true);
     setError(null);
-    
+
     try {
       const tracks = await getPlaylistItems(playlist.ratingKey);
       setPlaylistTracks(tracks);
@@ -59,9 +61,9 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       const duration = track.duration ? Math.floor(track.duration / 1000) : -1;
       const artist = track.originalTitle || track.grandparentTitle || 'Unknown Artist';
       const title = track.title || 'Unknown Title';
-      
+
       m3uContent += `#EXTINF:${duration},${artist} - ${title}\n`;
-      
+
       const trackUrl = `${PLEX_URL}/library/parts/${track.Media?.[0]?.Part?.[0]?.id}/file?X-Plex-Token=${PLEX_TOKEN}`;
       m3uContent += `${trackUrl}\n\n`;
     });
@@ -78,78 +80,139 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error) return <div className="alert alert-error text-center py-10 text-lg max-w-2xl mx-auto my-10">{error}</div>;
-  if (playlists.length === 0) return <div className="text-center py-10 text-base-content/60 text-lg">No audio playlists found.</div>;
+  if (error) return (
+    <Box sx={{ textAlign: 'center', py: 10, px: 2 }}>
+      <Typography color="error" variant="h6" sx={{ maxWidth: 600, mx: 'auto' }}>
+        {error}
+      </Typography>
+    </Box>
+  );
+  if (playlists.length === 0) return (
+    <Box sx={{ textAlign: 'center', py: 10 }}>
+      <Typography color="text.secondary" variant="h6">
+        No audio playlists found.
+      </Typography>
+    </Box>
+  );
 
   return (
-    <div className="px-5 py-5">
-      <div className="flex gap-5">
-        <div className="w-[250px] card bg-base-200 shadow-xl h-fit sticky top-5">
-          <ul className="menu p-0 custom-scrollbar max-h-[calc(100vh-120px)] overflow-y-auto">
-            {playlists.map(playlist => (
-              <li key={playlist.ratingKey}>
-                {/* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-                <a
-                  href="#"
-                  className={`${selectedPlaylist?.ratingKey === playlist.ratingKey ? 'active' : ''}`}
-                  onClick={(e) => { e.preventDefault(); handlePlaylistClick(playlist); }}
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium">{playlist.title}</span>
-                    <span className="text-sm opacity-70">
-                      {playlist.leafCount} tracks
-                    </span>
-                  </div>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100%',
+        overflow: 'hidden'
+      }}
+    >
+      {/* Sidebar */}
+      <Box
+        sx={{
+          width: SIDEBAR_WIDTH,
+          height: '100%',
+          borderRight: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          display: { xs: 'none', md: 'block' }
+        }}
+      >
+        <List sx={{ height: '100%', overflowY: 'auto', p: 0 }} className="custom-scrollbar">
+          {playlists.map(playlist => (
+            <ListItem key={playlist.ratingKey} disablePadding>
+              <ListItemButton
+                selected={selectedPlaylist?.ratingKey === playlist.ratingKey}
+                onClick={() => handlePlaylistClick(playlist)}
+              >
+                <ListItemText
+                  primary={playlist.title}
+                  secondary={`${playlist.leafCount} tracks`}
+                  primaryTypographyProps={{ fontWeight: 500 }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
+      </Box>
 
-        <div className="flex-1">
-          {selectedPlaylist ? (
-            <>
-              <div className="card bg-base-200 shadow-xl p-5 mb-5">
-                <div className="flex justify-between items-center flex-wrap gap-4">
-                  <div className="flex flex-col gap-1">
-                    <h2 className="card-title text-2xl">{selectedPlaylist.title}</h2>
-                    <span className="badge badge-primary">{playlistTracks.length} tracks</span>
-                  </div>
-                  <button
-                    className="btn btn-primary"
+      {/* Mobile Playlists Dropdown */}
+      <Box sx={{ display: { xs: 'block', md: 'none' }, width: '100%', p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Typography variant="subtitle2" sx={{ mb: 1 }}>Select Playlist:</Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {playlists.map(playlist => (
+            <Chip
+              key={playlist.ratingKey}
+              label={playlist.title}
+              onClick={() => handlePlaylistClick(playlist)}
+              color={selectedPlaylist?.ratingKey === playlist.ratingKey ? 'primary' : 'default'}
+              variant={selectedPlaylist?.ratingKey === playlist.ratingKey ? 'filled' : 'outlined'}
+            />
+          ))}
+        </Box>
+      </Box>
+
+      {/* Main Content */}
+      <Box
+        sx={{
+          flex: 1,
+          height: '100%',
+          overflowY: 'auto',
+          p: 2.5
+        }}
+        className="custom-scrollbar"
+      >
+        {selectedPlaylist ? (
+          <>
+            <Card sx={{ mb: 2.5, boxShadow: 3 }}>
+              <CardContent sx={{ p: 2.5 }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2}>
+                  <Stack spacing={1}>
+                    <Typography variant="h5" component="h2">
+                      {selectedPlaylist.title}
+                    </Typography>
+                    <Chip label={`${playlistTracks.length} tracks`} color="primary" size="small" />
+                  </Stack>
+                  <Button
+                    variant="contained"
+                    color="primary"
                     onClick={exportPlaylistAsM3U}
                     disabled={playlistTracks.length === 0}
                     title="Export playlist as M3U file"
                   >
                     Export M3U
-                  </button>
-                </div>
-              </div>
+                  </Button>
+                </Stack>
+              </CardContent>
+            </Card>
 
-              {loadingTracks ? (
-                <LoadingSpinner />
-              ) : playlistTracks.length === 0 ? (
-                <div className="text-center py-10 text-base-content/60 text-lg">This playlist is empty</div>
-              ) : (
-                <TrackList
-                  tracks={playlistTracks}
-                  albumData={selectedPlaylist}
-                  onPlayTrack={onPlayTrack}
-                  currentTrack={currentTrack}
-                  isPlaying={isPlaying}
-                  onTogglePlayback={onTogglePlayback}
-                />
-              )}
-            </>
-          ) : (
-            <div className="text-center py-20">
-              <h3 className="text-2xl font-bold text-base-content mb-3">Select a playlist</h3>
-              <p className="text-base-content/60">Choose a playlist from the sidebar to view its tracks</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+            {loadingTracks ? (
+              <LoadingSpinner />
+            ) : playlistTracks.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 10 }}>
+                <Typography color="text.secondary" variant="h6">
+                  This playlist is empty
+                </Typography>
+              </Box>
+            ) : (
+              <TrackList
+                tracks={playlistTracks}
+                albumData={selectedPlaylist}
+                onPlayTrack={onPlayTrack}
+                currentTrack={currentTrack}
+                isPlaying={isPlaying}
+                onTogglePlayback={onTogglePlayback}
+              />
+            )}
+          </>
+        ) : (
+          <Box sx={{ textAlign: 'center', py: 20 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1.5 }}>
+              Select a playlist
+            </Typography>
+            <Typography color="text.secondary">
+              Choose a playlist from the sidebar to view its tracks
+            </Typography>
+          </Box>
+        )}
+      </Box>
+    </Box>
   );
 }
 
