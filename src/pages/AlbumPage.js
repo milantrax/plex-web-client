@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Box, Typography, Card, CardContent, Divider, Stack, Button, Snackbar, Alert, Chip, Menu, MenuItem, ListItemIcon, ListItemText } from '@mui/material';
+import { Box, Typography, Card, CardContent, Divider, Stack, Button, Snackbar, Alert, Chip, Menu, MenuItem, ListItemIcon, ListItemText, Rating } from '@mui/material';
 import { getPlexImageUrl, getAlbumTracks } from '../api/plexApi';
 import axios from 'axios';
 import TrackList from '../components/TrackList';
@@ -11,6 +11,7 @@ import queueManager from '../utils/queueManager';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import StarIcon from '@mui/icons-material/Star';
 
 const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) => {
   const { albumId } = useParams();
@@ -182,16 +183,15 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
         sx={{
           width: { xs: '100%', md: 350 },
           height: { xs: 'auto', md: '100%' },
-          borderRight: { xs: 0, md: 1 },
           borderBottom: { xs: 1, md: 0 },
           borderColor: 'divider',
           bgcolor: 'background.paper',
+          boxShadow: { xs: 0, md: 3 },
           overflowY: 'auto',
           px: 2.5,
           pt: `${NAVBAR_HEIGHT + 20}px`,
           pb: `${PLAYER_HEIGHT + 20}px`
         }}
-        className="custom-scrollbar"
       >
         {/* Album Art */}
         {albumArtUrl ? (
@@ -293,6 +293,21 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
                       ))
                   }
                 </Box>
+              </Box>
+            )}
+
+            {(album.userRating || album.rating) && (
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', mb: 0.5, display: 'block' }}>
+                  Rating
+                </Typography>
+                <Rating
+                  value={(album.userRating || album.rating) / 2}
+                  precision={0.5}
+                  size="medium"
+                  readOnly
+                  emptyIcon={<StarIcon style={{ opacity: 0.2 }} fontSize="inherit" />}
+                />
               </Box>
             )}
 

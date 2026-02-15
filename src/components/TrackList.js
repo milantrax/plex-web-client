@@ -5,12 +5,14 @@ import queueManager from '../utils/queueManager';
 import {
   Box,
   IconButton,
-  Typography
+  Typography,
+  Rating
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import PlaylistAddIcon from '@mui/icons-material/PlaylistAdd';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
+import StarIcon from '@mui/icons-material/Star';
 
 function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [queuedTracks, setQueuedTracks] = useState(new Set());
@@ -99,7 +101,10 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: '50px 1fr 100px 60px 60px',
+          gridTemplateColumns: {
+            xs: '50px 1fr 100px 60px 60px',
+            md: '50px 1fr 140px 100px 60px 60px'
+          },
           alignItems: 'center',
           gap: 2,
           px: 2,
@@ -114,6 +119,9 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
           Title
+        </Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' }, fontWeight: 600, textTransform: 'uppercase' }}>
+          Rating
         </Typography>
         <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'right', fontWeight: 600, textTransform: 'uppercase' }}>
           Duration
@@ -138,7 +146,10 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
               onClick={() => handleTrackClick(track)}
               sx={{
                 display: 'grid',
-                gridTemplateColumns: '50px 1fr 100px 60px 60px',
+                gridTemplateColumns: {
+                  xs: '50px 1fr 100px 60px 60px',
+                  md: '50px 1fr 140px 100px 60px 60px'
+                },
                 alignItems: 'center',
                 gap: 2,
                 px: 2,
@@ -183,6 +194,23 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
               >
                 {track.title}
               </Typography>
+
+              {/* Rating - Desktop only */}
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
+                {(track.userRating || track.rating) ? (
+                  <Rating
+                    value={(track.userRating || track.rating) / 2}
+                    precision={0.5}
+                    size="small"
+                    readOnly
+                    emptyIcon={<StarIcon style={{ opacity: 0.2 }} fontSize="inherit" />}
+                  />
+                ) : (
+                  <Typography variant="body2" color="text.disabled" sx={{ fontSize: '0.75rem' }}>
+                    Not rated
+                  </Typography>
+                )}
+              </Box>
 
               {/* Duration */}
               <Typography
