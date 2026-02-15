@@ -71,7 +71,7 @@ export const lightTheme = createTheme({
   },
   spacing: 8,
   shape: {
-    borderRadius: 8,
+    borderRadius: 4,
   },
   transitions: {
     duration: {

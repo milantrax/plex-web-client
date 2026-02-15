@@ -190,7 +190,20 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
           overflowY: 'auto',
           px: 2.5,
           pt: `${NAVBAR_HEIGHT + 20}px`,
-          pb: `${PLAYER_HEIGHT + 20}px`
+          pb: `${PLAYER_HEIGHT + 20}px`,
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            bgcolor: 'background.paper',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            bgcolor: 'divider',
+            borderRadius: '4px',
+            '&:hover': {
+              bgcolor: 'action.disabled',
+            },
+          },
         }}
       >
         {/* Album Art */}
