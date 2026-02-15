@@ -1,5 +1,6 @@
 // src/components/Player.js
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getPlexAudioUrl, getPlexTranscodeUrl, getPlexImageUrl } from '../api/plexApi';
 import queueManager from '../utils/queueManager';
 import {
@@ -18,6 +19,7 @@ import SkipNextIcon from '@mui/icons-material/SkipNext';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPlayNext, onPlayPrevious }, ref) => {
+  const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioSrc, setAudioSrc] = useState(null);
   const [trackInfo, setTrackInfo] = useState(null);
@@ -53,6 +55,7 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
         title: currentTrack.title,
         artist: currentTrack.grandparentTitle || 'Unknown Artist',
         album: currentTrack.parentTitle || 'Unknown Album',
+        albumRatingKey: currentTrack.parentRatingKey,
         artUrl: getPlexImageUrl(currentTrack.thumb || currentTrack.parentThumb || currentTrack.grandparentThumb)
       });
 
@@ -226,6 +229,12 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
   const hasNext = currentTrack ? queueManager.hasNextTrack(currentTrack.ratingKey) : false;
   const hasPrevious = currentTrack ? queueManager.hasPreviousTrack(currentTrack.ratingKey) : false;
 
+  const handleAlbumArtClick = () => {
+    if (trackInfo?.albumRatingKey) {
+      navigate(`/album/${trackInfo.albumRatingKey}`);
+    }
+  };
+
   return (
     <AppBar
       position="fixed"
@@ -263,6 +272,7 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
                 component="img"
                 src={trackInfo.artUrl}
                 alt="Track art"
+                onClick={handleAlbumArtClick}
                 sx={{
                   width: 50,
                   height: 50,
@@ -270,6 +280,11 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
                   mr: 2,
                   borderRadius: 1,
                   bgcolor: 'background.paper',
+                  cursor: 'pointer',
+                  transition: 'opacity 0.2s',
+                  '&:hover': {
+                    opacity: 0.8,
+                  },
                 }}
               />
             )}
