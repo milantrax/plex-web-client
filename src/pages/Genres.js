@@ -191,7 +191,7 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                 </Typography>
               </Box>
             ) : (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
                 {albums.map(album => (
                   <AlbumCard
                     key={album.ratingKey}

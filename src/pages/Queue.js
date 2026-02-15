@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Box, Card, CardContent, Button, Typography, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CloseIcon from '@mui/icons-material/Close';
+import PauseIcon from '@mui/icons-material/Pause';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import queueManager from '../utils/queueManager';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -135,12 +137,37 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  const formatDate = (dateString) => {
+  const formatRelativeTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) {
+      return 'just now';
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) {
+      return `${minutes} min. ago`;
+    }
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) {
+      return `${hours} ${hours === 1 ? 'hour' : 'hours'} ago`;
+    }
+
+    const days = Math.floor(hours / 24);
+    if (days < 30) {
+      return `${days} ${days === 1 ? 'day' : 'days'} ago`;
+    }
+
+    const months = Math.floor(days / 30);
+    if (months < 12) {
+      return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+    }
+
+    const years = Math.floor(months / 12);
+    return `${years} ${years === 1 ? 'year' : 'years'} ago`;
   };
 
   if (loading) return <LoadingSpinner />;
@@ -174,7 +201,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       {queue.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 10 }}>
           <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>
-            Queue is empty
+            Playback Queue is empty
           </Typography>
           <Typography color="text.secondary" sx={{ mb: 3 }}>
             Add tracks to your queue from album pages to start building your playlist.
@@ -182,7 +209,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           <Card sx={{ maxWidth: 600, mx: 'auto', boxShadow: 3 }}>
             <CardContent sx={{ p: 3 }}>
               <Typography variant="h6" sx={{ mb: 2 }}>
-                How to use the queue:
+                How to use playback queue:
               </Typography>
               <Stack spacing={1} sx={{ textAlign: 'left' }}>
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
@@ -283,9 +310,9 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                   >
                     <Stack direction="row" alignItems="center" spacing={1}>
                       {isCurrentTrack(queueItem.track) && (
-                        <Typography color="primary" sx={{ fontSize: '1.125rem' }}>
-                          {isPlaying ? '⏸' : '▶'}
-                        </Typography>
+                        <Box sx={{ color: '#000000', display: 'flex', alignItems: 'center' }}>
+                          {isPlaying ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
+                        </Box>
                       )}
                       <Typography>{queueItem.track.title}</Typography>
                     </Stack>

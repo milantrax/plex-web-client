@@ -389,7 +389,7 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
         </Box>
       ) : (
         <>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
             {albums.map(album => (
               <AlbumCard key={album.ratingKey} album={album} onPlayTrack={onPlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={onTogglePlayback} />
             ))}

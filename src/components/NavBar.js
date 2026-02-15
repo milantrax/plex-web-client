@@ -39,10 +39,10 @@ function NavBar({ onPlayTrack }) {
   };
 
   const navItems = [
+    { label: 'Playback', path: '/queue' },
     { label: 'Library', path: '/', end: true },
     { label: 'Playlists', path: '/playlists' },
     { label: 'Genres', path: '/genres' },
-    { label: 'Queue', path: '/queue' },
     { label: 'Settings', path: '/settings' },
   ];
 

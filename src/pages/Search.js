@@ -188,7 +188,7 @@ class Search extends React.Component {
               </CardContent>
             </Card>
 
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
               {albums.map(album => {
                 const isExpanded = expandedItems.has(album.ratingKey);
                 const hasTrackMatch = album.matchType === 'track' && album.matchingTrack;

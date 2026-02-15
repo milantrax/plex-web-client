@@ -63,11 +63,6 @@ const AlbumCardSettings = () => {
             min={120}
             max={300}
             step={10}
-            marks={[
-              { value: 120, label: '120px' },
-              { value: 210, label: '210px' },
-              { value: 300, label: '300px' },
-            ]}
             valueLabelDisplay="auto"
             color="primary"
           />

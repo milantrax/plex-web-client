@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Box, Button, Typography, Card, CardContent, Grid } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { useParams } from 'react-router-dom';
+import { Box, Typography, Card, CardContent, Divider, Stack } from '@mui/material';
 import { getPlexImageUrl, getAlbumTracks } from '../api/plexApi';
 import axios from 'axios';
 import TrackList from '../components/TrackList';
@@ -53,22 +52,13 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
   if (error || !album) {
     return (
       <Box sx={{ px: 2.5, py: 10, textAlign: 'center' }}>
-        <Card sx={{ maxWidth: 400, mx: 'auto', mb: 2.5, boxShadow: 3 }}>
+        <Card sx={{ maxWidth: 400, mx: 'auto', boxShadow: 3 }}>
           <CardContent>
             <Typography color="error">
               {error || 'Album not found'}
             </Typography>
           </CardContent>
         </Card>
-        <Button
-          component={Link}
-          to="/"
-          variant="contained"
-          color="primary"
-          sx={{ textDecoration: 'none' }}
-        >
-          Back to Library
-        </Button>
       </Box>
     );
   }
@@ -76,88 +66,150 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
   const albumArtUrl = getPlexImageUrl(album.thumb);
 
   return (
-    <Box sx={{ px: 2.5, py: 2.5 }}>
-      <Box sx={{ mb: 3 }}>
-        <Button
-          component={Link}
-          to="/"
-          variant="text"
-          startIcon={<ArrowBackIcon />}
-          sx={{ textDecoration: 'none' }}
-        >
-          Back to Library
-        </Button>
+    <Box
+      sx={{
+        display: 'flex',
+        height: '100%',
+        overflow: 'hidden',
+        flexDirection: { xs: 'column', md: 'row' }
+      }}
+    >
+      {/* Left Column - Album Art & Metadata */}
+      <Box
+        sx={{
+          width: { xs: '100%', md: 350 },
+          height: { xs: 'auto', md: '100%' },
+          borderRight: { xs: 0, md: 1 },
+          borderBottom: { xs: 1, md: 0 },
+          borderColor: 'divider',
+          bgcolor: 'background.paper',
+          overflowY: 'auto',
+          p: 3
+        }}
+        className="custom-scrollbar"
+      >
+        {/* Album Art */}
+        {albumArtUrl ? (
+          <Box
+            component="img"
+            src={albumArtUrl}
+            alt={album.title}
+            sx={{
+              width: '100%',
+              aspectRatio: '1/1',
+              borderRadius: 2,
+              boxShadow: 3,
+              objectFit: 'cover',
+              mb: 3
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: '100%',
+              aspectRatio: '1/1',
+              borderRadius: 2,
+              bgcolor: 'action.disabledBackground',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'text.disabled',
+              fontSize: '1.25rem',
+              mb: 3,
+              boxShadow: 1
+            }}
+          >
+            No Cover
+          </Box>
+        )}
+
+        {/* Metadata */}
+        <Stack spacing={2}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5, lineHeight: 1.3 }}>
+              {album.title}
+            </Typography>
+            <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 500 }}>
+              {album.parentTitle || 'Unknown Artist'}
+            </Typography>
+          </Box>
+
+          <Divider />
+
+          <Stack spacing={1.5}>
+            {album.year && (
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
+                  Year
+                </Typography>
+                <Typography variant="body2">
+                  {album.year}
+                </Typography>
+              </Box>
+            )}
+
+            <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
+                Tracks
+              </Typography>
+              <Typography variant="body2">
+                {tracks.length} Track{tracks.length !== 1 ? 's' : ''}
+              </Typography>
+            </Box>
+
+            {album.genre && (
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
+                  Genre
+                </Typography>
+                <Typography variant="body2">
+                  {Array.isArray(album.Genre)
+                    ? album.Genre.map(g => g.tag).join(', ')
+                    : album.genre}
+                </Typography>
+              </Box>
+            )}
+
+            {album.studio && (
+              <Box>
+                <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
+                  Label
+                </Typography>
+                <Typography variant="body2">
+                  {album.studio}
+                </Typography>
+              </Box>
+            )}
+          </Stack>
+        </Stack>
       </Box>
 
-      <Grid
-        container
-        spacing={4}
+      {/* Right Column - Track List */}
+      <Box
         sx={{
-          mb: 4,
-          flexDirection: { xs: 'column', md: 'row' },
-          alignItems: { xs: 'center', md: 'flex-start' }
+          flex: 1,
+          height: { xs: 'auto', md: '100%' },
+          overflowY: 'auto',
+          p: { xs: 2, md: 3 }
         }}
+        className="custom-scrollbar"
       >
-        <Grid item xs={12} md="auto">
-          {albumArtUrl ? (
-            <Box
-              component="img"
-              src={albumArtUrl}
-              alt={album.title}
-              sx={{
-                width: 300,
-                height: 300,
-                borderRadius: 2,
-                boxShadow: 3,
-                objectFit: 'cover'
-              }}
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, px: 2 }}>
+          Tracks
+        </Typography>
+        <Card sx={{ boxShadow: 2 }}>
+          <CardContent sx={{ p: 0 }}>
+            <TrackList
+              tracks={tracks}
+              albumData={album}
+              onPlayTrack={onPlayTrack}
+              currentTrack={currentTrack}
+              isPlaying={isPlaying}
+              onTogglePlayback={onTogglePlayback}
             />
-          ) : (
-            <Box
-              sx={{
-                width: 300,
-                height: 300,
-                borderRadius: 2,
-                bgcolor: 'background.paper',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'text.secondary',
-                fontSize: '1.25rem'
-              }}
-            >
-              No Cover
-            </Box>
-          )}
-        </Grid>
-
-        <Grid item xs={12} md sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Typography variant="h3" sx={{ fontWeight: 700, mb: 1, mt: 0 }}>
-            {album.title}
-          </Typography>
-          <Typography variant="h5" sx={{ color: 'text.secondary', mb: 2, mt: 0, fontWeight: 400 }}>
-            {album.parentTitle || 'Unknown Artist'}
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2, color: 'text.secondary' }}>
-            <Typography>{album.year || 'Unknown Year'}</Typography>
-            <Typography>•</Typography>
-            <Typography>{tracks.length} Track{tracks.length !== 1 ? 's' : ''}</Typography>
-          </Box>
-        </Grid>
-      </Grid>
-
-      <Card sx={{ boxShadow: 3 }}>
-        <CardContent sx={{ p: 2.5 }}>
-          <TrackList
-            tracks={tracks}
-            albumData={album}
-            onPlayTrack={onPlayTrack}
-            currentTrack={currentTrack}
-            isPlaying={isPlaying}
-            onTogglePlayback={onTogglePlayback}
-          />
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </Box>
     </Box>
   );
 };

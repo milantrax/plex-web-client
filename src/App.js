@@ -106,7 +106,7 @@ function App() {
 
   return (
     <Router>
-      <Box className="App" sx={{ textAlign: 'center', height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box className="App" sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <NavBar onPlayTrack={handlePlayTrack} />
         <Box
           component="main"
