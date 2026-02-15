@@ -153,7 +153,7 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
                 alignItems: 'center',
                 gap: 2,
                 px: 2,
-                py: 1,
+                py: 0.5,
                 borderRadius: 1,
                 cursor: 'pointer',
                 transition: 'background-color 0.2s',

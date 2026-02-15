@@ -285,7 +285,7 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
         )}
 
         {/* Progress Section */}
-        <Box sx={{ flexGrow: 1, mx: 2 }}>
+        <Box sx={{ flexGrow: 1, mx: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <Slider
             value={progressPercentage}
             onChange={handleProgressChange}
@@ -301,11 +301,11 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
               },
             }}
           />
-          <Stack direction="row" justifyContent="space-between" spacing={1} sx={{ mt: 0.5 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+          <Stack direction="row" justifyContent="space-between" spacing={1} sx={{ mt: 0.25, mb: 0.75 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>
               {formatTime(currentTime)}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums', lineHeight: 1.2 }}>
               {formatTime(duration)}
             </Typography>
           </Stack>
