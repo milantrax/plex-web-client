@@ -2,8 +2,11 @@
 
 A React-based web client for streaming music from your local Plex Media Server. Browse your music library, manage playlists, explore genres, and enjoy seamless audio playback with an intuitive interface.
 
+Dark theme:
 ![Plex Web Client](screenshot.png)
 
+Light theme
+![Plex Web Client](screenshot-light.png)
 
 ## Features
 
@@ -60,7 +63,7 @@ REACT_APP_PLEX_URL=http://your-plex-server-ip:32400
 REACT_APP_PLEX_TOKEN=your-plex-token-here
 ```
 
-**Important**: 
+**Important**:
 - Never commit the `.env` file to version control
 - The `.env` file should already be in `.gitignore`
 - Restart the development server after creating or modifying the `.env` file

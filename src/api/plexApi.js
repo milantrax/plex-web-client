@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { PLEX_URL, PLEX_TOKEN } from '../config';
 
+// TODO: implement Node server for proxying requests and handling caching to avoid CORS issues and improve performance. For now, we will use client-side caching with localStorage, but this is not ideal for larger libraries or multi-user environments.
 // Cache configuration
 const CACHE_CONFIG = {
   defaultExpirationMinutes: 60,

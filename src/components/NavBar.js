@@ -1,6 +1,6 @@
 // src/components/NavBar.js
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -15,12 +15,15 @@ import {
   ListItemText,
   useMediaQuery,
   useTheme,
-  Divider
+  Divider,
+  Menu,
+  MenuItem,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import Brightness4Icon from '@mui/icons-material/Brightness4';
-import Brightness7Icon from '@mui/icons-material/Brightness7';
+import SettingsIcon from '@mui/icons-material/Settings';
 import SearchBar from './SearchBar';
 import { useThemeMode } from '../theme/ThemeContext';
 
@@ -29,6 +32,8 @@ function NavBar({ onPlayTrack }) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [settingsMenuAnchor, setSettingsMenuAnchor] = useState(null);
+  const navigate = useNavigate();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -38,12 +43,24 @@ function NavBar({ onPlayTrack }) {
     setMobileMenuOpen(false);
   };
 
+  const handleSettingsMenuOpen = (event) => {
+    setSettingsMenuAnchor(event.currentTarget);
+  };
+
+  const handleSettingsMenuClose = () => {
+    setSettingsMenuAnchor(null);
+  };
+
+  const handleSettingsClick = () => {
+    navigate('/settings');
+    handleSettingsMenuClose();
+  };
+
   const navItems = [
     { label: 'Playback', path: '/queue' },
     { label: 'Library', path: '/', end: true },
     { label: 'Playlists', path: '/playlists' },
     { label: 'Genres', path: '/genres' },
-    { label: 'Settings', path: '/settings' },
   ];
 
   const NavButton = ({ item }) => (
@@ -125,22 +142,51 @@ function NavBar({ onPlayTrack }) {
           )}
         </Box>
 
-        {/* Right Section: Search Bar + Theme Toggle */}
+        {/* Right Section: Search Bar + Settings Menu */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, justifyContent: 'flex-end' }}>
           {/* Search Bar */}
           <Box sx={{ maxWidth: 400, width: '100%', display: { xs: 'none', sm: 'block' } }}>
             <SearchBar onPlayTrack={onPlayTrack} />
           </Box>
 
-          {/* Theme Toggle */}
+          {/* Settings Menu */}
           <IconButton
-            onClick={toggleTheme}
+            onClick={handleSettingsMenuOpen}
             color="inherit"
-            aria-label="Toggle theme"
+            aria-label="Settings"
             edge="end"
           >
-            {mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+            <SettingsIcon />
           </IconButton>
+          <Menu
+            anchorEl={settingsMenuAnchor}
+            open={Boolean(settingsMenuAnchor)}
+            onClose={handleSettingsMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+          >
+            <MenuItem onClick={handleSettingsClick}>
+              <Typography>Settings</Typography>
+            </MenuItem>
+            <MenuItem>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={mode === 'dark'}
+                    onChange={toggleTheme}
+                    color="primary"
+                  />
+                }
+                label={mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
+              />
+            </MenuItem>
+          </Menu>
         </Box>
       </Toolbar>
 
@@ -194,6 +240,38 @@ function NavBar({ onPlayTrack }) {
               </NavLink>
             </ListItem>
           ))}
+          <Divider sx={{ my: 1 }} />
+          <ListItem disablePadding>
+            <NavLink
+              to="/settings"
+              style={{ textDecoration: 'none', width: '100%' }}
+              onClick={closeMobileMenu}
+            >
+              {({ isActive }) => (
+                <ListItemButton selected={isActive}>
+                  <ListItemText
+                    primary="Settings"
+                    primaryTypographyProps={{
+                      color: isActive ? 'primary.main' : 'text.primary',
+                      fontWeight: isActive ? 600 : 400,
+                    }}
+                  />
+                </ListItemButton>
+              )}
+            </NavLink>
+          </ListItem>
+          <ListItem>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={mode === 'dark'}
+                  onChange={toggleTheme}
+                  color="primary"
+                />
+              }
+              label={mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
+            />
+          </ListItem>
         </List>
       </Drawer>
     </AppBar>
