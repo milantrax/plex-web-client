@@ -296,90 +296,93 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     >
       <Card sx={{ mb: 3, boxShadow: 3 }}>
         <CardContent sx={{ p: 2.5 }}>
-          <Stack direction="row" flexWrap="wrap" spacing={2} alignItems="flex-end" sx={{ mb: 2 }}>
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel id="genre-filter-label">Genre</InputLabel>
-              <Select
-                labelId="genre-filter-label"
-                id="genre-filter"
-                value={selectedGenre}
-                label="Genre"
-                onChange={(e) => handleGenreChange(e.target.value)}
-                disabled={filtersLoading}
-              >
-                <MenuItem value="">All Genres</MenuItem>
-                {genres.map(genre => (
-                  <MenuItem key={genre.id} value={genre.tag || genre.title}>
-                    {genre.title}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+          <Stack direction="row" flexWrap="wrap" spacing={2} alignItems="center" justifyContent="space-between">
+            <Stack direction="row" flexWrap="wrap" spacing={2} alignItems="center">
+              <FormControl sx={{ minWidth: 140 }} size="small">
+                <InputLabel id="genre-filter-label">Genre</InputLabel>
+                <Select
+                  labelId="genre-filter-label"
+                  id="genre-filter"
+                  value={selectedGenre}
+                  label="Genre"
+                  onChange={(e) => handleGenreChange(e.target.value)}
+                  disabled={filtersLoading}
+                >
+                  <MenuItem value="">All Genres</MenuItem>
+                  {genres.map(genre => (
+                    <MenuItem key={genre.id} value={genre.tag || genre.title}>
+                      {genre.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel id="year-filter-label">Year</InputLabel>
-              <Select
-                labelId="year-filter-label"
-                id="year-filter"
-                value={selectedYear}
-                label="Year"
-                onChange={(e) => handleYearChange(e.target.value)}
-                disabled={filtersLoading}
-              >
-                <MenuItem value="">All Years</MenuItem>
-                {years.map(year => (
-                  <MenuItem key={year.id} value={year.title}>
-                    {year.title}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <FormControl sx={{ minWidth: 120 }} size="small">
+                <InputLabel id="year-filter-label">Year</InputLabel>
+                <Select
+                  labelId="year-filter-label"
+                  id="year-filter"
+                  value={selectedYear}
+                  label="Year"
+                  onChange={(e) => handleYearChange(e.target.value)}
+                  disabled={filtersLoading}
+                >
+                  <MenuItem value="">All Years</MenuItem>
+                  {years.map(year => (
+                    <MenuItem key={year.id} value={year.title}>
+                      {year.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel id="label-filter-label">Label</InputLabel>
-              <Select
-                labelId="label-filter-label"
-                id="label-filter"
-                value={selectedLabel}
-                label="Label"
-                onChange={(e) => handleLabelChange(e.target.value)}
-                disabled={filtersLoading}
-              >
-                <MenuItem value="">All Labels</MenuItem>
-                {labels.map(label => (
-                  <MenuItem key={label.id} value={label.tag || label.title}>
-                    {label.title}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <FormControl sx={{ minWidth: 140 }} size="small">
+                <InputLabel id="label-filter-label">Label</InputLabel>
+                <Select
+                  labelId="label-filter-label"
+                  id="label-filter"
+                  value={selectedLabel}
+                  label="Label"
+                  onChange={(e) => handleLabelChange(e.target.value)}
+                  disabled={filtersLoading}
+                >
+                  <MenuItem value="">All Labels</MenuItem>
+                  {labels.map(label => (
+                    <MenuItem key={label.id} value={label.tag || label.title}>
+                      {label.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
 
-            {(selectedGenre || selectedYear || selectedLabel) && (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={clearFilters}
-              >
-                Clear Filters
-              </Button>
-            )}
+              {(selectedGenre || selectedYear || selectedLabel) && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={clearFilters}
+                  size="small"
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </Stack>
+
+            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+              {selectedGenre || selectedYear || selectedLabel ? (
+                <span>
+                  {albums.length} album{albums.length !== 1 ? 's' : ''} found
+                  {selectedGenre && ` in ${genres.find(g => (g.tag || g.title) === selectedGenre)?.title || 'selected genre'}`}
+                  {selectedYear && ` from ${years.find(y => y.title === selectedYear)?.title || selectedYear}`}
+                  {selectedLabel && ` with label ${labels.find(l => (l.tag || l.title) === selectedLabel)?.title || 'selected label'}`}
+                </span>
+              ) : (
+                <span>
+                  {albums.length} album{albums.length !== 1 ? 's' : ''} loaded
+                  {hasMorePages && ' (scroll for more)'}
+                </span>
+              )}
+            </Typography>
           </Stack>
-
-          <Typography variant="body2" color="text.secondary">
-            {selectedGenre || selectedYear || selectedLabel ? (
-              <span>
-                {albums.length} album{albums.length !== 1 ? 's' : ''} found
-                {selectedGenre && ` in ${genres.find(g => (g.tag || g.title) === selectedGenre)?.title || 'selected genre'}`}
-                {selectedYear && ` from ${years.find(y => y.title === selectedYear)?.title || selectedYear}`}
-                {selectedLabel && ` with label ${labels.find(l => (l.tag || l.title) === selectedLabel)?.title || 'selected label'}`}
-              </span>
-            ) : (
-              <span>
-                {albums.length} album{albums.length !== 1 ? 's' : ''} loaded
-                {hasMorePages && ' (scroll for more)'}
-              </span>
-            )}
-          </Typography>
         </CardContent>
       </Card>
 
