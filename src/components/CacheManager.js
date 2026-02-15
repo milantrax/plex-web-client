@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { plexCache } from '../api/plexApi';
+import {
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  IconButton,
+  Stack,
+  Divider
+} from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 const CacheManager = () => {
   const [cacheStats, setCacheStats] = useState({
@@ -7,106 +18,145 @@ const CacheManager = () => {
     itemCount: 0,
     items: []
   });
-  
+
   const calculateCacheStats = () => {
     try {
       let totalSize = 0;
       const items = [];
       let count = 0;
-      
+
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        
+
         if (key && key.startsWith('plex_')) {
           const value = localStorage.getItem(key);
-          const size = (value?.length || 0) * 2; // Approximate size in bytes (UTF-16 encoding)
+          const size = (value?.length || 0) * 2;
           totalSize += size;
           count++;
-          
+
           try {
             const parsed = JSON.parse(value);
             items.push({
               key,
-              size: (size / 1024).toFixed(2), // Size in KB
+              size: (size / 1024).toFixed(2),
               expires: new Date(parsed.expiry).toLocaleString()
             });
           } catch (e) {
           }
         }
       }
-      
+
       setCacheStats({
         totalSize: (totalSize / 1024).toFixed(2),
         itemCount: count,
         items
       });
-      
+
     } catch (error) {
       console.error('Error calculating cache stats:', error);
     }
   };
-  
+
   useEffect(() => {
     calculateCacheStats();
   }, []);
-  
+
   const handleClearAllCache = () => {
     plexCache.clearAllCache();
     calculateCacheStats();
   };
-  
+
   const handleClearCacheItem = (key) => {
     localStorage.removeItem(key);
     calculateCacheStats();
   };
-  
+
   return (
-    <div className="p-0 text-base-content m-0">
-      <h2 className="text-primary mb-5">Cache Management</h2>
+    <Box sx={{ p: 0, m: 0 }}>
+      <Typography variant="h5" sx={{ color: 'primary.main', mb: 3, fontWeight: 700 }}>
+        Cache Management
+      </Typography>
 
-      <div className="stats shadow bg-base-200 mb-4">
-        <div className="stat">
-          <div className="stat-title">Total Cache Size</div>
-          <div className="stat-value text-primary">{cacheStats.totalSize} KB</div>
-        </div>
-        <div className="stat">
-          <div className="stat-title">Cached Items</div>
-          <div className="stat-value text-primary">{cacheStats.itemCount}</div>
-        </div>
-      </div>
+      <Card sx={{ mb: 2, bgcolor: 'background.paper' }}>
+        <CardContent>
+          <Stack direction="row" spacing={4}>
+            <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                Total Cache Size
+              </Typography>
+              <Typography variant="h5" color="primary" sx={{ fontWeight: 700 }}>
+                {cacheStats.totalSize} KB
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                Cached Items
+              </Typography>
+              <Typography variant="h5" color="primary" sx={{ fontWeight: 700 }}>
+                {cacheStats.itemCount}
+              </Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
 
-      <button
-        className="btn btn-error mt-4"
+      <Button
+        variant="contained"
+        color="error"
         onClick={handleClearAllCache}
+        sx={{ mt: 2, mb: 4 }}
       >
         Clear All Cache
-      </button>
+      </Button>
 
-      <h3 className="text-base-content my-6 text-[1.2em]">Cache Details</h3>
+      <Typography variant="h6" sx={{ my: 3 }}>
+        Cache Details
+      </Typography>
+
       {cacheStats.items.length > 0 ? (
-        <div className="card bg-base-200 shadow-xl">
-          <div className="card-body p-4">
-            {cacheStats.items.map(item => (
-              <div key={item.key} className="flex justify-between items-center py-2 border-b border-base-300 last:border-b-0">
-                <div className="flex flex-col items-start gap-1 overflow-hidden">
-                  <span className="font-medium mb-1">{item.key.replace('plex_', '')}</span>
-                  <span className="text-[0.85em] text-primary">{item.size} KB</span>
-                  <span className="text-[0.8em] text-base-content/60">Expires: {item.expires}</span>
-                </div>
-                <button
-                  className="btn btn-error btn-sm"
-                  onClick={() => handleClearCacheItem(item.key)}
+        <Card sx={{ bgcolor: 'background.paper' }}>
+          <CardContent sx={{ p: 2 }}>
+            {cacheStats.items.map((item, index) => (
+              <React.Fragment key={item.key}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    py: 1.5,
+                  }}
                 >
-                  Clear
-                </button>
-              </div>
+                  <Box sx={{ flex: 1, overflow: 'hidden', mr: 2 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
+                      {item.key.replace('plex_', '')}
+                    </Typography>
+                    <Typography variant="caption" color="primary">
+                      {item.size} KB
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                      Expires: {item.expires}
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    color="error"
+                    size="small"
+                    onClick={() => handleClearCacheItem(item.key)}
+                    aria-label="Clear cache item"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+                {index < cacheStats.items.length - 1 && <Divider />}
+              </React.Fragment>
             ))}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       ) : (
-        <p>No cached items found.</p>
+        <Typography variant="body2" color="text.secondary">
+          No cached items found.
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 };
 

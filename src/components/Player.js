@@ -2,6 +2,20 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { getPlexAudioUrl, getPlexTranscodeUrl, getPlexImageUrl } from '../api/plexApi';
 import queueManager from '../utils/queueManager';
+import {
+  AppBar,
+  Toolbar,
+  Box,
+  Slider,
+  IconButton,
+  Typography,
+  Stack
+} from '@mui/material';
+import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPlayNext, onPlayPrevious }, ref) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -12,7 +26,6 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
   const [audioError, setAudioError] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const progressBarRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
     togglePlayPause: () => togglePlayPause(),
@@ -21,30 +34,30 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
   }));
 
   useEffect(() => {
-    if (currentTrack && currentTrack.Media && currentTrack.Media.length > 0 && 
+    if (currentTrack && currentTrack.Media && currentTrack.Media.length > 0 &&
         currentTrack.Media[0].Part && currentTrack.Media[0].Part.length > 0) {
-      
+
       const partKey = currentTrack.Media[0].Part[0].key;
       const streamUrl = useTranscode ? getPlexTranscodeUrl(partKey) : getPlexAudioUrl(partKey);
-      
+
       console.log("Setting audio source:", streamUrl);
       setAudioSrc(streamUrl);
       setAudioError(false);
       setCurrentTime(0);
-      
+
       if (currentTrack.duration) {
-        setDuration(currentTrack.duration / 1000); // Convert from milliseconds to seconds
+        setDuration(currentTrack.duration / 1000);
       }
-      
+
       setTrackInfo({
         title: currentTrack.title,
-        artist: currentTrack.grandparentTitle || 'Unknown Artist', 
+        artist: currentTrack.grandparentTitle || 'Unknown Artist',
         album: currentTrack.parentTitle || 'Unknown Album',
         artUrl: getPlexImageUrl(currentTrack.thumb || currentTrack.parentThumb || currentTrack.grandparentThumb)
       });
-      
+
       if (audioRef.current) {
-        audioRef.current.pause(); 
+        audioRef.current.pause();
         audioRef.current.load();
       }
     } else {
@@ -63,14 +76,14 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
   useEffect(() => {
     if (audioSrc && audioRef.current && currentTrack) {
       console.log("Auto-playing new track:", currentTrack.title);
-      
+
       if (audioRef.current.src !== audioSrc) {
         audioRef.current.src = audioSrc;
         audioRef.current.load();
       }
-      
+
       const playPromise = audioRef.current.play();
-      
+
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
@@ -89,11 +102,11 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
           });
       }
     }
-  }, [currentTrack, audioSrc, onPlayStateChange]); // Include all dependencies
+  }, [currentTrack, audioSrc, onPlayStateChange]);
 
   const playNextTrack = () => {
     if (!currentTrack) return;
-    
+
     const nextTrack = queueManager.getNextTrack(currentTrack.ratingKey);
     if (nextTrack && onPlayNext) {
       console.log('Manually playing next track:', nextTrack);
@@ -103,7 +116,7 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
 
   const playPreviousTrack = () => {
     if (!currentTrack) return;
-    
+
     const previousTrack = queueManager.getPreviousTrack(currentTrack.ratingKey);
     if (previousTrack && onPlayPrevious) {
       console.log('Manually playing previous track:', previousTrack);
@@ -113,7 +126,7 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
 
   const togglePlayPause = () => {
     console.log('Player togglePlayPause called, current isPlaying:', isPlaying);
-    
+
     if (!audioRef.current || !audioSrc) {
       console.log('No audio element or source available');
       return;
@@ -149,7 +162,7 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
   const handleAudioError = (e) => {
     console.error("Audio Error:", e);
     setAudioError(true);
-    
+
     if (!useTranscode && currentTrack) {
       console.log("Direct playback failed, trying transcoding...");
       setUseTranscode(true);
@@ -170,20 +183,16 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
 
   const formatTime = (timeInSeconds) => {
     if (!timeInSeconds) return "0:00";
-    
+
     const minutes = Math.floor(timeInSeconds / 60);
     const seconds = Math.floor(timeInSeconds % 60);
     return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
-  const handleProgressClick = (e) => {
+  const handleProgressChange = (event, newValue) => {
     if (!audioRef.current || !duration) return;
-    
-    const progressBar = progressBarRef.current;
-    const rect = progressBar.getBoundingClientRect();
-    const clickPosition = (e.clientX - rect.left) / rect.width;
-    const newTime = duration * clickPosition;
-    
+
+    const newTime = (newValue / 100) * duration;
     audioRef.current.currentTime = newTime;
     setCurrentTime(newTime);
   };
@@ -194,20 +203,20 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
       onPlayStateChange(true);
     }
   };
-  
+
   const handlePause = () => {
     setIsPlaying(false);
     if (onPlayStateChange) {
       onPlayStateChange(false);
     }
   };
-  
+
   const handleEnded = () => {
     setIsPlaying(false);
     if (onPlayStateChange) {
       onPlayStateChange(false);
     }
-    
+
     if (onTrackEnded) {
       onTrackEnded(currentTrack);
     }
@@ -218,66 +227,135 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
   const hasPrevious = currentTrack ? queueManager.hasPreviousTrack(currentTrack.ratingKey) : false;
 
   return (
-    <div className={`fixed bottom-0 left-0 w-full bg-base-300 border-t-2 border-primary px-5 py-2.5 flex items-center justify-between box-border transition-transform duration-300 ease-in-out z-[1000] ${!trackInfo ? 'translate-y-full' : ''}`}>
-      {trackInfo && (
-        <div className="flex items-center justify-start text-left flex-grow-0 min-w-[200px] overflow-hidden mr-5">
-          {trackInfo.artUrl && <img src={trackInfo.artUrl} alt="Track art" className="w-[50px] h-[50px] object-cover mr-[15px] rounded bg-base-200"/>}
-          <div className="overflow-hidden text-left">
-            <p className="text-base-content font-bold m-0 mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{trackInfo.title}</p>
-            <p className="text-base-content/70 text-[0.9em] m-0 whitespace-nowrap overflow-hidden text-ellipsis">{trackInfo.artist} - {trackInfo.album}</p>
-          </div>
-        </div>
-      )}
-
-      <div className="flex-grow flex flex-col mx-[15px]">
-        <div
-          className="w-full h-1.5 bg-base-200 rounded-[3px] cursor-pointer relative"
-          onClick={handleProgressClick}
-          ref={progressBarRef}
-        >
-          <div
-            className="h-full bg-primary rounded-[3px] absolute left-0 top-0 transition-[width] duration-100 ease-linear"
-            style={{ width: `${progressPercentage}%` }}
-          ></div>
-        </div>
-        <div className="flex items-center justify-between mt-1.5 gap-2.5">
-          <span className="text-base-content/60 text-[0.8em] font-[tabular-nums]">{formatTime(currentTime)}</span>
-          <span className="text-base-content/60 text-[0.8em] font-[tabular-nums]">{formatTime(duration)}</span>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-start mx-2.5 gap-2">
-        <button
-          onClick={playPreviousTrack}
-          disabled={!hasPrevious}
-          className="btn btn-ghost text-[1.2em]"
-          title="Previous track"
-        >
-          ⏮
-        </button>
-
-        <button onClick={togglePlayPause} disabled={!audioSrc} className="btn btn-primary text-[1.4em] mx-2">
-          {isPlaying ? '⏸' : '▶'}
-        </button>
-
-        <button
-          onClick={playNextTrack}
-          disabled={!hasNext}
-          className="btn btn-ghost text-[1.2em]"
-          title="Next track"
-        >
-          ⏭
-        </button>
-
-        {audioError && (
-          <button
-            onClick={() => setUseTranscode(!useTranscode)}
-            className="btn btn-ghost text-[0.9em]"
+    <AppBar
+      position="fixed"
+      color="default"
+      sx={{
+        top: 'auto',
+        bottom: 0,
+        borderTop: 2,
+        borderColor: 'primary.main',
+        transition: 'transform 0.3s ease-in-out',
+        transform: !trackInfo ? 'translateY(100%)' : 'translateY(0)',
+        zIndex: 1000,
+      }}
+    >
+      <Toolbar sx={{ gap: 2, justifyContent: 'space-between' }}>
+        {/* Track Info */}
+        {trackInfo && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              minWidth: 200,
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
           >
-            Try {useTranscode ? 'Direct Play' : 'Transcode'}
-          </button>
+            {trackInfo.artUrl && (
+              <Box
+                component="img"
+                src={trackInfo.artUrl}
+                alt="Track art"
+                sx={{
+                  width: 50,
+                  height: 50,
+                  objectFit: 'cover',
+                  mr: 2,
+                  borderRadius: 1,
+                  bgcolor: 'background.paper',
+                }}
+              />
+            )}
+            <Box sx={{ overflow: 'hidden' }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {trackInfo.title}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                {trackInfo.artist} - {trackInfo.album}
+              </Typography>
+            </Box>
+          </Box>
         )}
-      </div>
+
+        {/* Progress Section */}
+        <Box sx={{ flexGrow: 1, mx: 2 }}>
+          <Slider
+            value={progressPercentage}
+            onChange={handleProgressChange}
+            aria-label="Progress"
+            sx={{
+              height: 6,
+              '& .MuiSlider-thumb': {
+                width: 12,
+                height: 12,
+              },
+              '& .MuiSlider-rail': {
+                opacity: 0.3,
+              },
+            }}
+          />
+          <Stack direction="row" justifyContent="space-between" spacing={1} sx={{ mt: 0.5 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+              {formatTime(currentTime)}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontVariantNumeric: 'tabular-nums' }}>
+              {formatTime(duration)}
+            </Typography>
+          </Stack>
+        </Box>
+
+        {/* Control Buttons */}
+        <Stack direction="row" spacing={1} alignItems="center">
+          <IconButton
+            onClick={playPreviousTrack}
+            disabled={!hasPrevious}
+            color="inherit"
+            title="Previous track"
+          >
+            <SkipPreviousIcon />
+          </IconButton>
+
+          <IconButton
+            onClick={togglePlayPause}
+            disabled={!audioSrc}
+            color="primary"
+            size="large"
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              '&:hover': {
+                bgcolor: 'primary.dark',
+              },
+              '&:disabled': {
+                bgcolor: 'action.disabledBackground',
+              },
+            }}
+          >
+            {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+          </IconButton>
+
+          <IconButton
+            onClick={playNextTrack}
+            disabled={!hasNext}
+            color="inherit"
+            title="Next track"
+          >
+            <SkipNextIcon />
+          </IconButton>
+
+          {audioError && (
+            <IconButton
+              onClick={() => setUseTranscode(!useTranscode)}
+              color="inherit"
+              size="small"
+              title={`Try ${useTranscode ? 'Direct Play' : 'Transcode'}`}
+            >
+              <SwapHorizIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Stack>
+      </Toolbar>
 
       <audio
         ref={audioRef}
@@ -289,9 +367,9 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleMetadataLoaded}
         preload="auto"
-        className="hidden"
+        style={{ display: 'none' }}
       />
-    </div>
+    </AppBar>
   );
 });
 

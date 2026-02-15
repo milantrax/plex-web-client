@@ -2,6 +2,23 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { searchMusic } from '../api/plexApi';
+import {
+  TextField,
+  Paper,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Chip,
+  CircularProgress,
+  Typography,
+  Box,
+  IconButton,
+  InputAdornment,
+  Button
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
 
 class SearchBar extends React.Component {
   constructor(props) {
@@ -13,7 +30,7 @@ class SearchBar extends React.Component {
       showDropdown: false,
       error: null
     };
-    
+
     this.searchInputRef = React.createRef();
     this.dropdownRef = React.createRef();
     this.searchTimeout = null;
@@ -62,9 +79,9 @@ class SearchBar extends React.Component {
         this.handleSearch(query);
       }, 300);
     } else {
-      this.setState({ 
-        results: { albums: [], tracks: [] }, 
-        showDropdown: false 
+      this.setState({
+        results: { albums: [], tracks: [] },
+        showDropdown: false
       });
     }
   }
@@ -100,14 +117,14 @@ class SearchBar extends React.Component {
 
     try {
       const results = await searchMusic(query, { limit: 10 });
-      this.setState({ 
-        results, 
+      this.setState({
+        results,
         showDropdown: true,
-        isLoading: false 
+        isLoading: false
       });
     } catch (error) {
       console.error('Search error:', error);
-      this.setState({ 
+      this.setState({
         error: 'Search failed. Please try again.',
         isLoading: false,
         showDropdown: false
@@ -123,7 +140,7 @@ class SearchBar extends React.Component {
         this.props.onPlayTrack(item);
       }
     }
-    
+
     this.setState({ showDropdown: false });
   }
 
@@ -148,122 +165,196 @@ class SearchBar extends React.Component {
     const hasResults = results.albums.length > 0 || results.tracks.length > 0;
 
     return (
-      <div className="relative w-full max-w-[400px] mx-auto">
-        <div className="relative flex items-center bg-base-200 border border-base-300 rounded-lg overflow-hidden transition-[border-color] duration-300 ease-in-out focus-within:border-primary focus-within:shadow-[0_0_0_2px_rgba(240,165,0,0.2)]">
-          <input
-            ref={this.searchInputRef}
-            type="text"
-            placeholder="Search albums and tracks..."
-            value={query}
-            onChange={this.handleInputChange}
-            onFocus={this.handleInputFocus}
-            onBlur={this.handleInputBlur}
-            onKeyDown={this.handleKeyDown}
-            className="input input-bordered flex-1 py-3 px-4 bg-transparent border-none text-base-content text-sm outline-none placeholder:text-base-content/50"
-          />
-
-          {query && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm text-lg"
-              onClick={this.clearSearch}
-              aria-label="Clear search"
-            >
-              ×
-            </button>
-          )}
-
-          <button
-            type="submit"
-            className="btn btn-primary py-3 px-4 text-sm"
-            onClick={this.handleSubmit}
-            disabled={!query.trim()}
-            aria-label="Search"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8"></circle>
-              <path d="m21 21-4.35-4.35"></path>
-            </svg>
-          </button>
-        </div>
+      <Box sx={{ position: 'relative', width: '100%', maxWidth: 400, mx: 'auto' }}>
+        <TextField
+          inputRef={this.searchInputRef}
+          fullWidth
+          size="small"
+          placeholder="Search albums and tracks..."
+          value={query}
+          onChange={this.handleInputChange}
+          onFocus={this.handleInputFocus}
+          onBlur={this.handleInputBlur}
+          onKeyDown={this.handleKeyDown}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: 'text.secondary' }} />
+              </InputAdornment>
+            ),
+            endAdornment: query && (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={this.clearSearch}
+                  aria-label="Clear search"
+                  edge="end"
+                >
+                  <CloseIcon />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '&.Mui-focused fieldset': {
+                borderColor: 'primary.main',
+                boxShadow: '0 0 0 2px rgba(240, 165, 0, 0.2)',
+              },
+            },
+          }}
+        />
 
         {showDropdown && (
-          <div ref={this.dropdownRef} className="absolute top-full left-0 right-0 bg-base-100 border border-base-300 border-t-0 rounded-b-lg shadow-xl max-h-[400px] overflow-y-auto z-[1000] text-left custom-scrollbar">
+          <Paper
+            ref={this.dropdownRef}
+            elevation={3}
+            sx={{
+              position: 'absolute',
+              top: 'calc(100% + 4px)',
+              left: 0,
+              right: 0,
+              maxHeight: 400,
+              overflowY: 'auto',
+              zIndex: 1000,
+              textAlign: 'left',
+            }}
+            className="custom-scrollbar"
+          >
             {isLoading && (
-              <div className="p-4 text-center text-base-content/50 italic">
-                <span>Searching...</span>
-              </div>
+              <Box sx={{ p: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <CircularProgress size={24} />
+                <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+                  Searching...
+                </Typography>
+              </Box>
             )}
 
             {error && (
-              <div className="p-4 text-center text-error italic">
-                <span>{error}</span>
-              </div>
+              <Box sx={{ p: 2, textAlign: 'center' }}>
+                <Typography variant="body2" color="error">
+                  {error}
+                </Typography>
+              </Box>
             )}
 
             {!isLoading && !error && hasResults && (
-              <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+              <Box>
                 {results.albums.length > 0 && (
-                  <div className="border-b border-base-300 last:border-b-0">
-                    <h4 className="pt-3 px-4 pb-2 m-0 text-xs font-semibold uppercase text-base-content/50 bg-base-100 border-b border-base-300">Albums</h4>
-                    {results.albums.slice(0, 5).map(album => (
-                      <div
-                        key={`album-${album.ratingKey}`}
-                        className="flex items-center justify-between py-3 px-4 cursor-pointer transition-colors duration-300 ease-in-out border-b border-base-300/50 last:border-b-0 hover:bg-base-300"
-                        onClick={() => this.handleResultClick(album, 'album')}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <span className="block text-base-content font-medium text-sm mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{album.title}</span>
-                          <span className="block text-base-content/50 text-xs whitespace-nowrap overflow-hidden text-ellipsis">
-                            {album.parentTitle || 'Various Artists'}
-                          </span>
-                        </div>
-                        <span className="badge badge-primary badge-sm uppercase ml-3 flex-shrink-0">Album</span>
-                      </div>
-                    ))}
-                  </div>
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        px: 2,
+                        py: 1,
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: 'text.secondary',
+                        bgcolor: 'background.default',
+                        borderBottom: 1,
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Albums
+                    </Typography>
+                    <List disablePadding>
+                      {results.albums.slice(0, 5).map(album => (
+                        <ListItem
+                          key={`album-${album.ratingKey}`}
+                          disablePadding
+                          sx={{ borderBottom: 1, borderColor: 'divider' }}
+                        >
+                          <ListItemButton onClick={() => this.handleResultClick(album, 'album')}>
+                            <ListItemText
+                              primary={album.title}
+                              secondary={album.parentTitle || 'Various Artists'}
+                              primaryTypographyProps={{
+                                variant: 'body2',
+                                noWrap: true,
+                              }}
+                              secondaryTypographyProps={{
+                                variant: 'caption',
+                                noWrap: true,
+                              }}
+                            />
+                            <Chip label="Album" size="small" color="primary" sx={{ ml: 2 }} />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
                 )}
 
                 {results.tracks.length > 0 && (
-                  <div className="border-b border-base-300 last:border-b-0">
-                    <h4 className="pt-3 px-4 pb-2 m-0 text-xs font-semibold uppercase text-base-content/50 bg-base-100 border-b border-base-300">Tracks</h4>
-                    {results.tracks.slice(0, 5).map(track => (
-                      <div
-                        key={`track-${track.ratingKey}`}
-                        className="flex items-center justify-between py-3 px-4 cursor-pointer transition-colors duration-300 ease-in-out border-b border-base-300/50 last:border-b-0 hover:bg-base-300"
-                        onClick={() => this.handleResultClick(track, 'track')}
-                      >
-                        <div className="flex-1 min-w-0">
-                          <span className="block text-base-content font-medium text-sm mb-0.5 whitespace-nowrap overflow-hidden text-ellipsis">{track.title}</span>
-                          <span className="block text-base-content/50 text-xs whitespace-nowrap overflow-hidden text-ellipsis">
-                            {track.grandparentTitle} • {track.parentTitle}
-                          </span>
-                        </div>
-                        <span className="badge badge-primary badge-sm uppercase ml-3 flex-shrink-0">Track</span>
-                      </div>
-                    ))}
-                  </div>
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        px: 2,
+                        py: 1,
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        color: 'text.secondary',
+                        bgcolor: 'background.default',
+                        borderBottom: 1,
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Tracks
+                    </Typography>
+                    <List disablePadding>
+                      {results.tracks.slice(0, 5).map(track => (
+                        <ListItem
+                          key={`track-${track.ratingKey}`}
+                          disablePadding
+                          sx={{ borderBottom: 1, borderColor: 'divider' }}
+                        >
+                          <ListItemButton onClick={() => this.handleResultClick(track, 'track')}>
+                            <ListItemText
+                              primary={track.title}
+                              secondary={`${track.grandparentTitle} • ${track.parentTitle}`}
+                              primaryTypographyProps={{
+                                variant: 'body2',
+                                noWrap: true,
+                              }}
+                              secondaryTypographyProps={{
+                                variant: 'caption',
+                                noWrap: true,
+                              }}
+                            />
+                            <Chip label="Track" size="small" color="primary" sx={{ ml: 2 }} />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
                 )}
 
-                <div className="p-3 border-t border-base-300 bg-base-100">
-                  <button
-                    className="btn btn-primary w-full text-xs uppercase"
+                <Box sx={{ p: 1.5, borderTop: 1, borderColor: 'divider' }}>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    size="small"
                     onClick={this.handleSubmit}
                   >
                     View all results
-                  </button>
-                </div>
-              </div>
+                  </Button>
+                </Box>
+              </Box>
             )}
 
             {!isLoading && !error && !hasResults && query.trim().length >= 2 && (
-              <div className="p-4 text-center text-base-content/50 italic">
-                <span>No results found for "{query}"</span>
-              </div>
+              <Box sx={{ p: 2, textAlign: 'center' }}>
+                <Typography variant="body2" color="text.secondary">
+                  No results found for "{query}"
+                </Typography>
+              </Box>
             )}
-          </div>
+          </Paper>
         )}
-      </div>
+      </Box>
     );
   }
 }
