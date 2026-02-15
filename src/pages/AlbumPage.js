@@ -6,6 +6,7 @@ import axios from 'axios';
 import TrackList from '../components/TrackList';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { PLEX_URL, PLEX_TOKEN } from '../config';
+import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 
 const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) => {
   const { albumId } = useParams();
@@ -84,7 +85,9 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
           borderColor: 'divider',
           bgcolor: 'background.paper',
           overflowY: 'auto',
-          p: 3
+          px: 2.5,
+          pt: `${NAVBAR_HEIGHT + 20}px`,
+          pb: `${PLAYER_HEIGHT + 20}px`
         }}
         className="custom-scrollbar"
       >
@@ -190,11 +193,13 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
           flex: 1,
           height: { xs: 'auto', md: '100%' },
           overflowY: 'auto',
-          p: { xs: 2, md: 3 }
+          px: 2.5,
+          pt: `${NAVBAR_HEIGHT + 20}px`,
+          pb: `${PLAYER_HEIGHT + 20}px`
         }}
         className="custom-scrollbar"
       >
-        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, px: 2 }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
           Tracks
         </Typography>
         <Card sx={{ boxShadow: 2 }}>

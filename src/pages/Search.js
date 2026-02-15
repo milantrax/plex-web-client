@@ -6,6 +6,7 @@ import { searchAlbumsWithMatchingTracks } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getAlbumCardWidth } from '../utils/settingsStorage';
+import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 
 class Search extends React.Component {
   constructor(props) {
@@ -103,7 +104,7 @@ class Search extends React.Component {
     } = this.props;
 
     return (
-      <Box sx={{ px: 2.5, py: 2.5 }} style={{'--card-width': `${cardWidth}px`}}>
+      <Box sx={{ px: 2.5, pt: `${NAVBAR_HEIGHT + 20}px`, pb: `${PLAYER_HEIGHT + 20}px` }} style={{'--card-width': `${cardWidth}px`}}>
         {query && (
           <Box sx={{ mb: 2.5 }}>
             <Typography color="text.secondary">

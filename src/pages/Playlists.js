@@ -5,7 +5,7 @@ import { getPlaylists, getPlaylistItems } from '../api/plexApi';
 import { PLEX_URL, PLEX_TOKEN } from '../config';
 import LoadingSpinner from '../components/LoadingSpinner';
 import TrackList from '../components/TrackList';
-import { SIDEBAR_WIDTH } from '../theme/theme';
+import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 
 function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [playlists, setPlaylists] = useState([]);
@@ -114,12 +114,13 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           display: { xs: 'none', md: 'block' }
         }}
       >
-        <List sx={{ height: '100%', overflowY: 'auto', p: 0 }} className="custom-scrollbar">
+        <List sx={{ height: '100%', overflowY: 'auto', px: 0, pt: `${NAVBAR_HEIGHT + 20}px`, pb: `${PLAYER_HEIGHT + 20}px` }} className="custom-scrollbar">
           {playlists.map(playlist => (
             <ListItem key={playlist.ratingKey} disablePadding>
               <ListItemButton
                 selected={selectedPlaylist?.ratingKey === playlist.ratingKey}
                 onClick={() => handlePlaylistClick(playlist)}
+                sx={{ py: 1.5, px: 2.5 }}
               >
                 <ListItemText
                   primary={playlist.title}
@@ -154,7 +155,9 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           flex: 1,
           height: '100%',
           overflowY: 'auto',
-          p: 2.5
+          px: 2.5,
+          pt: `${NAVBAR_HEIGHT + 20}px`,
+          pb: `${PLAYER_HEIGHT + 20}px`
         }}
         className="custom-scrollbar"
       >

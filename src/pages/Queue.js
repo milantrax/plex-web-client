@@ -8,6 +8,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import queueManager from '../utils/queueManager';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getPlexImageUrl } from '../api/plexApi';
+import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 
 function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [queue, setQueue] = useState([]);
@@ -174,7 +175,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <Box sx={{ px: 2.5, py: 2.5 }}>
+    <Box sx={{ px: 2.5, pt: `${NAVBAR_HEIGHT + 20}px`, pb: `${PLAYER_HEIGHT + 20}px` }}>
       <Card sx={{ mb: 3, boxShadow: 3 }}>
         <CardContent sx={{ p: 2.5 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2}>

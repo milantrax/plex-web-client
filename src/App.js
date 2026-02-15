@@ -13,7 +13,6 @@ import Search from './pages/Search';
 import Settings from './pages/Settings';
 import { initAudioDiagnostics } from './utils/audioDebug';
 import queueManager from './utils/queueManager';
-import { NAVBAR_HEIGHT, PLAYER_HEIGHT } from './theme/theme';
 
 function App() {
   const [currentTrack, setCurrentTrack] = useState(null);
@@ -106,13 +105,12 @@ function App() {
 
   return (
     <Router>
-      <Box className="App" sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box className="App" sx={{ height: '100vh', position: 'relative' }}>
         <NavBar onPlayTrack={handlePlayTrack} />
         <Box
           component="main"
           sx={{
-            flexGrow: 1,
-            height: `calc(100vh - ${NAVBAR_HEIGHT}px - ${PLAYER_HEIGHT}px)`,
+            height: '100vh',
             overflow: 'hidden',
             position: 'relative'
           }}

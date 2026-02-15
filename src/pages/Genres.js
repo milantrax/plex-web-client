@@ -4,7 +4,7 @@ import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip, St
 import { getSections, getGenres, getAlbumsByGenre } from '../api/plexApi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AlbumCard from '../components/AlbumCard';
-import { SIDEBAR_WIDTH } from '../theme/theme';
+import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 
 function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [genres, setGenres] = useState([]);
@@ -119,12 +119,13 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           display: { xs: 'none', md: 'block' }
         }}
       >
-        <List sx={{ height: '100%', overflowY: 'auto', p: 0 }} className="custom-scrollbar">
+        <List sx={{ height: '100%', overflowY: 'auto', px: 0, pt: `${NAVBAR_HEIGHT + 20}px`, pb: `${PLAYER_HEIGHT + 20}px` }} className="custom-scrollbar">
           {genres.map(genre => (
             <ListItem key={genre.key} disablePadding>
               <ListItemButton
                 selected={selectedGenre?.key === genre.key}
                 onClick={() => handleGenreClick(genre)}
+                sx={{ py: 1.5, px: 2.5 }}
               >
                 <ListItemText primary={genre.title} />
               </ListItemButton>
@@ -155,7 +156,9 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           flex: 1,
           height: '100%',
           overflowY: 'auto',
-          p: 2.5
+          px: 2.5,
+          pt: `${NAVBAR_HEIGHT + 20}px`,
+          pb: `${PLAYER_HEIGHT + 20}px`
         }}
         className="custom-scrollbar"
       >

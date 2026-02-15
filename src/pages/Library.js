@@ -4,6 +4,7 @@ import { Box, Card, CardContent, FormControl, InputLabel, Select, MenuItem, Butt
 import { getSections, getSectionItems, getGenres, getYears, getLabels, getAlbumsByGenre, getAlbumsByYear, getAlbumsByLabel } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { NAVBAR_HEIGHT, PLAYER_HEIGHT } from '../theme/theme';
 
 function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [albums, setAlbums] = useState([]);
@@ -288,7 +289,8 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
         height: '100%',
         overflowY: 'auto',
         px: 2.5,
-        py: 2.5
+        pt: `${NAVBAR_HEIGHT + 20}px`,
+        pb: `${PLAYER_HEIGHT + 20}px`
       }}
       className="custom-scrollbar"
     >

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip } from '@mui/material';
 import CacheManager from '../components/CacheManager';
 import AlbumCardSettings from '../components/AlbumCardSettings';
-import { SIDEBAR_WIDTH } from '../theme/theme';
+import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 
 const Settings = () => {
   const [activeSection, setActiveSection] = useState('display');
@@ -63,12 +63,13 @@ const Settings = () => {
           display: { xs: 'none', md: 'block' }
         }}
       >
-        <List sx={{ height: '100%', overflowY: 'auto', p: 0 }} className="custom-scrollbar">
+        <List sx={{ height: '100%', overflowY: 'auto', px: 0, pt: `${NAVBAR_HEIGHT + 20}px`, pb: `${PLAYER_HEIGHT + 20}px` }} className="custom-scrollbar">
           {settingSections.map(section => (
             <ListItem key={section.id} disablePadding>
               <ListItemButton
                 selected={activeSection === section.id}
                 onClick={() => setActiveSection(section.id)}
+                sx={{ py: 1.5, px: 2.5 }}
               >
                 <ListItemText primary={section.title} />
               </ListItemButton>
@@ -99,7 +100,9 @@ const Settings = () => {
           flex: 1,
           height: '100%',
           overflowY: 'auto',
-          p: 2.5
+          px: 2.5,
+          pt: `${NAVBAR_HEIGHT + 20}px`,
+          pb: `${PLAYER_HEIGHT + 20}px`
         }}
         className="custom-scrollbar"
       >

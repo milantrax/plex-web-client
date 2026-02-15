@@ -70,10 +70,11 @@ function NavBar({ onPlayTrack }) {
 
   return (
     <AppBar
-      position="sticky"
+      position="fixed"
       color="default"
       elevation={0}
       sx={{
+        top: 0,
         borderBottom: 2,
         borderColor: 'primary.main',
         zIndex: 1000,
