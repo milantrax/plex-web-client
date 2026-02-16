@@ -20,7 +20,7 @@ const AlbumCardSettings = () => {
     setIsChanged(width !== defaultWidth);
   }, [width]);
 
-  const handleWidthChange = (e, newValue) => {
+  const handleWidthChange = (_e, newValue) => {
     const newWidth = newValue;
     setWidth(newWidth);
     setAlbumCardWidth(newWidth);

@@ -183,60 +183,6 @@ class StorageManager {
     return null;
   }
 
-  /**
-   * Migrate data from localStorage to IndexedDB
-   * @returns {Promise<void>}
-   */
-  async migrateFromLocalStorage() {
-    try {
-      console.log('Starting migration from localStorage to IndexedDB...');
-      let migratedCount = 0;
-
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-
-        if (key && key.startsWith('plex_')) {
-          try {
-            const value = localStorage.getItem(key);
-            const parsedValue = JSON.parse(value);
-
-            let store = 'api';
-            if (key === 'plex_playback_queue') {
-              store = 'queue';
-            } else if (key.startsWith('plex_settings_')) {
-              store = 'settings';
-            }
-
-            await this.set(key, parsedValue, store);
-            migratedCount++;
-          } catch (error) {
-            console.warn(`Failed to migrate ${key}:`, error);
-          }
-        }
-      }
-
-      console.log(`Migration complete. Migrated ${migratedCount} items.`);
-
-    } catch (error) {
-      console.error('Migration error:', error);
-    }
-  }
-
-  /**
-   * Clear old localStorage cache entries
-   * @returns {void}
-   */
-  clearLocalStorageCache() {
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('plex_')) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(key => localStorage.removeItem(key));
-    console.log(`Removed ${keysToRemove.length} items from localStorage`);
-  }
 }
 
 export const storage = new StorageManager();
