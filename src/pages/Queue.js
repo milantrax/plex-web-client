@@ -130,7 +130,11 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   };
 
   const isCurrentTrack = (track) => {
-    return currentTrack && currentTrack.ratingKey === track.ratingKey;
+    if (!currentTrack || !track) return false;
+    // Compare ratingKey as strings to handle potential type mismatches
+    const currentKey = String(currentTrack.ratingKey);
+    const trackKey = String(track.ratingKey);
+    return currentKey === trackKey;
   };
 
   const formatDuration = (milliseconds) => {
@@ -269,7 +273,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                     }
                   }}
                 >
-                  <TableCell align="center" sx={{ color: 'text.secondary' }}>
+                  <TableCell align="center" sx={{ color: isCurrentTrack(queueItem.track) ? '#000000' : 'text.secondary' }}>
                     {index + 1}
                   </TableCell>
 
@@ -296,26 +300,32 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                           {isPlaying ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
                         </Box>
                       )}
-                      <Typography>{queueItem.track.title}</Typography>
+                      <Typography sx={{ color: isCurrentTrack(queueItem.track) ? '#000000' : 'inherit' }}>
+                        {queueItem.track.title}
+                      </Typography>
                     </Stack>
                   </TableCell>
 
                   <TableCell>
                     {queueItem.album ? (
                       <Box>
-                        <Typography>{queueItem.album.title}</Typography>
+                        <Typography sx={{ color: isCurrentTrack(queueItem.track) ? '#000000' : 'inherit' }}>
+                          {queueItem.album.title}
+                        </Typography>
                         {queueItem.album.artist && (
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" sx={{ color: isCurrentTrack(queueItem.track) ? 'rgba(0, 0, 0, 0.6)' : 'text.secondary' }}>
                             by {queueItem.album.artist}
                           </Typography>
                         )}
                       </Box>
                     ) : (
-                      <Typography color="text.secondary">Unknown Album</Typography>
+                      <Typography sx={{ color: isCurrentTrack(queueItem.track) ? 'rgba(0, 0, 0, 0.6)' : 'text.secondary' }}>
+                        Unknown Album
+                      </Typography>
                     )}
                   </TableCell>
 
-                  <TableCell align="center" sx={{ color: 'text.secondary' }}>
+                  <TableCell align="center" sx={{ color: isCurrentTrack(queueItem.track) ? '#000000' : 'text.secondary' }}>
                     {formatDuration(queueItem.track.duration || 0)}
                   </TableCell>
 

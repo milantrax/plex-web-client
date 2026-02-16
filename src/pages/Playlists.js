@@ -40,6 +40,14 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     fetchPlaylists();
   }, []);
 
+  // Force component update when currentTrack or isPlaying changes
+  useEffect(() => {
+    // This ensures visual indicators update when playback state changes
+    if (currentTrack) {
+      console.log('Current track updated:', currentTrack.title, 'Playing:', isPlaying);
+    }
+  }, [currentTrack, isPlaying]);
+
   const handlePlaylistClick = async (playlist) => {
     setSelectedPlaylist(playlist);
     setLoadingTracks(true);
@@ -91,7 +99,8 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     if (!currentTrack || !playlistTracks || playlistTracks.length === 0) {
       return false;
     }
-    return playlistTracks.some(track => track.ratingKey === currentTrack.ratingKey);
+    const currentKey = String(currentTrack.ratingKey);
+    return playlistTracks.some(track => String(track.ratingKey) === currentKey);
   };
 
   const handleOpenMenu = (event) => {
@@ -246,18 +255,17 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                     }
                   }}
                 >
-                  <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
-                    {containsCurrentTrack && (
-                      <Box sx={{ color: '#000000', display: 'flex', alignItems: 'center' }}>
-                        {isPlaying ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
-                      </Box>
-                    )}
-                    <ListItemText
-                      primary={playlist.title}
-                      secondary={`${playlist.leafCount} tracks`}
-                      primaryTypographyProps={{ fontWeight: 500 }}
-                    />
-                  </Stack>
+                  <ListItemText
+                    primary={playlist.title}
+                    secondary={`${playlist.leafCount} tracks`}
+                    primaryTypographyProps={{
+                      fontWeight: 500,
+                      color: containsCurrentTrack ? '#000000' : 'inherit'
+                    }}
+                    secondaryTypographyProps={{
+                      color: containsCurrentTrack ? 'rgba(0, 0, 0, 0.6)' : 'inherit'
+                    }}
+                  />
                 </ListItemButton>
               </ListItem>
             );
@@ -280,10 +288,12 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                 onClick={() => handlePlaylistClick(playlist)}
                 color={isSelected ? 'primary' : 'default'}
                 variant={isSelected ? 'filled' : 'outlined'}
-                icon={containsCurrentTrack ? (isPlaying ? <PauseIcon /> : <PlayArrowIcon />) : undefined}
                 sx={{
                   opacity: containsCurrentTrack && !isPlaying ? 0.7 : 1,
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  bgcolor: containsCurrentTrack ? 'primary.light' : undefined,
+                  borderLeft: containsCurrentTrack ? 4 : 0,
+                  borderLeftColor: 'primary.main'
                 }}
               />
             );
@@ -319,41 +329,74 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
               <CardContent sx={{ p: 2.5 }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2}>
                   <Stack spacing={1}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      {isPlaylistContainsCurrentTrack() && (
-                        <Box sx={{ color: '#000000', display: 'flex', alignItems: 'center' }}>
-                          {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
-                        </Box>
-                      )}
-                      <Typography variant="h5" component="h2">
+                    <Stack direction="row" alignItems="center" spacing={1.5}>
+                      <Typography variant="h5" component="h2" sx={{ color: '#000000' }}>
                         {selectedPlaylist.title}
                       </Typography>
+                      {isPlaylistContainsCurrentTrack() && (
+                        <Chip
+                          label="Now Playing"
+                          size="small"
+                          sx={{
+                            bgcolor: '#000000',
+                            color: '#ffffff',
+                            fontWeight: 600,
+                            fontSize: '0.7rem',
+                            height: '22px'
+                          }}
+                        />
+                      )}
                     </Stack>
-                    <Chip label={`${playlistTracks.length} tracks`} color="primary" size="small" />
+                    <Chip
+                      label={`${playlistTracks.length} tracks`}
+                      color="primary"
+                      size="small"
+                      sx={{
+                        color: '#000000',
+                        borderColor: '#000000'
+                      }}
+                    />
                   </Stack>
                   <Stack direction="row" spacing={1.5}>
                     <Button
                       variant="contained"
-                      color="primary"
                       endIcon={<ArrowDropDownIcon />}
                       onClick={handleOpenMenu}
                       disabled={playlistTracks.length === 0}
                       sx={{
                         fontWeight: 600,
-                        textTransform: 'none'
+                        textTransform: 'none',
+                        bgcolor: '#000000',
+                        color: '#ffffff',
+                        '&:hover': {
+                          bgcolor: '#333333'
+                        },
+                        '&:disabled': {
+                          bgcolor: 'action.disabledBackground',
+                          color: 'action.disabled'
+                        }
                       }}
                     >
                       Playlist Actions
                     </Button>
                     <Button
                       variant="outlined"
-                      color="primary"
                       onClick={exportPlaylistAsM3U}
                       disabled={playlistTracks.length === 0}
                       title="Export playlist as M3U file"
                       sx={{
                         fontWeight: 600,
-                        textTransform: 'none'
+                        textTransform: 'none',
+                        borderColor: '#000000',
+                        color: '#000000',
+                        '&:hover': {
+                          borderColor: '#000000',
+                          bgcolor: 'rgba(0, 0, 0, 0.04)'
+                        },
+                        '&:disabled': {
+                          borderColor: 'action.disabled',
+                          color: 'action.disabled'
+                        }
                       }}
                     >
                       Export M3U

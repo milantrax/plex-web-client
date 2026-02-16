@@ -16,10 +16,16 @@ import StarIcon from '@mui/icons-material/Star';
 
 function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [queuedTracks, setQueuedTracks] = useState(new Set());
+  const [, forceUpdate] = useState({});
 
   useEffect(() => {
     updateQueuedTracks();
   }, []);
+
+  useEffect(() => {
+    // Force re-render when currentTrack or isPlaying changes
+    forceUpdate({});
+  }, [currentTrack, isPlaying]);
 
   const updateQueuedTracks = () => {
     const queue = queueManager.getQueue();
@@ -60,7 +66,11 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
   };
 
   const isCurrentTrack = (track) => {
-    return currentTrack && currentTrack.ratingKey === track.ratingKey;
+    if (!currentTrack || !track) return false;
+    // Compare ratingKey as strings to handle potential type mismatches
+    const currentKey = String(currentTrack.ratingKey);
+    const trackKey = String(track.ratingKey);
+    return currentKey === trackKey;
   };
 
   const handleDownload = async (event, track) => {
@@ -177,8 +187,10 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
                 )}
                 <Typography
                   variant="body2"
-                  color="text.secondary"
-                  sx={{ fontVariantNumeric: 'tabular-nums' }}
+                  sx={{
+                    fontVariantNumeric: 'tabular-nums',
+                    color: isCurrent ? '#000000' : 'text.secondary'
+                  }}
                 >
                   {index + 1}
                 </Typography>
@@ -189,6 +201,7 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
                 variant="body2"
                 sx={{
                   transition: 'color 0.2s',
+                  color: isCurrent ? '#000000' : 'inherit',
                   '&:hover': {
                     color: 'primary.main',
                   },
@@ -217,8 +230,11 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
               {/* Duration */}
               <Typography
                 variant="body2"
-                color="text.secondary"
-                sx={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
+                sx={{
+                  textAlign: 'right',
+                  fontVariantNumeric: 'tabular-nums',
+                  color: isCurrent ? '#000000' : 'text.secondary'
+                }}
               >
                 {formatDuration(track.duration || 0)}
               </Typography>

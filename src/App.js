@@ -119,7 +119,7 @@ function App() {
         >
           <Routes>
             <Route path="/" element={<Library onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
-            <Route path="/playlists" element={<Playlists onPlayTrack={handlePlayTrack} />} />
+            <Route path="/playlists" element={<Playlists onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
             <Route path="/genres" element={<Genres onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
             <Route path="/artists" element={<Artists />} />
             <Route path="/artist/:artistId" element={<ArtistPage onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
