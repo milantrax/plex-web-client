@@ -1,6 +1,6 @@
 // src/pages/Playlists.js
 import React, { useState, useEffect } from 'react';
-import { Box, List, ListItem, ListItemButton, ListItemText, Card, CardContent, Button, Typography, Chip, Stack } from '@mui/material';
+import { Box, List, ListItem, ListItemButton, ListItemText, Card, CardContent, Button, Typography, Chip, Stack, Menu, MenuItem, ListItemIcon, Snackbar, Alert } from '@mui/material';
 import { getPlaylists, getPlaylistItems } from '../api/plexApi';
 import { PLEX_URL, PLEX_TOKEN } from '../config';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -8,6 +8,9 @@ import TrackList from '../components/TrackList';
 import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
+import QueueMusicIcon from '@mui/icons-material/QueueMusic';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import queueManager from '../utils/queueManager';
 
 function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [playlists, setPlaylists] = useState([]);
@@ -16,6 +19,9 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
   const [playlistTracks, setPlaylistTracks] = useState([]);
   const [loadingTracks, setLoadingTracks] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const menuOpen = Boolean(anchorEl);
 
   useEffect(() => {
     const fetchPlaylists = async () => {
@@ -86,6 +92,97 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       return false;
     }
     return playlistTracks.some(track => track.ratingKey === currentTrack.ratingKey);
+  };
+
+  const handleOpenMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  const handlePlayPlaylist = () => {
+    handleCloseMenu();
+
+    if (!playlistTracks || playlistTracks.length === 0) {
+      setSnackbar({
+        open: true,
+        message: 'No tracks available to play',
+        severity: 'warning'
+      });
+      return;
+    }
+
+    console.log('Playing playlist - clearing queue and adding tracks');
+
+    // Clear existing queue
+    queueManager.clearQueue();
+
+    // Add all playlist tracks
+    const result = queueManager.addMultipleToQueue(playlistTracks, selectedPlaylist);
+
+    console.log('Play playlist result:', result);
+
+    if (result.success) {
+      // Get the first track from the playlist
+      const firstTrack = playlistTracks[0];
+
+      // Start playing the first track
+      if (onPlayTrack && firstTrack) {
+        onPlayTrack(firstTrack);
+        setSnackbar({
+          open: true,
+          message: `Playing playlist: ${selectedPlaylist.title}`,
+          severity: 'success'
+        });
+      }
+    } else {
+      setSnackbar({
+        open: true,
+        message: 'Failed to play playlist',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleEnqueuePlaylist = () => {
+    handleCloseMenu();
+
+    if (!playlistTracks || playlistTracks.length === 0) {
+      setSnackbar({
+        open: true,
+        message: 'No tracks available to enqueue',
+        severity: 'warning'
+      });
+      return;
+    }
+
+    console.log('Enqueueing playlist:', selectedPlaylist);
+    console.log('Tracks to enqueue:', playlistTracks);
+
+    const result = queueManager.addMultipleToQueue(playlistTracks, selectedPlaylist);
+
+    console.log('Enqueue result:', result);
+    console.log('Current queue after enqueue:', queueManager.getQueue());
+
+    if (result.success) {
+      setSnackbar({
+        open: true,
+        message: `Added ${result.addedCount} track${result.addedCount !== 1 ? 's' : ''} to queue${result.skippedCount > 0 ? ` (${result.skippedCount} already in queue)` : ''}`,
+        severity: 'success'
+      });
+    } else {
+      setSnackbar({
+        open: true,
+        message: 'All tracks are already in the queue',
+        severity: 'info'
+      });
+    }
   };
 
   if (loading) return <LoadingSpinner />;
@@ -234,16 +331,66 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                     </Stack>
                     <Chip label={`${playlistTracks.length} tracks`} color="primary" size="small" />
                   </Stack>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={exportPlaylistAsM3U}
-                    disabled={playlistTracks.length === 0}
-                    title="Export playlist as M3U file"
-                  >
-                    Export M3U
-                  </Button>
+                  <Stack direction="row" spacing={1.5}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      endIcon={<ArrowDropDownIcon />}
+                      onClick={handleOpenMenu}
+                      disabled={playlistTracks.length === 0}
+                      sx={{
+                        fontWeight: 600,
+                        textTransform: 'none'
+                      }}
+                    >
+                      Playlist Actions
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={exportPlaylistAsM3U}
+                      disabled={playlistTracks.length === 0}
+                      title="Export playlist as M3U file"
+                      sx={{
+                        fontWeight: 600,
+                        textTransform: 'none'
+                      }}
+                    >
+                      Export M3U
+                    </Button>
+                  </Stack>
                 </Stack>
+
+                <Menu
+                  anchorEl={anchorEl}
+                  open={menuOpen}
+                  onClose={handleCloseMenu}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'right',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                  }}
+                >
+                  <MenuItem onClick={handlePlayPlaylist}>
+                    <ListItemIcon>
+                      <PlayArrowIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>
+                      Play Now
+                    </ListItemText>
+                  </MenuItem>
+                  <MenuItem onClick={handleEnqueuePlaylist}>
+                    <ListItemIcon>
+                      <QueueMusicIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>
+                      Enqueue Playlist
+                    </ListItemText>
+                  </MenuItem>
+                </Menu>
               </CardContent>
             </Card>
 
@@ -277,6 +424,22 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           </Box>
         )}
       </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
