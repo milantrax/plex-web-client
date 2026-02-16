@@ -9,17 +9,24 @@ import {
   CardContent,
   Typography,
   Box,
-  IconButton
+  IconButton,
+  Button,
+  Collapse,
+  Chip,
+  Divider
 } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 
-function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayback, isArtist = false }) {
+function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayback, isArtist = false, showTrackMatch = false }) {
   const imageUrl = getPlexImageUrl(album.thumb || album.art);
   const navigate = useNavigate();
   const actionInProgress = useRef(false);
   const [cardWidth, setCardWidth] = useState(getAlbumCardWidth());
   const [isHovered, setIsHovered] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const hasTrackMatch = showTrackMatch && album.matchType === 'track' && album.matchingTrack;
 
   useEffect(() => {
     const handleWidthChange = (event) => {
@@ -104,6 +111,8 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
         cursor: 'pointer',
         position: 'relative',
         transition: 'all 0.2s ease-in-out',
+        display: 'flex',
+        flexDirection: 'column',
         '&:hover': {
           transform: 'translateY(-4px)',
           elevation: 4,
@@ -184,7 +193,7 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
       )}
 
       {/* Album/Artist Info */}
-      <CardContent sx={{ p: 1.25, textAlign: 'left' }}>
+      <CardContent sx={{ p: 1.25, textAlign: 'left', pb: hasTrackMatch ? 0.5 : 1.25, flexGrow: 1 }}>
         <Typography
           variant="body2"
           component="h2"
@@ -219,6 +228,57 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
           </Typography>
         )}
       </CardContent>
+
+      {/* Track Match Footer */}
+      {hasTrackMatch && (
+        <Box sx={{ mt: 'auto' }}>
+          <Divider />
+          <Box sx={{ px: 1.25, py: 0.75 }}>
+            <Button
+              variant="text"
+              fullWidth
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsExpanded(!isExpanded);
+              }}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.5,
+                py: 0.5,
+                minHeight: 0,
+                textTransform: 'none'
+              }}
+            >
+              <Typography
+                component="span"
+                color="primary"
+                sx={{ fontWeight: 700, fontSize: '1rem' }}
+              >
+                {isExpanded ? '−' : '+'}
+              </Typography>
+              <Typography variant="body2" color="primary">
+                Track Match
+              </Typography>
+            </Button>
+            <Collapse in={isExpanded}>
+              <Box sx={{ pt: 0.75, pb: 0.5 }}>
+                <Chip
+                  label="Track Match"
+                  color="primary"
+                  size="small"
+                  sx={{ mb: 0.75 }}
+                />
+                <Typography variant="body2" color="text.secondary">
+                  Contains: "{album.matchingTrack}"
+                </Typography>
+              </Box>
+            </Collapse>
+          </Box>
+        </Box>
+      )}
     </Card>
   );
 }

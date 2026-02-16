@@ -16,12 +16,10 @@ class Search extends React.Component {
       isLoading: false,
       error: null,
       query: '',
-      expandedItems: new Set(),
       cardWidth: getAlbumCardWidth()
     };
 
     this.searchAlbums = this.searchAlbums.bind(this);
-    this.toggleExpanded = this.toggleExpanded.bind(this);
     this.handleWidthChange = this.handleWidthChange.bind(this);
   }
 
@@ -81,20 +79,8 @@ class Search extends React.Component {
     }
   }
 
-  toggleExpanded(albumKey) {
-    this.setState(prevState => {
-      const newExpandedItems = new Set(prevState.expandedItems);
-      if (newExpandedItems.has(albumKey)) {
-        newExpandedItems.delete(albumKey);
-      } else {
-        newExpandedItems.add(albumKey);
-      }
-      return { expandedItems: newExpandedItems };
-    });
-  }
-
   render() {
-    const { albums, isLoading, error, query, expandedItems, cardWidth } = this.state;
+    const { albums, isLoading, error, query, cardWidth } = this.state;
     const {
       currentTrack,
       isPlaying,
@@ -190,62 +176,18 @@ class Search extends React.Component {
             </Card>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-              {albums.map(album => {
-                const isExpanded = expandedItems.has(album.ratingKey);
-                const hasTrackMatch = album.matchType === 'track' && album.matchingTrack;
-
-                return (
-                  <Box key={album.ratingKey} sx={{ position: 'relative' }}>
-                    <AlbumCard
-                      album={album}
-                      currentTrack={currentTrack}
-                      isPlaying={isPlaying}
-                      onPlayTrack={onPlayTrack}
-                      onTogglePlayback={onTogglePlayback}
-                      onCurrentTrackChange={onCurrentTrackChange}
-                    />
-                    {hasTrackMatch && (
-                      <Box sx={{ mt: 1, mx: 1 }}>
-                        <Button
-                          variant="text"
-                          fullWidth
-                          onClick={() => this.toggleExpanded(album.ratingKey)}
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: 1
-                          }}
-                        >
-                          <Typography
-                            component="span"
-                            color="primary"
-                            sx={{ fontWeight: 700, fontSize: '1.125rem' }}
-                          >
-                            {isExpanded ? '−' : '+'}
-                          </Typography>
-                          <Typography variant="body2">Track Match</Typography>
-                        </Button>
-                        {isExpanded && (
-                          <Card sx={{ mt: 1, boxShadow: 2 }}>
-                            <CardContent sx={{ p: 1.5 }}>
-                              <Chip
-                                label="Track Match"
-                                color="primary"
-                                size="small"
-                                sx={{ mb: 1 }}
-                              />
-                              <Typography variant="body2" color="text.secondary">
-                                Contains: "{album.matchingTrack}"
-                              </Typography>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </Box>
-                    )}
-                  </Box>
-                );
-              })}
+              {albums.map(album => (
+                <AlbumCard
+                  key={album.ratingKey}
+                  album={album}
+                  currentTrack={currentTrack}
+                  isPlaying={isPlaying}
+                  onPlayTrack={onPlayTrack}
+                  onTogglePlayback={onTogglePlayback}
+                  onCurrentTrackChange={onCurrentTrackChange}
+                  showTrackMatch={true}
+                />
+              ))}
             </Box>
           </Box>
         )}
