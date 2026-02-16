@@ -179,12 +179,7 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
               }}
             >
               {/* Track Number */}
-              <Box sx={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                {isCurrent && (
-                  <Box sx={{ color: '#000000', display: 'flex', alignItems: 'center' }}>
-                    {isPlaying ? <PauseIcon sx={{ fontSize: '1rem' }} /> : <PlayArrowIcon sx={{ fontSize: '1rem' }} />}
-                  </Box>
-                )}
+              <Box sx={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <Typography
                   variant="body2"
                   sx={{
@@ -197,18 +192,25 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
               </Box>
 
               {/* Title */}
-              <Typography
-                variant="body2"
-                sx={{
-                  transition: 'color 0.2s',
-                  color: isCurrent ? '#000000' : 'inherit',
-                  '&:hover': {
-                    color: 'primary.main',
-                  },
-                }}
-              >
-                {track.title}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75 }}>
+                {isCurrent && (
+                  <Box sx={{ color: '#000000', display: 'flex', alignItems: 'center' }}>
+                    {isPlaying ? <PauseIcon sx={{ fontSize: '1rem' }} /> : <PlayArrowIcon sx={{ fontSize: '1rem' }} />}
+                  </Box>
+                )}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    transition: 'color 0.2s',
+                    color: isCurrent ? '#000000' : 'inherit',
+                    '&:hover': {
+                      color: 'primary.main',
+                    },
+                  }}
+                >
+                  {track.title}
+                </Typography>
+              </Box>
 
               {/* Rating - Desktop only */}
               <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center' }}>
