@@ -23,14 +23,19 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
   }, []);
 
   useEffect(() => {
-    // Force re-render when currentTrack or isPlaying changes
     forceUpdate({});
   }, [currentTrack, isPlaying]);
 
   const updateQueuedTracks = async () => {
-    const queue = await queueManager.getQueue();
-    const queuedTrackKeys = new Set(queue.map(item => item.track.ratingKey));
-    setQueuedTracks(queuedTrackKeys);
+    try {
+      const queue = await queueManager.getQueue();
+      const queueArray = Array.isArray(queue) ? queue : [];
+      const queuedTrackKeys = new Set(queueArray.map(item => item.track.ratingKey));
+      setQueuedTracks(queuedTrackKeys);
+    } catch (error) {
+      console.error('Error updating queued tracks:', error);
+      setQueuedTracks(new Set()); // Empty set on error
+    }
   };
 
   if (!tracks || tracks.length === 0) {
@@ -67,7 +72,6 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
 
   const isCurrentTrack = (track) => {
     if (!currentTrack || !track) return false;
-    // Compare ratingKey as strings to handle potential type mismatches
     const currentKey = String(currentTrack.ratingKey);
     const trackKey = String(track.ratingKey);
     return currentKey === trackKey;

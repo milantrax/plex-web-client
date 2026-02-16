@@ -126,12 +126,14 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
            } else {
              setError("No libraries found on your Plex server. Please check your Plex configuration.");
            }
+           setLoading(false); // Stop loading when there's an error
         }
       } catch (err) {
          console.error("Failed to fetch sections:", err);
          setError("Failed to connect to Plex server or fetch library sections.");
+         setLoading(false); // Stop loading on error
       } finally {
-         // Don't stop loading here, wait for albums to load or error out
+         // Loading will be stopped by error handling or by the albums useEffect
       }
     };
     fetchMusicSection();
@@ -140,7 +142,7 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
    useEffect(() => {
      const fetchAlbums = async () => {
          if (!musicSectionId) {
-             if (!error) setLoading(false);
+             setLoading(false); // Always stop loading if no section ID
              return;
          };
          setLoading(true);

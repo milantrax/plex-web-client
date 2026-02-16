@@ -192,7 +192,6 @@ class StorageManager {
       console.log('Starting migration from localStorage to IndexedDB...');
       let migratedCount = 0;
 
-      // Migrate API cache
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
 
@@ -201,7 +200,6 @@ class StorageManager {
             const value = localStorage.getItem(key);
             const parsedValue = JSON.parse(value);
 
-            // Determine store type
             let store = 'api';
             if (key === 'plex_playback_queue') {
               store = 'queue';
@@ -209,7 +207,6 @@ class StorageManager {
               store = 'settings';
             }
 
-            // Migrate to IndexedDB
             await this.set(key, parsedValue, store);
             migratedCount++;
           } catch (error) {
@@ -219,10 +216,6 @@ class StorageManager {
       }
 
       console.log(`Migration complete. Migrated ${migratedCount} items.`);
-
-      // Optionally clear localStorage after successful migration
-      // Uncomment if you want to remove old localStorage data
-      // this.clearLocalStorageCache();
 
     } catch (error) {
       console.error('Migration error:', error);
@@ -246,8 +239,5 @@ class StorageManager {
   }
 }
 
-// Export singleton instance
 export const storage = new StorageManager();
-
-// Export store instances for direct access if needed
 export { apiCache, queueStore, settingsStore };

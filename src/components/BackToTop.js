@@ -7,7 +7,6 @@ import { PLAYER_HEIGHT } from '../theme/theme';
 function BackToTop({ scrollContainerRef }) {
   const [showBackToTop, setShowBackToTop] = useState(false);
 
-  // Handle scroll to top
   const handleScrollToTop = () => {
     if (scrollContainerRef?.current) {
       scrollContainerRef.current.scrollTo({
@@ -17,7 +16,6 @@ function BackToTop({ scrollContainerRef }) {
     }
   };
 
-  // Track scroll position to show/hide back to top button
   useEffect(() => {
     const container = scrollContainerRef?.current;
     if (!container) return;
@@ -28,7 +26,6 @@ function BackToTop({ scrollContainerRef }) {
       setShowBackToTop(scrolled);
     };
 
-    // Initial check
     handleScroll();
 
     container.addEventListener('scroll', handleScroll);

@@ -79,10 +79,9 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
   const handleGenreClick = (genre) => {
     setSelectedGenre(genre);
-    setSelectedYear(''); // Reset year selection when genre changes
+    setSelectedYear('');
   };
 
-  // Group albums by year
   const groupAlbumsByYear = (albums) => {
     const grouped = albums.reduce((acc, album) => {
       const year = album.year || 'Unknown';
@@ -93,7 +92,6 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       return acc;
     }, {});
 
-    // Sort years in descending order (newest first)
     return Object.keys(grouped)
       .sort((a, b) => {
         if (a === 'Unknown') return 1;
@@ -106,7 +104,6 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       }));
   };
 
-  // Handle year selection and scroll to year section
   const handleYearSelect = (year) => {
     setSelectedYear(year);
     if (year) {
@@ -115,12 +112,10 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
         const container = scrollContainerRef.current;
 
         if (yearElement && container) {
-          // Get the position of the year element relative to the container
           const containerRect = container.getBoundingClientRect();
           const yearRect = yearElement.getBoundingClientRect();
           const offset = yearRect.top - containerRect.top + container.scrollTop;
 
-          // Scroll the container to the year element
           container.scrollTo({
             top: offset - 20, // 20px padding from top
             behavior: 'smooth'
@@ -320,7 +315,7 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           </>
         ) : (
           <Box sx={{ textAlign: 'center', py: 20 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
               Select a genre
             </Typography>
             <Typography color="text.secondary" sx={{ m: 0 }}>

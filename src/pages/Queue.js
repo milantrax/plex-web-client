@@ -218,8 +218,11 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
       {queue.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 10 }}>
-          <Typography variant="h5" sx={{ fontWeight: 400}}>
-            Playback queue is empty
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+              Playback queue is empty
+          </Typography>
+          <Typography color="text.secondary" sx={{ m: 0 }}>
+            Add a track from the album or playlist
           </Typography>
         </Box>
       ) : (

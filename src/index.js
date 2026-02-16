@@ -4,8 +4,7 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ThemeProvider } from './theme/ThemeContext';
-import * as serviceWorkerRegistration from './serviceWorkerRegistration';
-import { storage } from './utils/storage';
+// import { storage } from './utils/storage'; // Disabled during debugging
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -16,33 +15,47 @@ root.render(
   </React.StrictMode>
 );
 
-// Register service worker for caching media and static assets
-serviceWorkerRegistration.register({
-  onSuccess: () => {
-    console.log('Service worker registered successfully');
-  },
-  onUpdate: (registration) => {
-    console.log('New service worker content available');
-    if (window.confirm('New version available! Reload to update?')) {
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-      window.location.reload();
-    }
-  }
-});
+// TEMPORARILY DISABLED - Service Worker causing reload loops
+// TODO: Re-enable after debugging
+console.log('[Service Worker] Disabled to prevent reload loops');
 
-// Migrate data from localStorage to IndexedDB on first load
-const MIGRATION_FLAG = 'plex_storage_migrated';
-if (!localStorage.getItem(MIGRATION_FLAG)) {
-  console.log('First time with new storage system, migrating data...');
-  storage.migrateFromLocalStorage().then(() => {
-    localStorage.setItem(MIGRATION_FLAG, 'true');
-    console.log('Migration completed successfully');
-  }).catch((error) => {
-    console.error('Migration failed:', error);
+// Unregister any existing Service Workers
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(registration => {
+      registration.unregister();
+      console.log('[Service Worker] Unregistered existing worker');
+    });
   });
 }
+
+// serviceWorkerRegistration.register({
+//   onSuccess: () => {
+//     console.log('[Service Worker] Registered successfully');
+//   },
+//   onUpdate: (registration) => {
+//     console.log('[Service Worker] New content available');
+//   }
+// });
+
+// TEMPORARILY DISABLED - Migration causing issues
+// TODO: Re-enable after debugging
+console.log('[Migration] Disabled to prevent reload loops');
+
+// Mark as migrated to skip migration attempts
+localStorage.setItem('plex_storage_migrated', 'true');
+
+// // Migrate data from localStorage to IndexedDB on first load
+// const MIGRATION_FLAG = 'plex_storage_migrated';
+// if (!localStorage.getItem(MIGRATION_FLAG)) {
+//   console.log('First time with new storage system, migrating data...');
+//   storage.migrateFromLocalStorage().then(() => {
+//     localStorage.setItem(MIGRATION_FLAG, 'true');
+//     console.log('Migration completed successfully');
+//   }).catch((error) => {
+//     console.error('Migration failed:', error);
+//   });
+// }
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

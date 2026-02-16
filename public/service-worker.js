@@ -42,7 +42,8 @@ self.addEventListener('install', (event) => {
           return Promise.resolve();
         });
       })
-      .then(() => self.skipWaiting())
+      // Don't auto-skipWaiting - wait for user approval or explicit message
+      // .then(() => self.skipWaiting())
   );
 });
 
