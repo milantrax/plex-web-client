@@ -1,6 +1,6 @@
 // src/pages/Genres.js
-import React, { useState, useEffect } from 'react';
-import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip, Stack, Divider } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip, Stack, Divider, Select, MenuItem, FormControl } from '@mui/material';
 import { getSections, getGenres, getAlbumsByGenre } from '../api/plexApi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AlbumCard from '../components/AlbumCard';
@@ -14,6 +14,8 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [loadingAlbums, setLoadingAlbums] = useState(false);
   const [error, setError] = useState(null);
   const [musicSectionId, setMusicSectionId] = useState(null);
+  const [selectedYear, setSelectedYear] = useState('');
+  const yearRefs = useRef({});
 
    useEffect(() => {
     const fetchMusicSection = async () => {
@@ -75,6 +77,7 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
   const handleGenreClick = (genre) => {
     setSelectedGenre(genre);
+    setSelectedYear(''); // Reset year selection when genre changes
   };
 
   // Group albums by year
@@ -99,6 +102,17 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
         year,
         albums: grouped[year]
       }));
+  };
+
+  // Handle year selection and scroll to year section
+  const handleYearSelect = (year) => {
+    setSelectedYear(year);
+    if (year && yearRefs.current[year]) {
+      yearRefs.current[year].scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
   };
 
   if (loading) return <LoadingSpinner />;
@@ -192,16 +206,39 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
               direction="row"
               justifyContent="space-between"
               alignItems="center"
-              sx={{
-                mb: 2.5,
-                pb: 2,
-                borderBottom: 1,
-                borderColor: 'divider'
-              }}
+              flexWrap="wrap"
+              gap={2}
+              sx={{ mb: 2.5 }}
             >
-              <Typography variant="h5" component="h3" sx={{ fontWeight: 700, m: 0 }}>
-                {selectedGenre.title}
-              </Typography>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Typography variant="h5" component="h3" sx={{ fontWeight: 700, m: 0 }}>
+                  {selectedGenre.title}
+                </Typography>
+                {albums.length > 0 && (
+                  <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <Select
+                      value={selectedYear}
+                      onChange={(e) => handleYearSelect(e.target.value)}
+                      displayEmpty
+                      sx={{
+                        fontSize: '0.875rem',
+                        '& .MuiSelect-select': {
+                          py: 0.75
+                        }
+                      }}
+                    >
+                      <MenuItem value="" sx={{ fontStyle: 'normal' }}>
+                        All Years
+                      </MenuItem>
+                      {groupAlbumsByYear(albums).map(({ year }) => (
+                        <MenuItem key={year} value={year}>
+                          {year}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+              </Stack>
               <Chip
                 label={`${albums.length} album${albums.length !== 1 ? 's' : ''}`}
                 color="primary"
@@ -220,7 +257,11 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
             ) : (
               <Box>
                 {groupAlbumsByYear(albums).map((yearGroup, index) => (
-                  <Box key={yearGroup.year} sx={{ mb: 4 }}>
+                  <Box
+                    key={yearGroup.year}
+                    ref={(el) => (yearRefs.current[yearGroup.year] = el)}
+                    sx={{ mb: 4 }}
+                  >
                     {/* Year Header with Divider */}
                     <Box
                       sx={{
