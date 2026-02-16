@@ -15,7 +15,7 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [error, setError] = useState(null);
   const [musicSectionId, setMusicSectionId] = useState(null);
   const [selectedYear, setSelectedYear] = useState('');
-  const yearRefs = useRef({});
+  const scrollContainerRef = useRef(null);
 
    useEffect(() => {
     const fetchMusicSection = async () => {
@@ -107,11 +107,24 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   // Handle year selection and scroll to year section
   const handleYearSelect = (year) => {
     setSelectedYear(year);
-    if (year && yearRefs.current[year]) {
-      yearRefs.current[year].scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
+    if (year) {
+      setTimeout(() => {
+        const yearElement = document.getElementById(`year-${year}`);
+        const container = scrollContainerRef.current;
+
+        if (yearElement && container) {
+          // Get the position of the year element relative to the container
+          const containerRect = container.getBoundingClientRect();
+          const yearRect = yearElement.getBoundingClientRect();
+          const offset = yearRect.top - containerRect.top + container.scrollTop;
+
+          // Scroll the container to the year element
+          container.scrollTo({
+            top: offset - 20, // 20px padding from top
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
     }
   };
 
@@ -190,6 +203,7 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
       {/* Main Content */}
       <Box
+        ref={scrollContainerRef}
         sx={{
           flex: 1,
           height: '100%',
@@ -259,7 +273,7 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                 {groupAlbumsByYear(albums).map((yearGroup, index) => (
                   <Box
                     key={yearGroup.year}
-                    ref={(el) => (yearRefs.current[yearGroup.year] = el)}
+                    id={`year-${yearGroup.year}`}
                     sx={{ mb: 4 }}
                   >
                     {/* Year Header with Divider */}
