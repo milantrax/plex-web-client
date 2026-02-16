@@ -20,7 +20,7 @@ import { storage } from '../utils/storage';
 
 // Cache configuration
 const CACHE_CONFIG = {
-  defaultExpirationMinutes: 60,
+  defaultExpirationMinutes: 180,
   keys: {
     sections: 'plex_sections',
     albums: 'plex_albums_',
@@ -110,9 +110,9 @@ export const plexApi = axios.create({
   },
 });
 
-// --- Helper Functions ---
+// Helper Functions
 export const getPlexImageUrl = (thumbPath) => {
-  if (!thumbPath) return null; // Handle cases where thumb might be missing
+  if (!thumbPath) return null;
   const url = new URL(PLEX_URL + thumbPath);
   url.searchParams.append('X-Plex-Token', PLEX_TOKEN);
   return url.toString();
@@ -142,7 +142,7 @@ export const getPlexTranscodeUrl = (partKey) => {
   return url.toString();
 }
 
-// --- API Calls ---
+// API Calls
 /**
  * Get all library sections
  * @param {boolean} [useCache=true] - Whether to use cache if available
@@ -187,10 +187,10 @@ export const getSectionItems = async (sectionId, type = 9, start = 0, size = nul
   const cacheKey = `${CACHE_CONFIG.keys.albums}${sectionId}_${type}_${start}_${size}`;
 
   try {
-    if (useCache && start === 0 && !size) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 120);
+    if (useCache) {
+      const cachedData = await cacheHelpers.getFromCache(cacheKey, 180); // 3 hours to match Service Worker
       if (cachedData) {
-        console.log(`Using cached section items for section ${sectionId}`);
+        console.log(`Using cached section items for section ${sectionId} (start: ${start}, size: ${size})`);
         return cachedData;
       }
     }
@@ -206,8 +206,9 @@ export const getSectionItems = async (sectionId, type = 9, start = 0, size = nul
     const response = await plexApi.get(url);
     const items = response.data.MediaContainer.Metadata || [];
 
-    if (start === 0 && !size) {
-      await cacheHelpers.saveToCache(cacheKey, items, 120);
+    if (useCache) {
+      await cacheHelpers.saveToCache(cacheKey, items, 180); // 3 hours
+      console.log(`Cached section items for section ${sectionId} (start: ${start}, size: ${size})`);
     }
 
     return items;
@@ -517,7 +518,7 @@ export const getYears = async (sectionId, type = 9, useCache = true) => {
         console.log('Year map after processing:', yearMap);
         
         years = Array.from(yearMap.entries()).map(([year, count]) => ({
-          id: year.toString(), // Use the year as ID for easier filtering
+          id: year.toString(),
           title: year.toString(),
           count: count
         }));

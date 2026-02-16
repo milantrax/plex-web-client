@@ -19,6 +19,9 @@ const STATIC_ASSETS = [
 const MAX_MEDIA_CACHE_SIZE = 50; // Maximum 50 media files
 const MAX_RUNTIME_CACHE_SIZE = 100; // Maximum 100 runtime entries
 
+// Cache freshness duration (3 hours in milliseconds)
+const CACHE_FRESHNESS_DURATION = 3 * 60 * 60 * 1000; // 3 hours
+
 /**
  * Install event - cache static assets
  */
@@ -84,13 +87,13 @@ self.addEventListener('fetch', (event) => {
 
   // Determine caching strategy based on request type
   if (isPlexMediaRequest(url)) {
-    // Plex media (images, audio) - cache-first strategy
-    event.respondWith(cacheFirstStrategy(request, MEDIA_CACHE, MAX_MEDIA_CACHE_SIZE));
+    // Plex media (images, audio) - cache-first with 3-hour freshness
+    event.respondWith(cacheFirstWithRevalidation(request, MEDIA_CACHE, MAX_MEDIA_CACHE_SIZE));
   } else if (isPlexAPIRequest(url)) {
-    // Plex API requests - network-first strategy (data is cached in IndexedDB instead)
-    event.respondWith(networkFirstStrategy(request, RUNTIME_CACHE));
+    // Plex API requests - cache-first with 3-hour freshness
+    event.respondWith(cacheFirstWithRevalidation(request, RUNTIME_CACHE, MAX_RUNTIME_CACHE_SIZE));
   } else if (isStaticAsset(url)) {
-    // Static assets - cache-first strategy
+    // Static assets - cache-first strategy (no revalidation needed)
     event.respondWith(cacheFirstStrategy(request, STATIC_CACHE));
   } else {
     // Default - network-first for HTML pages
@@ -167,6 +170,64 @@ async function cacheFirstStrategy(request, cacheName, maxSize = null) {
     return networkResponse;
   } catch (error) {
     console.error('[Service Worker] Cache-first strategy failed:', error);
+    throw error;
+  }
+}
+
+/**
+ * Cache-first with time-based revalidation
+ * Serves from cache if fresh (< 3 hours old), otherwise fetches from network
+ */
+async function cacheFirstWithRevalidation(request, cacheName, maxSize = null) {
+  try {
+    const cache = await caches.open(cacheName);
+    const cachedResponse = await cache.match(request);
+
+    // Check if cached response exists and is fresh
+    if (cachedResponse) {
+      const cachedTime = new Date(cachedResponse.headers.get('date')).getTime();
+      const now = Date.now();
+      const age = now - cachedTime;
+
+      // If cache is fresh (less than 3 hours old), return it
+      if (age < CACHE_FRESHNESS_DURATION) {
+        console.log(`[Service Worker] Serving fresh cache (${Math.floor(age / 1000 / 60)} min old):`, request.url);
+        return cachedResponse;
+      }
+
+      // Cache is stale, fetch fresh data
+      console.log(`[Service Worker] Cache stale (${Math.floor(age / 1000 / 60)} min old), fetching fresh:`, request.url);
+    }
+
+    // No cache or stale cache - fetch from network
+    const networkResponse = await fetch(request);
+
+    // Cache successful responses
+    if (networkResponse && networkResponse.status === 200) {
+      // Clone response before caching
+      const responseToCache = networkResponse.clone();
+
+      // Add to cache and enforce size limit
+      cache.put(request, responseToCache).then(() => {
+        console.log('[Service Worker] Cached fresh response:', request.url);
+        if (maxSize) {
+          enforceCacheLimit(cacheName, maxSize);
+        }
+      });
+    }
+
+    return networkResponse;
+  } catch (error) {
+    console.error('[Service Worker] Cache-first with revalidation failed:', error);
+
+    // If network fails, try to return stale cache as fallback
+    const cache = await caches.open(cacheName);
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) {
+      console.log('[Service Worker] Network failed, serving stale cache:', request.url);
+      return cachedResponse;
+    }
+
     throw error;
   }
 }

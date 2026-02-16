@@ -16,22 +16,18 @@ const isLocalhost = Boolean(
  */
 export function register(config) {
   if ('serviceWorker' in navigator) {
-    // Wait for the page to load
     window.addEventListener('load', () => {
       const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
 
       if (isLocalhost) {
-        // Running on localhost - check if service worker exists
         checkValidServiceWorker(swUrl, config);
 
-        // Log additional info for localhost
         navigator.serviceWorker.ready.then(() => {
           console.log(
             'This web app is being served cache-first by a service worker.'
           );
         });
       } else {
-        // Not localhost - register service worker
         registerValidSW(swUrl, config);
       }
     });
@@ -56,18 +52,14 @@ function registerValidSW(swUrl, config) {
         installingWorker.onstatechange = () => {
           if (installingWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
-              // New service worker available
               console.log('[Service Worker] New content available, will refresh on next visit');
 
-              // Execute callback
               if (config && config.onUpdate) {
                 config.onUpdate(registration);
               }
             } else {
-              // Content cached for offline use
               console.log('[Service Worker] Content cached for offline use');
 
-              // Execute callback
               if (config && config.onSuccess) {
                 config.onSuccess(registration);
               }
@@ -94,14 +86,12 @@ function checkValidServiceWorker(swUrl, config) {
         response.status === 404 ||
         (contentType != null && contentType.indexOf('javascript') === -1)
       ) {
-        // Service worker not found - reload page
         navigator.serviceWorker.ready.then((registration) => {
           registration.unregister().then(() => {
             window.location.reload();
           });
         });
       } else {
-        // Service worker found - proceed with registration
         registerValidSW(swUrl, config);
       }
     })
