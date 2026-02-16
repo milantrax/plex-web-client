@@ -1,5 +1,5 @@
 // src/pages/Queue.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Card, CardContent, Button, Typography, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CloseIcon from '@mui/icons-material/Close';
@@ -7,6 +7,7 @@ import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import queueManager from '../utils/queueManager';
 import LoadingSpinner from '../components/LoadingSpinner';
+import BackToTop from '../components/BackToTop';
 import { getPlexImageUrl } from '../api/plexApi';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 
@@ -16,6 +17,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [queueStats, setQueueStats] = useState({});
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverIndex, setDragOverIndex] = useState(null);
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     loadQueue();
@@ -180,6 +182,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
   return (
     <Box
+      ref={scrollContainerRef}
       sx={{
         height: '100%',
         overflowY: 'auto',
@@ -361,6 +364,8 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           </Table>
         </TableContainer>
       )}
+
+      <BackToTop scrollContainerRef={scrollContainerRef} />
     </Box>
   );
 }

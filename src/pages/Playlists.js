@@ -1,10 +1,11 @@
 // src/pages/Playlists.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, List, ListItem, ListItemButton, ListItemText, Card, CardContent, Button, Typography, Chip, Stack, Menu, MenuItem, ListItemIcon, Snackbar, Alert } from '@mui/material';
 import { getPlaylists, getPlaylistItems } from '../api/plexApi';
 import { PLEX_URL, PLEX_TOKEN } from '../config';
 import LoadingSpinner from '../components/LoadingSpinner';
 import TrackList from '../components/TrackList';
+import BackToTop from '../components/BackToTop';
 import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
@@ -22,6 +23,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const menuOpen = Boolean(anchorEl);
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     const fetchPlaylists = async () => {
@@ -303,6 +305,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
       {/* Main Content */}
       <Box
+        ref={scrollContainerRef}
         sx={{
           flex: 1,
           height: '100%',
@@ -483,6 +486,8 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      <BackToTop scrollContainerRef={scrollContainerRef} />
     </Box>
   );
 }

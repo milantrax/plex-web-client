@@ -1,10 +1,10 @@
 // src/pages/Genres.js
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip, Stack, Divider, Select, MenuItem, FormControl, Fab } from '@mui/material';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip, Stack, Divider, Select, MenuItem, FormControl } from '@mui/material';
 import { getSections, getGenres, getAlbumsByGenre } from '../api/plexApi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AlbumCard from '../components/AlbumCard';
+import BackToTop from '../components/BackToTop';
 import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 
 function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
@@ -16,7 +16,6 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [error, setError] = useState(null);
   const [musicSectionId, setMusicSectionId] = useState(null);
   const [selectedYear, setSelectedYear] = useState('');
-  const [showBackToTop, setShowBackToTop] = useState(false);
   const scrollContainerRef = useRef(null);
 
    useEffect(() => {
@@ -129,34 +128,6 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       }, 100);
     }
   };
-
-  // Handle scroll to top
-  const handleScrollToTop = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: 0,
-        behavior: 'smooth'
-      });
-    }
-  };
-
-  // Track scroll position to show/hide back to top button
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const viewportHeight = window.innerHeight;
-      const scrolled = container.scrollTop > viewportHeight;
-      setShowBackToTop(scrolled);
-    };
-
-    // Initial check
-    handleScroll();
-
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, [selectedGenre, albums]);
 
   if (loading) return <LoadingSpinner />;
   if (error && !loadingAlbums) return (
@@ -359,24 +330,7 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       </Box>
 
       {/* Back to Top Button */}
-      <Fab
-        color="primary"
-        size="medium"
-        onClick={handleScrollToTop}
-        sx={{
-          position: 'fixed',
-          bottom: `${PLAYER_HEIGHT + 20}px`,
-          right: 20,
-          zIndex: 1100,
-          boxShadow: 3,
-          opacity: showBackToTop ? 1 : 0,
-          visibility: showBackToTop ? 'visible' : 'hidden',
-          transition: 'opacity 0.3s ease-in-out, visibility 0.3s ease-in-out'
-        }}
-        aria-label="scroll back to top"
-      >
-        <KeyboardArrowUpIcon />
-      </Fab>
+      <BackToTop scrollContainerRef={scrollContainerRef} />
     </Box>
   );
 }

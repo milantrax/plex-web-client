@@ -1,11 +1,12 @@
 // src/pages/ArtistPage.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography, Card, CardContent } from '@mui/material';
 import { getPlexImageUrl, getArtistAlbums } from '../api/plexApi';
 import axios from 'axios';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import BackToTop from '../components/BackToTop';
 import { PLEX_URL, PLEX_TOKEN } from '../config';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 
@@ -15,6 +16,7 @@ const ArtistPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) 
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     const fetchArtistData = async () => {
@@ -152,6 +154,7 @@ const ArtistPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) 
 
       {/* Right Column - Albums */}
       <Box
+        ref={scrollContainerRef}
         sx={{
           flex: 1,
           height: { xs: 'auto', md: '100%' },
@@ -187,6 +190,8 @@ const ArtistPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) 
           </Box>
         )}
       </Box>
+
+      <BackToTop scrollContainerRef={scrollContainerRef} />
     </Box>
   );
 };

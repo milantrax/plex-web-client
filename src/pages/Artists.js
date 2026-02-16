@@ -4,6 +4,7 @@ import { Box, Typography } from '@mui/material';
 import { getSections, getArtists } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import BackToTop from '../components/BackToTop';
 import { NAVBAR_HEIGHT, PLAYER_HEIGHT } from '../theme/theme';
 
 function Artists() {
@@ -185,6 +186,8 @@ function Artists() {
           </Typography>
         </Box>
       )}
+
+      <BackToTop scrollContainerRef={scrollContainerRef} />
     </Box>
   );
 }

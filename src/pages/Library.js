@@ -4,6 +4,7 @@ import { Box, Card, CardContent, FormControl, InputLabel, Select, MenuItem, Butt
 import { getSections, getSectionItems, getGenres, getYears, getLabels, getAlbumsByGenre, getAlbumsByYear, getAlbumsByLabel } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import BackToTop from '../components/BackToTop';
 import { NAVBAR_HEIGHT, PLAYER_HEIGHT } from '../theme/theme';
 
 function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
@@ -418,6 +419,8 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           )}
         </>
       )}
+
+      <BackToTop scrollContainerRef={scrollContainerRef} />
     </Box>
   );
 }

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography, Card, CardContent, Divider, Stack, Button, Snackbar, Alert, Chip, Menu, MenuItem, ListItemIcon, ListItemText, Rating } from '@mui/material';
 import { getPlexImageUrl, getAlbumTracks } from '../api/plexApi';
 import axios from 'axios';
 import TrackList from '../components/TrackList';
 import LoadingSpinner from '../components/LoadingSpinner';
+import BackToTop from '../components/BackToTop';
 import { PLEX_URL, PLEX_TOKEN } from '../config';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 import queueManager from '../utils/queueManager';
@@ -22,6 +23,7 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [anchorEl, setAnchorEl] = useState(null);
   const menuOpen = Boolean(anchorEl);
+  const scrollContainerRef = useRef(null);
 
   useEffect(() => {
     const fetchAlbumData = async () => {
@@ -391,6 +393,7 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
 
       {/* Right Column - Track List */}
       <Box
+        ref={scrollContainerRef}
         sx={{
           flex: 1,
           height: { xs: 'auto', md: '100%' },
@@ -417,6 +420,8 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
           </CardContent>
         </Card>
       </Box>
+
+      <BackToTop scrollContainerRef={scrollContainerRef} />
 
       <Snackbar
         open={snackbar.open}
