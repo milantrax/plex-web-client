@@ -156,26 +156,28 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
                 py: 0.5,
                 borderRadius: 1,
                 cursor: 'pointer',
-                transition: 'background-color 0.2s',
+                transition: 'all 0.2s',
                 bgcolor: isCurrent
-                  ? isPlaying
-                    ? 'rgba(240, 165, 0, 0.1)'
-                    : 'action.hover'
+                  ? 'primary.light'
                   : 'transparent',
-                color: isCurrent && isPlaying ? 'primary.main' : 'text.primary',
+                opacity: isCurrent && !isPlaying ? 0.7 : 1,
+                borderLeft: isCurrent ? 4 : 0,
+                borderLeftColor: 'primary.main',
                 '&:hover': {
-                  bgcolor: 'action.hover',
+                  bgcolor: isCurrent ? 'primary.light' : 'action.hover',
                 },
               }}
             >
               {/* Track Number */}
               <Box sx={{ textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
-                {isCurrent ? (
-                  isPlaying ? <PauseIcon sx={{ fontSize: '1rem', color: 'primary.main' }} /> : <PlayArrowIcon sx={{ fontSize: '1rem', color: 'text.secondary' }} />
-                ) : null}
+                {isCurrent && (
+                  <Box sx={{ color: '#000000', display: 'flex', alignItems: 'center' }}>
+                    {isPlaying ? <PauseIcon sx={{ fontSize: '1rem' }} /> : <PlayArrowIcon sx={{ fontSize: '1rem' }} />}
+                  </Box>
+                )}
                 <Typography
                   variant="body2"
-                  color={isCurrent ? (isPlaying ? 'primary.main' : 'text.secondary') : 'text.secondary'}
+                  color="text.secondary"
                   sx={{ fontVariantNumeric: 'tabular-nums' }}
                 >
                   {index + 1}
@@ -215,7 +217,7 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
               {/* Duration */}
               <Typography
                 variant="body2"
-                color={isCurrent ? (isPlaying ? 'primary.main' : 'text.secondary') : 'text.secondary'}
+                color="text.secondary"
                 sx={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
               >
                 {formatDuration(track.duration || 0)}

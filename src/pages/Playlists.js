@@ -6,6 +6,8 @@ import { PLEX_URL, PLEX_TOKEN } from '../config';
 import LoadingSpinner from '../components/LoadingSpinner';
 import TrackList from '../components/TrackList';
 import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import PauseIcon from '@mui/icons-material/Pause';
 
 function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const [playlists, setPlaylists] = useState([]);
@@ -79,6 +81,13 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     URL.revokeObjectURL(url);
   };
 
+  const isPlaylistContainsCurrentTrack = () => {
+    if (!currentTrack || !playlistTracks || playlistTracks.length === 0) {
+      return false;
+    }
+    return playlistTracks.some(track => track.ratingKey === currentTrack.ratingKey);
+  };
+
   if (loading) return <LoadingSpinner />;
   if (error) return (
     <Box sx={{ textAlign: 'center', py: 10, px: 2 }}>
@@ -115,21 +124,47 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
         }}
       >
         <List sx={{ height: '100%', overflowY: 'auto', px: 0, pt: `${NAVBAR_HEIGHT + 20}px`, pb: `${PLAYER_HEIGHT + 20}px` }} className="custom-scrollbar">
-          {playlists.map(playlist => (
-            <ListItem key={playlist.ratingKey} disablePadding>
-              <ListItemButton
-                selected={selectedPlaylist?.ratingKey === playlist.ratingKey}
-                onClick={() => handlePlaylistClick(playlist)}
-                sx={{ py: 1.5, px: 2.5 }}
-              >
-                <ListItemText
-                  primary={playlist.title}
-                  secondary={`${playlist.leafCount} tracks`}
-                  primaryTypographyProps={{ fontWeight: 500 }}
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
+          {playlists.map(playlist => {
+            const isSelected = selectedPlaylist?.ratingKey === playlist.ratingKey;
+            const containsCurrentTrack = isSelected && isPlaylistContainsCurrentTrack();
+
+            return (
+              <ListItem key={playlist.ratingKey} disablePadding>
+                <ListItemButton
+                  selected={isSelected}
+                  onClick={() => handlePlaylistClick(playlist)}
+                  sx={{
+                    py: 1.5,
+                    px: 2.5,
+                    bgcolor: containsCurrentTrack ? 'primary.light' : 'inherit',
+                    opacity: containsCurrentTrack && !isPlaying ? 0.7 : 1,
+                    borderLeft: containsCurrentTrack ? 4 : 0,
+                    borderLeftColor: 'primary.main',
+                    transition: 'all 0.2s',
+                    '&.Mui-selected': {
+                      bgcolor: containsCurrentTrack ? 'primary.light' : 'action.selected',
+                    },
+                    '&.Mui-selected:hover': {
+                      bgcolor: containsCurrentTrack ? 'primary.light' : 'action.selected',
+                    }
+                  }}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
+                    {containsCurrentTrack && (
+                      <Box sx={{ color: '#000000', display: 'flex', alignItems: 'center' }}>
+                        {isPlaying ? <PauseIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
+                      </Box>
+                    )}
+                    <ListItemText
+                      primary={playlist.title}
+                      secondary={`${playlist.leafCount} tracks`}
+                      primaryTypographyProps={{ fontWeight: 500 }}
+                    />
+                  </Stack>
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
         </List>
       </Box>
 
@@ -137,15 +172,25 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       <Box sx={{ display: { xs: 'block', md: 'none' }, width: '100%', p: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Typography variant="subtitle2" sx={{ mb: 1 }}>Select Playlist:</Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {playlists.map(playlist => (
-            <Chip
-              key={playlist.ratingKey}
-              label={playlist.title}
-              onClick={() => handlePlaylistClick(playlist)}
-              color={selectedPlaylist?.ratingKey === playlist.ratingKey ? 'primary' : 'default'}
-              variant={selectedPlaylist?.ratingKey === playlist.ratingKey ? 'filled' : 'outlined'}
-            />
-          ))}
+          {playlists.map(playlist => {
+            const isSelected = selectedPlaylist?.ratingKey === playlist.ratingKey;
+            const containsCurrentTrack = isSelected && isPlaylistContainsCurrentTrack();
+
+            return (
+              <Chip
+                key={playlist.ratingKey}
+                label={playlist.title}
+                onClick={() => handlePlaylistClick(playlist)}
+                color={isSelected ? 'primary' : 'default'}
+                variant={isSelected ? 'filled' : 'outlined'}
+                icon={containsCurrentTrack ? (isPlaying ? <PauseIcon /> : <PlayArrowIcon />) : undefined}
+                sx={{
+                  opacity: containsCurrentTrack && !isPlaying ? 0.7 : 1,
+                  transition: 'all 0.2s'
+                }}
+              />
+            );
+          })}
         </Box>
       </Box>
 
@@ -163,13 +208,30 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       >
         {selectedPlaylist ? (
           <>
-            <Card sx={{ mb: 2.5, boxShadow: 3 }}>
+            <Card
+              sx={{
+                mb: 2.5,
+                boxShadow: 3,
+                bgcolor: isPlaylistContainsCurrentTrack() ? 'primary.light' : 'background.paper',
+                opacity: isPlaylistContainsCurrentTrack() && !isPlaying ? 0.7 : 1,
+                borderLeft: isPlaylistContainsCurrentTrack() ? 4 : 0,
+                borderLeftColor: 'primary.main',
+                transition: 'all 0.2s'
+              }}
+            >
               <CardContent sx={{ p: 2.5 }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2}>
                   <Stack spacing={1}>
-                    <Typography variant="h5" component="h2">
-                      {selectedPlaylist.title}
-                    </Typography>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      {isPlaylistContainsCurrentTrack() && (
+                        <Box sx={{ color: '#000000', display: 'flex', alignItems: 'center' }}>
+                          {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+                        </Box>
+                      )}
+                      <Typography variant="h5" component="h2">
+                        {selectedPlaylist.title}
+                      </Typography>
+                    </Stack>
                     <Chip label={`${playlistTracks.length} tracks`} color="primary" size="small" />
                   </Stack>
                   <Button
