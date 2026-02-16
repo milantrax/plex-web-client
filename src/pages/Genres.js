@@ -1,6 +1,6 @@
 // src/pages/Genres.js
 import React, { useState, useEffect } from 'react';
-import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip, Stack } from '@mui/material';
+import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip, Stack, Divider } from '@mui/material';
 import { getSections, getGenres, getAlbumsByGenre } from '../api/plexApi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import AlbumCard from '../components/AlbumCard';
@@ -75,6 +75,30 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
   const handleGenreClick = (genre) => {
     setSelectedGenre(genre);
+  };
+
+  // Group albums by year
+  const groupAlbumsByYear = (albums) => {
+    const grouped = albums.reduce((acc, album) => {
+      const year = album.year || 'Unknown';
+      if (!acc[year]) {
+        acc[year] = [];
+      }
+      acc[year].push(album);
+      return acc;
+    }, {});
+
+    // Sort years in descending order (newest first)
+    return Object.keys(grouped)
+      .sort((a, b) => {
+        if (a === 'Unknown') return 1;
+        if (b === 'Unknown') return -1;
+        return Number(b) - Number(a);
+      })
+      .map(year => ({
+        year,
+        albums: grouped[year]
+      }));
   };
 
   if (loading) return <LoadingSpinner />;
@@ -194,16 +218,45 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                 </Typography>
               </Box>
             ) : (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-                {albums.map(album => (
-                  <AlbumCard
-                    key={album.ratingKey}
-                    album={album}
-                    onPlayTrack={onPlayTrack}
-                    currentTrack={currentTrack}
-                    isPlaying={isPlaying}
-                    onTogglePlayback={onTogglePlayback}
-                  />
+              <Box>
+                {groupAlbumsByYear(albums).map((yearGroup, index) => (
+                  <Box key={yearGroup.year} sx={{ mb: 4 }}>
+                    {/* Year Header with Divider */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        mb: 2.5,
+                        gap: 2
+                      }}
+                    >
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontWeight: 600,
+                          color: 'text.secondary',
+                          flexShrink: 0
+                        }}
+                      >
+                        {yearGroup.year}
+                      </Typography>
+                      <Divider sx={{ flexGrow: 1 }} />
+                    </Box>
+
+                    {/* Albums for this year */}
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+                      {yearGroup.albums.map(album => (
+                        <AlbumCard
+                          key={album.ratingKey}
+                          album={album}
+                          onPlayTrack={onPlayTrack}
+                          currentTrack={currentTrack}
+                          isPlaying={isPlaying}
+                          onTogglePlayback={onTogglePlayback}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
                 ))}
               </Box>
             )}
