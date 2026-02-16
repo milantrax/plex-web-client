@@ -1,6 +1,6 @@
 // src/pages/Artists.js
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, FormControl, Select, MenuItem, Stack, Divider } from '@mui/material';
 import { getSections, getArtists } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -18,7 +18,56 @@ function Artists() {
   const [loadingMore, setLoadingMore] = useState(false);
   const ARTISTS_PER_PAGE = 100;
 
+  const [selectedLetter, setSelectedLetter] = useState('');
   const scrollContainerRef = useRef(null);
+
+  // Group artists by first letter
+  const groupArtistsByLetter = (artists) => {
+    const grouped = artists.reduce((acc, artist) => {
+      const firstChar = artist.title.charAt(0).toUpperCase();
+      const letter = /[A-Z]/.test(firstChar) ? firstChar : '#';
+
+      if (!acc[letter]) {
+        acc[letter] = [];
+      }
+      acc[letter].push(artist);
+      return acc;
+    }, {});
+
+    // Sort letters A-Z, then #
+    return Object.keys(grouped)
+      .sort((a, b) => {
+        if (a === '#') return 1;
+        if (b === '#') return -1;
+        return a.localeCompare(b);
+      })
+      .map(letter => ({
+        letter,
+        artists: grouped[letter]
+      }));
+  };
+
+  // Handle letter selection and scroll to letter section
+  const handleLetterSelect = (letter) => {
+    setSelectedLetter(letter);
+    if (letter) {
+      setTimeout(() => {
+        const letterElement = document.getElementById(`letter-${letter}`);
+        const container = scrollContainerRef.current;
+
+        if (letterElement && container) {
+          const containerRect = container.getBoundingClientRect();
+          const letterRect = letterElement.getBoundingClientRect();
+          const offset = letterRect.top - containerRect.top + container.scrollTop;
+
+          container.scrollTo({
+            top: offset - 20,
+            behavior: 'smooth'
+          });
+        }
+      }, 100);
+    }
+  };
 
   const loadMoreArtists = useCallback(async () => {
     if (loadingMore || !hasMorePages || !musicSectionId) return;
@@ -151,22 +200,85 @@ function Artists() {
       }}
       className="custom-scrollbar"
     >
-      <Typography variant="h5" sx={{ mb: 3, fontWeight: 700 }}>
-        Artists
-      </Typography>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        flexWrap="wrap"
+        gap={2}
+        sx={{ mb: 2.5 }}
+      >
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Typography variant="h5" sx={{ fontWeight: 700, m: 0 }}>
+            Artists
+          </Typography>
+          {artists.length > 0 && (
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <Select
+                value={selectedLetter}
+                onChange={(e) => handleLetterSelect(e.target.value)}
+                displayEmpty
+                sx={{
+                  fontSize: '0.875rem',
+                  '& .MuiSelect-select': {
+                    py: 0.75
+                  }
+                }}
+              >
+                <MenuItem value="" sx={{ fontStyle: 'normal' }}>
+                  All Letters
+                </MenuItem>
+                {groupArtistsByLetter(artists).map(({ letter }) => (
+                  <MenuItem key={letter} value={letter}>
+                    {letter}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        </Stack>
+        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+          {artists.length} artist{artists.length !== 1 ? 's' : ''} loaded
+          {hasMorePages && ' (scroll for more)'}
+        </Typography>
+      </Stack>
 
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        {artists.length} artist{artists.length !== 1 ? 's' : ''} loaded
-        {hasMorePages && ' (scroll for more)'}
-      </Typography>
+      <Box>
+        {groupArtistsByLetter(artists).map((letterGroup) => (
+          <Box key={letterGroup.letter} id={`letter-${letterGroup.letter}`} sx={{ mb: 4 }}>
+            {/* Letter Header with Divider */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                mb: 2.5,
+                gap: 2
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  color: 'text.secondary',
+                  flexShrink: 0
+                }}
+              >
+                {letterGroup.letter}
+              </Typography>
+              <Divider sx={{ flexGrow: 1 }} />
+            </Box>
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-        {artists.map(artist => (
-          <AlbumCard
-            key={artist.ratingKey}
-            album={artist}
-            isArtist={true}
-          />
+            {/* Artists for this letter */}
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+              {letterGroup.artists.map(artist => (
+                <AlbumCard
+                  key={artist.ratingKey}
+                  album={artist}
+                  isArtist={true}
+                />
+              ))}
+            </Box>
+          </Box>
         ))}
       </Box>
 
