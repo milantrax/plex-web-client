@@ -92,13 +92,40 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       setError(null);
       try {
         const sections = await getSections();
-        // Find the first section of type 'artist' (which signifies a music library)
-        const musicSection = sections.find(sec => sec.type === 'artist');
+        // Ensure sections is an array
+        const sectionsArray = Array.isArray(sections) ? sections : [];
+
+        // Debug: Log all sections to see what we're getting
+        console.log('All sections:', sectionsArray);
+        console.log('Section types:', sectionsArray.map(s => ({ title: s.title, type: s.type, key: s.key })));
+
+        // Find the first music section - try multiple type identifiers
+        // Different Plex versions may use 'artist', 'music', or have a specific scanner
+        const musicSection = sectionsArray.find(sec =>
+          sec.type === 'artist' ||
+          sec.type === 'music' ||
+          (sec.scanner && sec.scanner.includes('music')) ||
+          (sec.agent && sec.agent.includes('music'))
+        );
+
         if (musicSection) {
+          console.log('Found music section:', musicSection);
           setMusicSectionId(musicSection.key);
         } else {
            console.warn("No music library section found.");
-           setError("Could not find a music library section on your Plex server.");
+           console.warn("Available sections:", sectionsArray.map(s => ({
+             title: s.title,
+             type: s.type,
+             scanner: s.scanner,
+             agent: s.agent
+           })));
+
+           // If we have sections but none are music, show a more helpful error
+           if (sectionsArray.length > 0) {
+             setError(`No music library found. Available libraries: ${sectionsArray.map(s => `${s.title} (${s.type})`).join(', ')}`);
+           } else {
+             setError("No libraries found on your Plex server. Please check your Plex configuration.");
+           }
         }
       } catch (err) {
          console.error("Failed to fetch sections:", err);
@@ -120,9 +147,10 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
          setError(null);
          try {
             const albumData = await getSectionItems(musicSectionId, 9, 0, ALBUMS_PER_PAGE);
-            setAlbums(albumData);
+            const albumsArray = Array.isArray(albumData) ? albumData : [];
+            setAlbums(albumsArray);
             setCurrentPage(0);
-            setHasMorePages(albumData.length === ALBUMS_PER_PAGE);
+            setHasMorePages(albumsArray.length === ALBUMS_PER_PAGE);
          } catch (err) {
              console.error("Failed to fetch albums:", err);
              setError("Failed to fetch albums from the music library.");
@@ -197,9 +225,10 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
       if (activeFilters.length === 0) {
         const albumData = await getSectionItems(musicSectionId, 9, 0, ALBUMS_PER_PAGE);
-        setAlbums(albumData);
+        const albumsArray = Array.isArray(albumData) ? albumData : [];
+        setAlbums(albumsArray);
         setCurrentPage(0);
-        setHasMorePages(albumData.length === ALBUMS_PER_PAGE);
+        setHasMorePages(albumsArray.length === ALBUMS_PER_PAGE);
         return;
       } else if (activeFilters.length === 1) {
         const filter = activeFilters[0];
@@ -248,9 +277,10 @@ function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     setLoading(true);
     try {
       const albumData = await getSectionItems(musicSectionId, 9, 0, ALBUMS_PER_PAGE);
-      setAlbums(albumData);
+      const albumsArray = Array.isArray(albumData) ? albumData : [];
+      setAlbums(albumsArray);
       setCurrentPage(0);
-      setHasMorePages(albumData.length === ALBUMS_PER_PAGE);
+      setHasMorePages(albumsArray.length === ALBUMS_PER_PAGE);
     } catch (err) {
       console.error("Failed to reset to first page:", err);
       setError("Failed to reset albums.");

@@ -1,9 +1,10 @@
 // src/utils/queueManager.js
+import { storage } from './storage';
 
 const QUEUE_STORAGE_KEY = 'plex_playback_queue';
 
 /**
- * Queue Manager for handling playback queue persistence and operations
+ * Queue Manager for handling playback queue persistence and operations using IndexedDB
  */
 class QueueManager {
   constructor() {
@@ -11,29 +12,30 @@ class QueueManager {
   }
 
   /**
-   * Get the current queue from localStorage
-   * @returns {Array} Array of queued tracks
+   * Get the current queue from IndexedDB
+   * @returns {Promise<Array>} Array of queued tracks
    */
-  getQueue() {
+  async getQueue() {
     try {
-      const queueData = localStorage.getItem(this.storageKey);
-      return queueData ? JSON.parse(queueData) : [];
+      const queueData = await storage.get(this.storageKey, Infinity, 'queue');
+      return queueData || [];
     } catch (error) {
-      console.error('Error reading queue from localStorage:', error);
+      console.error('Error reading queue from IndexedDB:', error);
       return [];
     }
   }
 
   /**
-   * Save queue to localStorage
+   * Save queue to IndexedDB
    * @param {Array} queue - Array of tracks to save
+   * @returns {Promise<boolean>} Success status
    */
-  saveQueue(queue) {
+  async saveQueue(queue) {
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(queue));
+      await storage.set(this.storageKey, queue, 'queue');
       return true;
     } catch (error) {
-      console.error('Error saving queue to localStorage:', error);
+      console.error('Error saving queue to IndexedDB:', error);
       return false;
     }
   }
@@ -42,11 +44,11 @@ class QueueManager {
    * Add a track to the queue
    * @param {Object} track - Track object to add
    * @param {Object} albumData - Album data for context
-   * @returns {boolean} Success status
+   * @returns {Promise<boolean>} Success status
    */
-  addToQueue(track, albumData = null) {
+  async addToQueue(track, albumData = null) {
     try {
-      const queue = this.getQueue();
+      const queue = await this.getQueue();
 
       const existingIndex = queue.findIndex(queueItem =>
         queueItem.track.ratingKey === track.ratingKey
@@ -79,7 +81,7 @@ class QueueManager {
 
       queue.push(queueItem);
 
-      return this.saveQueue(queue);
+      return await this.saveQueue(queue);
     } catch (error) {
       console.error('Error adding track to queue:', error);
       return false;
@@ -90,12 +92,12 @@ class QueueManager {
    * Add multiple tracks to the queue (e.g., entire album)
    * @param {Array} tracks - Array of track objects to add
    * @param {Object} albumData - Album data for context
-   * @returns {Object} Result with success status and count of added tracks
+   * @returns {Promise<Object>} Result with success status and count of added tracks
    */
-  addMultipleToQueue(tracks, albumData = null) {
+  async addMultipleToQueue(tracks, albumData = null) {
     try {
       console.log('addMultipleToQueue called with:', { tracksCount: tracks.length, albumData });
-      const queue = this.getQueue();
+      const queue = await this.getQueue();
       console.log('Current queue before adding:', queue);
       let addedCount = 0;
 
@@ -142,7 +144,7 @@ class QueueManager {
 
       if (addedCount > 0) {
         console.log('Saving queue with', addedCount, 'new tracks');
-        const saveResult = this.saveQueue(queue);
+        const saveResult = await this.saveQueue(queue);
         console.log('Save result:', saveResult);
       }
 
@@ -167,18 +169,18 @@ class QueueManager {
   /**
    * Remove a track from the queue by queue item ID
    * @param {string|number} queueItemId - ID of the queue item to remove
-   * @returns {boolean} Success status
+   * @returns {Promise<boolean>} Success status
    */
-  removeFromQueue(queueItemId) {
+  async removeFromQueue(queueItemId) {
     try {
-      const queue = this.getQueue();
+      const queue = await this.getQueue();
       const updatedQueue = queue.filter(item => item.id !== queueItemId);
       
       if (updatedQueue.length === queue.length) {
         return false;
       }
 
-      return this.saveQueue(updatedQueue);
+      return await this.saveQueue(updatedQueue);
     } catch (error) {
       console.error('Error removing track from queue:', error);
       return false;
@@ -188,11 +190,11 @@ class QueueManager {
   /**
    * Remove a track from the queue by track ratingKey
    * @param {string} trackRatingKey - Track's ratingKey to remove
-   * @returns {boolean} Success status
+   * @returns {Promise<boolean>} Success status
    */
-  removeTrackFromQueue(trackRatingKey) {
+  async removeTrackFromQueue(trackRatingKey) {
     try {
-      const queue = this.getQueue();
+      const queue = await this.getQueue();
       const updatedQueue = queue.filter(item => 
         item.track.ratingKey !== trackRatingKey
       );
@@ -201,7 +203,7 @@ class QueueManager {
         return false;
       }
 
-      return this.saveQueue(updatedQueue);
+      return await this.saveQueue(updatedQueue);
     } catch (error) {
       console.error('Error removing track from queue:', error);
       return false;
@@ -210,11 +212,11 @@ class QueueManager {
 
   /**
    * Clear the entire queue
-   * @returns {boolean} Success status
+   * @returns {Promise<boolean>} Success status
    */
-  clearQueue() {
+  async clearQueue() {
     try {
-      return this.saveQueue([]);
+      return await this.saveQueue([]);
     } catch (error) {
       console.error('Error clearing queue:', error);
       return false;
@@ -225,11 +227,11 @@ class QueueManager {
    * Move a track to a different position in the queue
    * @param {string|number} queueItemId - ID of the queue item to move
    * @param {number} newIndex - New position index
-   * @returns {boolean} Success status
+   * @returns {Promise<boolean>} Success status
    */
-  moveInQueue(queueItemId, newIndex) {
+  async moveInQueue(queueItemId, newIndex) {
     try {
-      const queue = this.getQueue();
+      const queue = await this.getQueue();
       const itemIndex = queue.findIndex(item => item.id === queueItemId);
       
       if (itemIndex === -1 || newIndex < 0 || newIndex >= queue.length) {
@@ -239,7 +241,7 @@ class QueueManager {
       const [movedItem] = queue.splice(itemIndex, 1);
       queue.splice(newIndex, 0, movedItem);
 
-      return this.saveQueue(queue);
+      return await this.saveQueue(queue);
     } catch (error) {
       console.error('Error moving track in queue:', error);
       return false;
@@ -249,11 +251,11 @@ class QueueManager {
   /**
    * Check if a track is in the queue
    * @param {string} trackRatingKey - Track's ratingKey to check
-   * @returns {boolean} Whether track is in queue
+   * @returns {Promise<boolean>} Whether track is in queue
    */
-  isInQueue(trackRatingKey) {
+  async isInQueue(trackRatingKey) {
     try {
-      const queue = this.getQueue();
+      const queue = await this.getQueue();
       return queue.some(item => item.track.ratingKey === trackRatingKey);
     } catch (error) {
       console.error('Error checking if track is in queue:', error);
@@ -263,11 +265,11 @@ class QueueManager {
 
   /**
    * Get queue statistics
-   * @returns {Object} Queue statistics
+   * @returns {Promise<Object>} Queue statistics
    */
-  getQueueStats() {
+  async getQueueStats() {
     try {
-      const queue = this.getQueue();
+      const queue = await this.getQueue();
       const totalTracks = queue.length;
       const totalDuration = queue.reduce((total, item) => 
         total + (item.track.duration || 0), 0
@@ -300,9 +302,9 @@ class QueueManager {
    * @param {string} currentTrackRatingKey - Current track's ratingKey
    * @returns {Object|null} Next track or null if none found
    */
-  getNextTrack(currentTrackRatingKey) {
+  async getNextTrack(currentTrackRatingKey) {
     try {
-      const queue = this.getQueue();
+      const queue = await this.getQueue();
       
       if (queue.length === 0) {
         return null;
@@ -332,9 +334,9 @@ class QueueManager {
    * @param {string} currentTrackRatingKey - Current track's ratingKey
    * @returns {Object|null} Previous track or null if none found
    */
-  getPreviousTrack(currentTrackRatingKey) {
+  async getPreviousTrack(currentTrackRatingKey) {
     try {
-      const queue = this.getQueue();
+      const queue = await this.getQueue();
       
       if (queue.length === 0) {
         return null;
@@ -358,31 +360,31 @@ class QueueManager {
   /**
    * Check if there's a next track available in the queue
    * @param {string} currentTrackRatingKey - Current track's ratingKey
-   * @returns {boolean} Whether there's a next track
+   * @returns {Promise<boolean>} Whether there's a next track
    */
-  hasNextTrack(currentTrackRatingKey) {
-    return this.getNextTrack(currentTrackRatingKey) !== null;
+  async hasNextTrack(currentTrackRatingKey) {
+    return await this.getNextTrack(currentTrackRatingKey) !== null;
   }
 
   /**
    * Check if there's a previous track available in the queue
    * @param {string} currentTrackRatingKey - Current track's ratingKey
-   * @returns {boolean} Whether there's a previous track
+   * @returns {Promise<boolean>} Whether there's a previous track
    */
-  hasPreviousTrack(currentTrackRatingKey) {
-    return this.getPreviousTrack(currentTrackRatingKey) !== null;
+  async hasPreviousTrack(currentTrackRatingKey) {
+    return await this.getPreviousTrack(currentTrackRatingKey) !== null;
   }
 
   /**
    * Remove the current track from queue after it's been played
    * @param {string} trackRatingKey - Track's ratingKey to remove
    * @param {boolean} autoRemove - Whether to automatically remove played tracks
-   * @returns {boolean} Success status
+   * @returns {Promise<boolean>} Success status
    */
-  handleTrackPlayed(trackRatingKey, autoRemove = false) {
+  async handleTrackPlayed(trackRatingKey, autoRemove = false) {
     try {
       if (autoRemove) {
-        return this.removeTrackFromQueue(trackRatingKey);
+        return await this.removeTrackFromQueue(trackRatingKey);
       }
       return true;
     } catch (error) {

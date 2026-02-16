@@ -28,6 +28,8 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
   const [audioError, setAudioError] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [hasNext, setHasNext] = useState(false);
+  const [hasPrevious, setHasPrevious] = useState(false);
 
   useImperativeHandle(ref, () => ({
     togglePlayPause: () => togglePlayPause(),
@@ -107,20 +109,20 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
     }
   }, [currentTrack, audioSrc, onPlayStateChange]);
 
-  const playNextTrack = () => {
+  const playNextTrack = async () => {
     if (!currentTrack) return;
 
-    const nextTrack = queueManager.getNextTrack(currentTrack.ratingKey);
+    const nextTrack = await queueManager.getNextTrack(currentTrack.ratingKey);
     if (nextTrack && onPlayNext) {
       console.log('Manually playing next track:', nextTrack);
       onPlayNext(nextTrack);
     }
   };
 
-  const playPreviousTrack = () => {
+  const playPreviousTrack = async () => {
     if (!currentTrack) return;
 
-    const previousTrack = queueManager.getPreviousTrack(currentTrack.ratingKey);
+    const previousTrack = await queueManager.getPreviousTrack(currentTrack.ratingKey);
     if (previousTrack && onPlayPrevious) {
       console.log('Manually playing previous track:', previousTrack);
       onPlayPrevious(previousTrack);
@@ -226,8 +228,22 @@ const Player = forwardRef(({ currentTrack, onPlayStateChange, onTrackEnded, onPl
   };
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
-  const hasNext = currentTrack ? queueManager.hasNextTrack(currentTrack.ratingKey) : false;
-  const hasPrevious = currentTrack ? queueManager.hasPreviousTrack(currentTrack.ratingKey) : false;
+
+  // Update hasNext and hasPrevious when currentTrack changes
+  useEffect(() => {
+    const updateQueueStatus = async () => {
+      if (currentTrack) {
+        const next = await queueManager.hasNextTrack(currentTrack.ratingKey);
+        const prev = await queueManager.hasPreviousTrack(currentTrack.ratingKey);
+        setHasNext(next);
+        setHasPrevious(prev);
+      } else {
+        setHasNext(false);
+        setHasPrevious(false);
+      }
+    };
+    updateQueueStatus();
+  }, [currentTrack]);
 
   const handleAlbumArtClick = () => {
     if (trackInfo?.albumRatingKey) {

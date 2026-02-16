@@ -43,10 +43,10 @@ function App() {
     }
   }, []);
 
-  const handleTrackEnded = useCallback((endedTrack) => {
+  const handleTrackEnded = useCallback(async (endedTrack) => {
     console.log('Track ended:', endedTrack);
 
-    const nextTrack = queueManager.getNextTrack(endedTrack.ratingKey);
+    const nextTrack = await queueManager.getNextTrack(endedTrack.ratingKey);
 
     if (nextTrack) {
       console.log('Playing next track from queue:', nextTrack);

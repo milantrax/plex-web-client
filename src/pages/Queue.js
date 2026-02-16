@@ -27,11 +27,11 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     loadQueue();
   }, [currentTrack]);
 
-  const loadQueue = () => {
+  const loadQueue = async () => {
     setLoading(true);
     try {
-      const queueData = queueManager.getQueue();
-      const stats = queueManager.getQueueStats();
+      const queueData = await queueManager.getQueue();
+      const stats = await queueManager.getQueueStats();
       setQueue(queueData);
       setQueueStats(stats);
     } catch (error) {
@@ -41,23 +41,23 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     }
   };
 
-  const handleRemoveFromQueue = (queueItemId) => {
-    const success = queueManager.removeFromQueue(queueItemId);
+  const handleRemoveFromQueue = async (queueItemId) => {
+    const success = await queueManager.removeFromQueue(queueItemId);
     if (success) {
-      loadQueue();
+      await loadQueue();
     } else {
       alert('Failed to remove track from queue');
     }
   };
 
-  const handleClearQueue = () => {
+  const handleClearQueue = async () => {
     if (queue.length === 0) return;
 
     const confirmed = window.confirm('Are you sure you want to clear the entire queue?');
     if (confirmed) {
-      const success = queueManager.clearQueue();
+      const success = await queueManager.clearQueue();
       if (success) {
-        loadQueue();
+        await loadQueue();
       } else {
         alert('Failed to clear queue');
       }
@@ -93,7 +93,7 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     }
   };
 
-  const handleDrop = (e, dropIndex) => {
+  const handleDrop = async (e, dropIndex) => {
     e.preventDefault();
     setDragOverIndex(null);
 
@@ -101,9 +101,9 @@ function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       return;
     }
 
-    const success = queueManager.moveInQueue(draggedItem.item.id, dropIndex);
+    const success = await queueManager.moveInQueue(draggedItem.item.id, dropIndex);
     if (success) {
-      loadQueue();
+      await loadQueue();
     }
     setDraggedItem(null);
   };

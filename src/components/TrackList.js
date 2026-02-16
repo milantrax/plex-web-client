@@ -27,8 +27,8 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
     forceUpdate({});
   }, [currentTrack, isPlaying]);
 
-  const updateQueuedTracks = () => {
-    const queue = queueManager.getQueue();
+  const updateQueuedTracks = async () => {
+    const queue = await queueManager.getQueue();
     const queuedTrackKeys = new Set(queue.map(item => item.track.ratingKey));
     setQueuedTracks(queuedTrackKeys);
   };
@@ -88,9 +88,9 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
     event.stopPropagation();
 
     try {
-      const success = queueManager.addToQueue(track, albumData);
+      const success = await queueManager.addToQueue(track, albumData);
       if (success) {
-        updateQueuedTracks();
+        await updateQueuedTracks();
         console.log(`Added "${track.title}" to queue`);
       } else {
         alert('This track is already in your queue.');

@@ -24,7 +24,8 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       setError(null);
       try {
         const sections = await getSections();
-        const musicSection = sections.find(sec => sec.type === 'artist');
+        const sectionsArray = Array.isArray(sections) ? sections : [];
+        const musicSection = sectionsArray.find(sec => sec.type === 'artist');
         if (musicSection) {
           setMusicSectionId(musicSection.key);
         } else {
@@ -45,7 +46,7 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       setError(null);
       try {
           const genreData = await getGenres(musicSectionId, 9);
-          setGenres(genreData);
+          setGenres(Array.isArray(genreData) ? genreData : []);
       } catch (err) {
           console.error("Failed to fetch genres:", err);
           setError("Failed to fetch genres.");
@@ -65,7 +66,7 @@ function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
           setError(null);
           try {
               const albumData = await getAlbumsByGenre(musicSectionId, selectedGenre.key, 9);
-              setAlbums(albumData);
+              setAlbums(Array.isArray(albumData) ? albumData : []);
           } catch (err) {
              console.error(`Failed to fetch albums for genre ${selectedGenre.title}:`, err);
              setError(`Failed to fetch albums for genre: ${selectedGenre.title}.`);

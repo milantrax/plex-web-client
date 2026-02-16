@@ -41,7 +41,7 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
           setAlbum(response.data.MediaContainer.Metadata[0]);
 
           const tracksData = await getAlbumTracks(albumId);
-          setTracks(tracksData);
+          setTracks(Array.isArray(tracksData) ? tracksData : []);
         } else {
           setError('Album data not found');
         }
@@ -56,7 +56,7 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
     fetchAlbumData();
   }, [albumId]);
 
-  const handleEnqueueAlbum = () => {
+  const handleEnqueueAlbum = async () => {
     if (!tracks || tracks.length === 0) {
       setSnackbar({
         open: true,
@@ -69,10 +69,9 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
     console.log('Enqueueing album:', album);
     console.log('Tracks to enqueue:', tracks);
 
-    const result = queueManager.addMultipleToQueue(tracks, album);
+    const result = await queueManager.addMultipleToQueue(tracks, album);
 
     console.log('Enqueue result:', result);
-    console.log('Current queue after enqueue:', queueManager.getQueue());
 
     if (result.success) {
       setSnackbar({
@@ -101,7 +100,7 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
     setAnchorEl(null);
   };
 
-  const handlePlayAlbum = () => {
+  const handlePlayAlbum = async () => {
     handleCloseMenu();
 
     if (!tracks || tracks.length === 0) {
@@ -116,10 +115,10 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
     console.log('Playing album - clearing queue and adding tracks');
 
     // Clear existing queue
-    queueManager.clearQueue();
+    await queueManager.clearQueue();
 
     // Add all album tracks
-    const result = queueManager.addMultipleToQueue(tracks, album);
+    const result = await queueManager.addMultipleToQueue(tracks, album);
 
     console.log('Play album result:', result);
 

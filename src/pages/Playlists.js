@@ -31,10 +31,11 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       setError(null);
       try {
         const data = await getPlaylists();
-        setPlaylists(data);
+        setPlaylists(Array.isArray(data) ? data : []);
       } catch (err) {
          console.error("Failed to fetch playlists:", err);
          setError("Failed to fetch playlists.");
+         setPlaylists([]);
       } finally {
         setLoading(false);
       }
@@ -57,10 +58,11 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
 
     try {
       const tracks = await getPlaylistItems(playlist.ratingKey);
-      setPlaylistTracks(tracks);
+      setPlaylistTracks(Array.isArray(tracks) ? tracks : []);
     } catch (err) {
       console.error("Failed to fetch playlist items:", err);
       setError("Failed to fetch tracks for this playlist.");
+      setPlaylistTracks([]);
     } finally {
       setLoadingTracks(false);
     }
@@ -117,7 +119,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handlePlayPlaylist = () => {
+  const handlePlayPlaylist = async () => {
     handleCloseMenu();
 
     if (!playlistTracks || playlistTracks.length === 0) {
@@ -132,10 +134,10 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     console.log('Playing playlist - clearing queue and adding tracks');
 
     // Clear existing queue
-    queueManager.clearQueue();
+    await queueManager.clearQueue();
 
     // Add all playlist tracks
-    const result = queueManager.addMultipleToQueue(playlistTracks, selectedPlaylist);
+    const result = await queueManager.addMultipleToQueue(playlistTracks, selectedPlaylist);
 
     console.log('Play playlist result:', result);
 
@@ -161,7 +163,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     }
   };
 
-  const handleEnqueuePlaylist = () => {
+  const handleEnqueuePlaylist = async () => {
     handleCloseMenu();
 
     if (!playlistTracks || playlistTracks.length === 0) {
@@ -176,10 +178,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     console.log('Enqueueing playlist:', selectedPlaylist);
     console.log('Tracks to enqueue:', playlistTracks);
 
-    const result = queueManager.addMultipleToQueue(playlistTracks, selectedPlaylist);
-
-    console.log('Enqueue result:', result);
-    console.log('Current queue after enqueue:', queueManager.getQueue());
+    const result = await queueManager.addMultipleToQueue(playlistTracks, selectedPlaylist);
 
     if (result.success) {
       setSnackbar({
