@@ -1,7 +1,7 @@
 // src/components/SearchBar.js
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { searchMusic } from '../api/plexApi';
+import { searchMusic, getPlexImageUrl } from '../api/plexApi';
 import {
   TextField,
   Paper,
@@ -266,6 +266,21 @@ class SearchBar extends React.Component {
                           sx={{ borderBottom: 1, borderColor: 'divider' }}
                         >
                           <ListItemButton onClick={() => this.handleResultClick(album, 'album')}>
+                            {album.thumb && (
+                              <Box
+                                component="img"
+                                src={getPlexImageUrl(album.thumb)}
+                                alt={album.title}
+                                sx={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: 1,
+                                  objectFit: 'cover',
+                                  mr: 1.5,
+                                  flexShrink: 0
+                                }}
+                              />
+                            )}
                             <ListItemText
                               primary={album.title}
                               secondary={album.parentTitle || 'Various Artists'}
@@ -312,6 +327,21 @@ class SearchBar extends React.Component {
                           sx={{ borderBottom: 1, borderColor: 'divider' }}
                         >
                           <ListItemButton onClick={() => this.handleResultClick(track, 'track')}>
+                            {(track.thumb || track.parentThumb) && (
+                              <Box
+                                component="img"
+                                src={getPlexImageUrl(track.thumb || track.parentThumb)}
+                                alt={track.parentTitle}
+                                sx={{
+                                  width: 40,
+                                  height: 40,
+                                  borderRadius: 1,
+                                  objectFit: 'cover',
+                                  mr: 1.5,
+                                  flexShrink: 0
+                                }}
+                              />
+                            )}
                             <ListItemText
                               primary={track.title}
                               secondary={`${track.grandparentTitle} • ${track.parentTitle}`}
