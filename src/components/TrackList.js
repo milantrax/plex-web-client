@@ -202,9 +202,7 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
                   <Typography
                     variant="body2"
                     sx={{
-                      transition: 'color 0.2s',
                       color: isCurrent ? '#000000' : 'inherit',
-                      '&:hover': { color: 'primary.main' },
                     }}
                   >
                     {track.title}

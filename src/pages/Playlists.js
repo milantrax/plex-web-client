@@ -14,6 +14,7 @@ import {
 } from '../api/customPlaylistsApi';
 import LoadingSpinner from '../components/LoadingSpinner';
 import TrackList from '../components/TrackList';
+import CustomPlaylistTrackList from '../components/CustomPlaylistTrackList';
 import BackToTop from '../components/BackToTop';
 import CreatePlaylistModal from '../components/CreatePlaylistModal';
 import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
@@ -22,21 +23,18 @@ import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DownloadIcon from '@mui/icons-material/Download';
 import queueManager from '../utils/queueManager';
 
-// Marker to distinguish custom playlists from Plex playlists
 const CUSTOM_PREFIX = 'custom_';
 
 function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
-  // Plex playlists
   const [plexPlaylists, setPlexPlaylists] = useState([]);
   const [plexLoading, setPlexLoading] = useState(true);
 
-  // Custom playlists
   const [customPlaylists, setCustomPlaylists] = useState([]);
   const [customLoading, setCustomLoading] = useState(true);
 
-  // Shared view state
   const [selected, setSelected] = useState(null); // { type: 'plex'|'custom', data: {} }
   const [viewTracks, setViewTracks] = useState([]);
   const [loadingTracks, setLoadingTracks] = useState(false);
@@ -52,7 +50,6 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
   const showSnackbar = (message, severity = 'success') =>
     setSnackbar({ open: true, message, severity });
 
-  // ── Data fetching ──────────────────────────────────────────────────────────
 
   const fetchPlexPlaylists = useCallback(async () => {
     setPlexLoading(true);
@@ -83,8 +80,6 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     fetchCustomPlaylists();
   }, [fetchPlexPlaylists, fetchCustomPlaylists]);
 
-  // ── Selection / track loading ──────────────────────────────────────────────
-
   const handleSelectPlex = async (playlist) => {
     setSelected({ type: 'plex', data: playlist });
     setViewTracks([]);
@@ -107,7 +102,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     setError(null);
     try {
       const { tracks } = await getCustomPlaylistTracks(playlist.id);
-      // Adapt DB track shape to match Plex track shape for TrackList
+
       setViewTracks(tracks.map(t => ({
         ratingKey: t.rating_key,
         title: t.title,
@@ -126,8 +121,6 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     }
   };
 
-  // ── Custom playlist actions ────────────────────────────────────────────────
-
   const handlePlaylistCreated = (playlist) => {
     setCustomPlaylists(prev => [{ ...playlist, track_count: 0 }, ...prev]);
     showSnackbar(`Playlist "${playlist.name}" created`);
@@ -137,6 +130,18 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     setCustomPlaylists(prev =>
       prev.map(p => p.id === playlistId ? { ...p, track_count: p.track_count + 1 } : p)
     );
+  };
+
+  const handleRemoveTrackFromView = async (track) => {
+    try {
+      await removeTrackFromCustomPlaylist(selected.data.id, track._customTrackId);
+      setViewTracks(prev => prev.filter(t => t._customTrackId !== track._customTrackId));
+      setCustomPlaylists(prev =>
+        prev.map(p => p.id === selected.data.id ? { ...p, track_count: Math.max(0, p.track_count - 1) } : p)
+      );
+    } catch {
+      showSnackbar('Failed to remove track', 'error');
+    }
   };
 
   const handleDeleteCustomPlaylist = async (playlist) => {
@@ -153,20 +158,21 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     }
   };
 
-  // ── Plex playlist export ───────────────────────────────────────────────────
-
   const exportPlaylistAsM3U = () => {
-    if (!selected || selected.type !== 'plex' || viewTracks.length === 0) return;
+    if (!selected || viewTracks.length === 0) return;
     const link = document.createElement('a');
-    link.href = `/api/plex/playlists/${selected.data.ratingKey}/export-m3u`;
-    link.download = `${selected.data.title.replace(/[^\w\s-]/g, '')}.m3u`;
+    if (selected.type === 'plex') {
+      link.href = `/api/plex/playlists/${selected.data.ratingKey}/export-m3u`;
+      link.download = `${selected.data.title.replace(/[^\w\s-]/g, '')}.m3u`;
+    } else {
+      link.href = `/api/custom-playlists/${selected.data.id}/export-m3u`;
+      link.download = `${selected.data.name.replace(/[^\w\s-]/g, '')}.m3u`;
+    }
     link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
-
-  // ── Playback ───────────────────────────────────────────────────────────────
 
   const isCurrentPlaylistPlaying = () => {
     if (!currentTrack || !viewTracks.length) return false;
@@ -194,8 +200,6 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
       showSnackbar('All tracks are already in the queue', 'info');
     }
   };
-
-  // ── Render helpers ─────────────────────────────────────────────────────────
 
   const isSelectedPlex = (pl) => selected?.type === 'plex' && selected.data.ratingKey === pl.ratingKey;
   const isSelectedCustom = (pl) => selected?.type === 'custom' && selected.data.id === pl.id;
@@ -310,8 +314,6 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     </List>
   );
 
-  // ── Main content ───────────────────────────────────────────────────────────
-
   const nowPlaying = isCurrentPlaylistPlaying();
 
   return (
@@ -411,7 +413,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                         <Chip label="Now Playing" size="small" sx={{ bgcolor: '#000000', color: '#ffffff', fontWeight: 600, fontSize: '0.7rem', height: '22px' }} />
                       )}
                       {selected.type === 'custom' && selected.data.genre && (
-                        <Chip label={selected.data.genre} size="small" variant="outlined" />
+                        <Chip label={selected.data.genre} size="small" sx={{ bgcolor: '#ffffff', color: '#000000' }} />
                       )}
                     </Stack>
                     <Chip label={`${viewTracks.length} tracks`} color="primary" size="small" sx={{ width: 'fit-content', color: nowPlaying ? '#000000' : undefined }} />
@@ -427,17 +429,6 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                     >
                       Playlist Actions
                     </Button>
-
-                    {selected.type === 'plex' && (
-                      <Button
-                        variant="outlined"
-                        onClick={exportPlaylistAsM3U}
-                        disabled={viewTracks.length === 0}
-                        sx={{ fontWeight: 600, textTransform: 'none', borderColor: '#000000', color: '#000000', '&:hover': { borderColor: '#000000', bgcolor: 'rgba(0,0,0,0.04)' } }}
-                      >
-                        Export M3U
-                      </Button>
-                    )}
 
                     {selected.type === 'custom' && (
                       <Button
@@ -468,6 +459,10 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                     <ListItemIcon><QueueMusicIcon fontSize="small" /></ListItemIcon>
                     <ListItemText>Enqueue Playlist</ListItemText>
                   </MenuItem>
+                  <MenuItem onClick={() => { setAnchorEl(null); exportPlaylistAsM3U(); }} disabled={viewTracks.length === 0}>
+                    <ListItemIcon><DownloadIcon fontSize="small" /></ListItemIcon>
+                    <ListItemText>Export M3U</ListItemText>
+                  </MenuItem>
                 </Menu>
               </CardContent>
             </Card>
@@ -485,6 +480,18 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                   </Typography>
                 )}
               </Box>
+            ) : selected.type === 'custom' ? (
+              <CustomPlaylistTrackList
+                playlistId={selected.data.id}
+                tracks={viewTracks}
+                onTracksChange={setViewTracks}
+                onPlayTrack={onPlayTrack}
+                currentTrack={currentTrack}
+                isPlaying={isPlaying}
+                onTogglePlayback={onTogglePlayback}
+                onRemoveTrack={handleRemoveTrackFromView}
+                onTrackAddedToPlaylist={handleTrackAddedToPlaylist}
+              />
             ) : (
               <TrackList
                 tracks={viewTracks}
