@@ -188,6 +188,11 @@ export function FavoritePlaylists() {
 
   const playlists = favorites.filter(f => f.type === 'playlist');
 
+  const getPlaylistRoute = (pl) =>
+    pl.subtitle === 'custom'
+      ? `/playlist/custom/${pl.rating_key}`
+      : `/playlist/plex/${pl.rating_key}`;
+
   if (playlists.length === 0) {
     return <EmptyState message="No favorite playlists yet" />;
   }
@@ -199,7 +204,7 @@ export function FavoritePlaylists() {
         {playlists.map(pl => (
           <ListItem key={pl.rating_key} disablePadding sx={{ mb: 1 }}>
             <ListItemButton
-              onClick={() => navigate('/playlists')}
+              onClick={() => navigate(getPlaylistRoute(pl))}
               sx={{ borderRadius: 1, border: 1, borderColor: 'divider' }}
             >
               <ListItemText

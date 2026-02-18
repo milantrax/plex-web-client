@@ -11,6 +11,8 @@ import Artists from './pages/Artists';
 import Queue from './pages/Queue';
 import AlbumPage from './pages/AlbumPage';
 import ArtistPage from './pages/ArtistPage';
+import PlaylistPage from './pages/PlaylistPage';
+import GenrePage from './pages/GenrePage';
 import Search from './pages/Search';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -121,6 +123,8 @@ const AppShellCore = memo(function AppShellCore() {
           <Route path="/genres" element={<Genres />} />
           <Route path="/artists" element={<Artists />} />
           <Route path="/artist/:artistId" element={<ArtistPage />} />
+          <Route path="/playlist/:type/:id" element={<PlaylistPage />} />
+          <Route path="/genre/:genreKey" element={<GenrePage />} />
           <Route path="/queue" element={<Queue />} />
           <Route path="/album/:albumId" element={<AlbumPage />} />
           <Route path="/search" element={<SearchWrapper />} />

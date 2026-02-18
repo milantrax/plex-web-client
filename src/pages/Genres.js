@@ -1,24 +1,17 @@
 // src/pages/Genres.js
-import React, { useState, useEffect, useRef } from 'react';
-import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip, Stack, Divider, Select, MenuItem, FormControl } from '@mui/material';
-import { getSections, getGenres, getAlbumsByGenre } from '../api/plexApi';
+import React, { useState, useEffect } from 'react';
+import { Box, List, ListItem, ListItemButton, ListItemText, Typography, Chip } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { getSections, getGenres } from '../api/plexApi';
 import LoadingSpinner from '../components/LoadingSpinner';
-import AlbumCard from '../components/AlbumCard';
-import BackToTop from '../components/BackToTop';
 import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
-import { usePlayback } from '../contexts/PlaybackContext';
 
 function Genres() {
-  const { currentTrack, isPlaying, onPlayTrack, onTogglePlayback } = usePlayback();
+  const navigate = useNavigate();
   const [genres, setGenres] = useState([]);
-  const [selectedGenre, setSelectedGenre] = useState(null);
-  const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingAlbums, setLoadingAlbums] = useState(false);
   const [error, setError] = useState(null);
   const [musicSectionId, setMusicSectionId] = useState(null);
-  const [selectedYear, setSelectedYear] = useState('');
-  const scrollContainerRef = useRef(null);
 
    useEffect(() => {
     const fetchMusicSection = async () => {
@@ -60,89 +53,26 @@ function Genres() {
     fetchGenres();
   }, [musicSectionId]);
 
-  useEffect(() => {
-      const fetchAlbumsForGenre = async () => {
-          if (!selectedGenre || !musicSectionId) return;
-          setLoadingAlbums(true);
-          setAlbums([]);
-          setError(null);
-          try {
-              const albumData = await getAlbumsByGenre(musicSectionId, selectedGenre.key, 9);
-              setAlbums(Array.isArray(albumData) ? albumData : []);
-          } catch (err) {
-             console.error(`Failed to fetch albums for genre ${selectedGenre.title}:`, err);
-             setError(`Failed to fetch albums for genre: ${selectedGenre.title}.`);
-          } finally {
-            setLoadingAlbums(false);
-          }
-      };
-      fetchAlbumsForGenre();
-  }, [selectedGenre, musicSectionId]);
-
   const handleGenreClick = (genre) => {
-    setSelectedGenre(genre);
-    setSelectedYear('');
-  };
-
-  const groupAlbumsByYear = (albums) => {
-    const grouped = albums.reduce((acc, album) => {
-      const year = album.year || 'Unknown';
-      if (!acc[year]) {
-        acc[year] = [];
-      }
-      acc[year].push(album);
-      return acc;
-    }, {});
-
-    return Object.keys(grouped)
-      .sort((a, b) => {
-        if (a === 'Unknown') return 1;
-        if (b === 'Unknown') return -1;
-        return Number(b) - Number(a);
-      })
-      .map(year => ({
-        year,
-        albums: grouped[year]
-      }));
-  };
-
-  const handleYearSelect = (year) => {
-    setSelectedYear(year);
-    if (year) {
-      setTimeout(() => {
-        const yearElement = document.getElementById(`year-${year}`);
-        const container = scrollContainerRef.current;
-
-        if (yearElement && container) {
-          const containerRect = container.getBoundingClientRect();
-          const yearRect = yearElement.getBoundingClientRect();
-          const offset = yearRect.top - containerRect.top + container.scrollTop;
-
-          container.scrollTo({
-            top: offset - 20, // 20px padding from top
-            behavior: 'smooth'
-          });
-        }
-      }, 100);
-    }
+    navigate(`/genre/${genre.key}`, { state: { genreTitle: genre.title, sectionId: musicSectionId } });
   };
 
   if (loading) return <LoadingSpinner />;
-  if (error && !loadingAlbums) return (
+  if (error) return (
     <Box sx={{ textAlign: 'center', py: 10, px: 2 }}>
       <Typography color="error" variant="h6" sx={{ maxWidth: 600, mx: 'auto' }}>
         {error}
       </Typography>
     </Box>
   );
-  if (!musicSectionId && !error) return (
+  if (!musicSectionId) return (
     <Box sx={{ textAlign: 'center', py: 10 }}>
       <Typography color="text.secondary" variant="h6">
         No music library found.
       </Typography>
     </Box>
   );
-  if (genres.length === 0 && !error) return (
+  if (genres.length === 0) return (
     <Box sx={{ textAlign: 'center', py: 10 }}>
       <Typography color="text.secondary" variant="h6">
         No genres found in this library.
@@ -173,7 +103,6 @@ function Genres() {
           {genres.map(genre => (
             <ListItem key={genre.key} disablePadding>
               <ListItemButton
-                selected={selectedGenre?.key === genre.key}
                 onClick={() => handleGenreClick(genre)}
                 sx={{ py: 1.5, px: 2.5 }}
               >
@@ -193,8 +122,7 @@ function Genres() {
               key={genre.key}
               label={genre.title}
               onClick={() => handleGenreClick(genre)}
-              color={selectedGenre?.key === genre.key ? 'primary' : 'default'}
-              variant={selectedGenre?.key === genre.key ? 'filled' : 'outlined'}
+              variant="outlined"
             />
           ))}
         </Box>
@@ -202,133 +130,28 @@ function Genres() {
 
       {/* Main Content */}
       <Box
-        ref={scrollContainerRef}
         sx={{
           flex: 1,
           height: '100%',
           overflowY: 'auto',
           px: 2.5,
           pt: `${NAVBAR_HEIGHT + 20}px`,
-          pb: `${PLAYER_HEIGHT + 20}px`
+          pb: `${PLAYER_HEIGHT + 20}px`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}
         className="custom-scrollbar"
       >
-        {selectedGenre ? (
-          <>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              flexWrap="wrap"
-              gap={2}
-              sx={{ mb: 2.5 }}
-            >
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Typography variant="h5" component="h3" sx={{ fontWeight: 700, m: 0 }}>
-                  {selectedGenre.title}
-                </Typography>
-                {albums.length > 0 && (
-                  <FormControl size="small" sx={{ minWidth: 120 }}>
-                    <Select
-                      value={selectedYear}
-                      onChange={(e) => handleYearSelect(e.target.value)}
-                      displayEmpty
-                      sx={{
-                        fontSize: '0.875rem',
-                        '& .MuiSelect-select': {
-                          py: 0.75
-                        }
-                      }}
-                    >
-                      <MenuItem value="" sx={{ fontStyle: 'normal' }}>
-                        All Years
-                      </MenuItem>
-                      {groupAlbumsByYear(albums).map(({ year }) => (
-                        <MenuItem key={year} value={year}>
-                          {year}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                )}
-              </Stack>
-              <Chip
-                label={`${albums.length} album${albums.length !== 1 ? 's' : ''}`}
-                color="primary"
-                size="small"
-              />
-            </Stack>
-
-            {loadingAlbums ? (
-              <LoadingSpinner />
-            ) : albums.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 10 }}>
-                <Typography color="text.secondary" variant="h6">
-                  No albums found for this genre
-                </Typography>
-              </Box>
-            ) : (
-              <Box>
-                {groupAlbumsByYear(albums).map((yearGroup, index) => (
-                  <Box
-                    key={yearGroup.year}
-                    id={`year-${yearGroup.year}`}
-                    sx={{ mb: 4 }}
-                  >
-                    {/* Year Header with Divider */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        mb: 2.5,
-                        gap: 2
-                      }}
-                    >
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontWeight: 600,
-                          color: 'text.secondary',
-                          flexShrink: 0
-                        }}
-                      >
-                        {yearGroup.year}
-                      </Typography>
-                      <Divider sx={{ flexGrow: 1 }} />
-                    </Box>
-
-                    {/* Albums for this year */}
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start' }}>
-                      {yearGroup.albums.map(album => (
-                        <AlbumCard
-                          key={album.ratingKey}
-                          album={album}
-                          onPlayTrack={onPlayTrack}
-                          currentTrack={currentTrack}
-                          isPlaying={isPlaying}
-                          onTogglePlayback={onTogglePlayback}
-                        />
-                      ))}
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </>
-        ) : (
-          <Box sx={{ textAlign: 'center', py: 20 }}>
-            <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
-              Select a genre
-            </Typography>
-            <Typography color="text.secondary" sx={{ m: 0 }}>
-              Choose a genre from the sidebar to view its albums
-            </Typography>
-          </Box>
-        )}
+        <Box sx={{ textAlign: 'center' }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
+            Select a genre
+          </Typography>
+          <Typography color="text.secondary">
+            Choose a genre from the sidebar to view its albums
+          </Typography>
+        </Box>
       </Box>
-
-      {/* Back to Top Button */}
-      <BackToTop scrollContainerRef={scrollContainerRef} />
     </Box>
   );
 }
