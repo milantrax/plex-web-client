@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import NavBar from './components/NavBar';
@@ -16,8 +16,8 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { useAuth } from './contexts/AuthContext';
+import { PlaybackProvider, usePlaybackActions, usePlaybackState } from './contexts/PlaybackContext';
 import { initAudioDiagnostics } from './utils/audioDebug';
-import queueManager from './utils/queueManager';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -37,45 +37,46 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-function AppShell() {
-  const [currentTrack, setCurrentTrack] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const playerRef = useRef(null);
+// Renders the Player, consuming playback state+actions from context.
+// Re-renders when currentTrack or isPlaying change — correct behaviour.
+function PlayerWrapper() {
+  const { currentTrack } = usePlaybackState();
+  const { playerRef, onPlayStateChange, onTrackEnded, onPlayNext, onPlayPrevious } = usePlaybackActions();
+  return (
+    <Player
+      ref={playerRef}
+      currentTrack={currentTrack}
+      onPlayStateChange={onPlayStateChange}
+      onTrackEnded={onTrackEnded}
+      onPlayNext={onPlayNext}
+      onPlayPrevious={onPlayPrevious}
+    />
+  );
+}
+
+// Adapts the class-based Search component to receive playback props from context.
+function SearchWrapper() {
+  const { currentTrack, isPlaying } = usePlaybackState();
+  const { onPlayTrack, onTogglePlayback, setCurrentTrack } = usePlaybackActions();
+  return (
+    <Search
+      currentTrack={currentTrack}
+      isPlaying={isPlaying}
+      onPlayTrack={onPlayTrack}
+      onTogglePlayback={onTogglePlayback}
+      onCurrentTrackChange={setCurrentTrack}
+    />
+  );
+}
+
+// Memoized shell — only consumes stable actions, so it never re-renders
+// when currentTrack or isPlaying change. Pages re-render via their own
+// usePlayback() subscriptions, not via parent propagation.
+const AppShellCore = memo(function AppShellCore() {
+  const { onTogglePlayback, playerRef } = usePlaybackActions();
 
   useEffect(() => {
     initAudioDiagnostics();
-  }, []);
-
-  const handlePlayTrack = (track) => {
-    setCurrentTrack(track);
-    setIsPlaying(true);
-  };
-
-  const handlePlayStateChange = useCallback((playing) => {
-    setIsPlaying(playing);
-  }, []);
-
-  const handleTogglePlayback = useCallback(() => {
-    if (playerRef.current) {
-      playerRef.current.togglePlayPause();
-    }
-  }, []);
-
-  const handleTrackEnded = useCallback(async (endedTrack) => {
-    const nextTrack = await queueManager.getNextTrack(endedTrack.ratingKey);
-    if (nextTrack) {
-      handlePlayTrack(nextTrack);
-    } else {
-      setIsPlaying(false);
-    }
-  }, []);
-
-  const handlePlayNext = useCallback((nextTrack) => {
-    handlePlayTrack(nextTrack);
-  }, []);
-
-  const handlePlayPrevious = useCallback((previousTrack) => {
-    handlePlayTrack(previousTrack);
   }, []);
 
   useEffect(() => {
@@ -85,7 +86,7 @@ function AppShell() {
       switch (e.code) {
         case 'Space':
           e.preventDefault();
-          handleTogglePlayback();
+          onTogglePlayback();
           break;
         case 'ArrowRight':
           if (e.shiftKey) {
@@ -106,26 +107,34 @@ function AppShell() {
 
     document.addEventListener('keydown', handleKeyPress);
     return () => document.removeEventListener('keydown', handleKeyPress);
-  }, [handleTogglePlayback]);
+  }, [onTogglePlayback, playerRef]);
 
   return (
     <Box className="App" sx={{ height: '100vh', position: 'relative' }}>
-      <NavBar onPlayTrack={handlePlayTrack} />
+      <NavBar />
       <Box component="main" sx={{ height: '100vh', overflow: 'hidden', position: 'relative' }}>
         <Routes>
-          <Route path="/" element={<Library onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
-          <Route path="/playlists" element={<Playlists onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
-          <Route path="/genres" element={<Genres onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
+          <Route path="/" element={<Library />} />
+          <Route path="/playlists" element={<Playlists />} />
+          <Route path="/genres" element={<Genres />} />
           <Route path="/artists" element={<Artists />} />
-          <Route path="/artist/:artistId" element={<ArtistPage onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
-          <Route path="/queue" element={<Queue onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
-          <Route path="/album/:albumId" element={<AlbumPage onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} />} />
-          <Route path="/search" element={<Search onPlayTrack={handlePlayTrack} currentTrack={currentTrack} isPlaying={isPlaying} onTogglePlayback={handleTogglePlayback} onCurrentTrackChange={setCurrentTrack} />} />
+          <Route path="/artist/:artistId" element={<ArtistPage />} />
+          <Route path="/queue" element={<Queue />} />
+          <Route path="/album/:albumId" element={<AlbumPage />} />
+          <Route path="/search" element={<SearchWrapper />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </Box>
-      <Player ref={playerRef} currentTrack={currentTrack} onPlayStateChange={handlePlayStateChange} onTrackEnded={handleTrackEnded} onPlayNext={handlePlayNext} onPlayPrevious={handlePlayPrevious} />
+      <PlayerWrapper />
     </Box>
+  );
+});
+
+function AppShell() {
+  return (
+    <PlaybackProvider>
+      <AppShellCore />
+    </PlaybackProvider>
   );
 }
 

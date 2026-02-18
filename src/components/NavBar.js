@@ -30,10 +30,12 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import SearchBar from './SearchBar';
 import { useThemeMode } from '../theme/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { usePlaybackActions } from '../contexts/PlaybackContext';
 
-function NavBar({ onPlayTrack }) {
+function NavBar() {
   const { mode, toggleTheme } = useThemeMode();
   const { user, logout } = useAuth();
+  const { onPlayTrack } = usePlaybackActions();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

@@ -7,8 +7,10 @@ import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackToTop from '../components/BackToTop';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
+import { usePlayback } from '../contexts/PlaybackContext';
 
-const ArtistPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) => {
+const ArtistPage = () => {
+  const { currentTrack, isPlaying, onPlayTrack, onTogglePlayback } = usePlayback();
   const { artistId } = useParams();
   const [artist, setArtist] = useState(null);
   const [albums, setAlbums] = useState([]);

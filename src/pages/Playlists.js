@@ -25,10 +25,12 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
 import queueManager from '../utils/queueManager';
+import { usePlayback } from '../contexts/PlaybackContext';
 
 const CUSTOM_PREFIX = 'custom_';
 
-function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
+function Playlists() {
+  const { currentTrack, isPlaying, onPlayTrack, onTogglePlayback } = usePlayback();
   const [plexPlaylists, setPlexPlaylists] = useState([]);
   const [plexLoading, setPlexLoading] = useState(true);
 

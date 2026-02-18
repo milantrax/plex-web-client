@@ -6,8 +6,10 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import AlbumCard from '../components/AlbumCard';
 import BackToTop from '../components/BackToTop';
 import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
+import { usePlayback } from '../contexts/PlaybackContext';
 
-function Genres({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
+function Genres() {
+  const { currentTrack, isPlaying, onPlayTrack, onTogglePlayback } = usePlayback();
   const [genres, setGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState(null);
   const [albums, setAlbums] = useState([]);

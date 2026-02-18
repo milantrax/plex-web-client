@@ -6,8 +6,10 @@ import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackToTop from '../components/BackToTop';
 import { NAVBAR_HEIGHT, PLAYER_HEIGHT } from '../theme/theme';
+import { usePlayback } from '../contexts/PlaybackContext';
 
-function Library({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
+function Library() {
+  const { currentTrack, isPlaying, onPlayTrack, onTogglePlayback } = usePlayback();
   const [albums, setAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

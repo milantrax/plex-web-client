@@ -11,8 +11,10 @@ import QueueMusicIcon from '@mui/icons-material/QueueMusic';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import StarIcon from '@mui/icons-material/Star';
+import { usePlayback } from '../contexts/PlaybackContext';
 
-const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) => {
+const AlbumPage = () => {
+  const { currentTrack, isPlaying, onPlayTrack, onTogglePlayback } = usePlayback();
   const { albumId } = useParams();
   const [album, setAlbum] = useState(null);
   const [tracks, setTracks] = useState([]);

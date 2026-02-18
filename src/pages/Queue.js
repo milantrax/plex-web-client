@@ -10,8 +10,10 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import BackToTop from '../components/BackToTop';
 import { getPlexImageUrl } from '../api/plexApi';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
+import { usePlayback } from '../contexts/PlaybackContext';
 
-function Queue({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
+function Queue() {
+  const { currentTrack, isPlaying, onPlayTrack, onTogglePlayback } = usePlayback();
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [queueStats, setQueueStats] = useState({});
