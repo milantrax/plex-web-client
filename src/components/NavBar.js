@@ -75,6 +75,7 @@ function NavBar() {
     { label: 'Playlists', path: '/playlists' },
     { label: 'Genres', path: '/genres' },
     { label: 'Artists', path: '/artists' },
+    { label: 'Favorites', path: '/favorites' },
   ];
 
   const NavButton = ({ item }) => (

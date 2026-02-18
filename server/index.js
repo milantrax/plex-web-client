@@ -10,6 +10,7 @@ const authRoutes = require('./routes/auth');
 const plexRoutes = require('./routes/plex');
 const mediaRoutes = require('./routes/media');
 const customPlaylistsRoutes = require('./routes/customPlaylists');
+const favoritesRoutes = require('./routes/favorites');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -46,6 +47,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/plex', plexRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/custom-playlists', customPlaylistsRoutes);
+app.use('/api/favorites', favoritesRoutes);
 
 // Serve React build in production
 if (process.env.NODE_ENV === 'production') {

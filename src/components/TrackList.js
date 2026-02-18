@@ -16,6 +16,7 @@ import PauseIcon from '@mui/icons-material/Pause';
 import StarIcon from '@mui/icons-material/Star';
 import AddToPlaylistModal from './AddToPlaylistModal';
 import CreatePlaylistModal from './CreatePlaylistModal';
+import FavoriteButton from './FavoriteButton';
 
 function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, onTogglePlayback, onTrackAddedToPlaylist }) {
   const [queuedTracks, setQueuedTracks] = useState(new Set());
@@ -124,8 +125,8 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
           sx={{
             display: 'grid',
             gridTemplateColumns: {
-              xs: '50px 1fr 100px 60px 60px 60px',
-              md: '50px 1fr 140px 100px 60px 60px 60px'
+              xs: '50px 1fr 100px 60px 60px 60px 60px',
+              md: '50px 1fr 140px 100px 60px 60px 60px 60px'
             },
             alignItems: 'center',
             gap: 2,
@@ -148,6 +149,7 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
           <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'right', fontWeight: 600, textTransform: 'uppercase' }}>
             Duration
           </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>&nbsp;</Typography>
           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>&nbsp;</Typography>
           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>&nbsp;</Typography>
           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>&nbsp;</Typography>
@@ -268,6 +270,23 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
                   >
                     <LibraryAddIcon fontSize="small" />
                   </IconButton>
+                </Box>
+
+                {/* Favorite Button */}
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <FavoriteButton
+                    type="track"
+                    item={{
+                      ratingKey: track.ratingKey,
+                      title: track.title,
+                      thumb: track.thumb || track.parentThumb,
+                      subtitle: track.originalTitle || track.grandparentTitle,
+                      duration: track.duration,
+                      partKey: track.Media?.[0]?.Part?.[0]?.key || null,
+                      parentRatingKey: track.parentRatingKey ? String(track.parentRatingKey) : null,
+                    }}
+                    size="small"
+                  />
                 </Box>
               </Box>
             );

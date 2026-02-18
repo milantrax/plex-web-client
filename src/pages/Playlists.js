@@ -17,6 +17,7 @@ import TrackList from '../components/TrackList';
 import CustomPlaylistTrackList from '../components/CustomPlaylistTrackList';
 import BackToTop from '../components/BackToTop';
 import CreatePlaylistModal from '../components/CreatePlaylistModal';
+import FavoriteButton from '../components/FavoriteButton';
 import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
@@ -435,7 +436,7 @@ function Playlists() {
                     <Chip label={`${viewTracks.length} tracks`} color="primary" size="small" sx={{ width: 'fit-content', color: nowPlaying ? '#000000' : undefined }} />
                   </Stack>
 
-                  <Stack direction="row" spacing={1.5} flexWrap="wrap">
+                  <Stack direction="row" spacing={1.5} flexWrap="wrap" alignItems="center">
                     <Button
                       variant="contained"
                       endIcon={<ArrowDropDownIcon />}
@@ -445,6 +446,15 @@ function Playlists() {
                     >
                       Playlist Actions
                     </Button>
+
+                    <FavoriteButton
+                      type="playlist"
+                      item={
+                        selected.type === 'plex'
+                          ? { ratingKey: selected.data.ratingKey, title: selected.data.title, thumb: null }
+                          : { ratingKey: String(selected.data.id), title: selected.data.name, thumb: null }
+                      }
+                    />
 
                     {selected.type === 'custom' && (
                       <Button

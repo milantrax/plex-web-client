@@ -48,3 +48,21 @@ CREATE TABLE IF NOT EXISTS playlist_tracks (
 ALTER TABLE playlist_tracks ADD COLUMN IF NOT EXISTS parent_rating_key VARCHAR(255);
 
 CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist ON playlist_tracks(playlist_id);
+
+CREATE TABLE IF NOT EXISTS favorites (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(20) NOT NULL CHECK (type IN ('album', 'artist', 'playlist', 'track')),
+  rating_key VARCHAR(255) NOT NULL,
+  title VARCHAR(500),
+  thumb VARCHAR(1000),
+  subtitle VARCHAR(500),
+  year INTEGER,
+  duration INTEGER,
+  part_key VARCHAR(1000),
+  parent_rating_key VARCHAR(255),
+  added_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, type, rating_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);

@@ -15,8 +15,10 @@ import Search from './pages/Search';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Favorites, { FavoriteAlbums, FavoriteArtists, FavoritePlaylists, FavoriteTracks } from './pages/Favorites';
 import { useAuth } from './contexts/AuthContext';
 import { PlaybackProvider, usePlaybackActions, usePlaybackState } from './contexts/PlaybackContext';
+import { FavoritesProvider } from './contexts/FavoritesContext';
 import { initAudioDiagnostics } from './utils/audioDebug';
 
 function ProtectedRoute({ children }) {
@@ -123,6 +125,13 @@ const AppShellCore = memo(function AppShellCore() {
           <Route path="/album/:albumId" element={<AlbumPage />} />
           <Route path="/search" element={<SearchWrapper />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/favorites" element={<Favorites />}>
+            <Route index element={<Navigate to="albums" replace />} />
+            <Route path="albums" element={<FavoriteAlbums />} />
+            <Route path="artists" element={<FavoriteArtists />} />
+            <Route path="playlists" element={<FavoritePlaylists />} />
+            <Route path="tracks" element={<FavoriteTracks />} />
+          </Route>
         </Routes>
       </Box>
       <PlayerWrapper />
@@ -133,7 +142,9 @@ const AppShellCore = memo(function AppShellCore() {
 function AppShell() {
   return (
     <PlaybackProvider>
-      <AppShellCore />
+      <FavoritesProvider>
+        <AppShellCore />
+      </FavoritesProvider>
     </PlaybackProvider>
   );
 }

@@ -6,6 +6,7 @@ import { getPlexImageUrl, getArtistAlbums, getMetadata } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackToTop from '../components/BackToTop';
+import FavoriteButton from '../components/FavoriteButton';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 import { usePlayback } from '../contexts/PlaybackContext';
 
@@ -136,9 +137,20 @@ const ArtistPage = () => {
         )}
 
         {/* Artist Name */}
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, mb: 1 }}>
           {artist.title}
         </Typography>
+
+        {/* Favorite Button */}
+        <FavoriteButton
+          type="artist"
+          item={{
+            ratingKey: artistId,
+            title: artist.title,
+            thumb: artist.thumb || artist.art || null,
+          }}
+          sx={{ mb: 1, ml: -1 }}
+        />
 
         {/* Album Count */}
         <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>

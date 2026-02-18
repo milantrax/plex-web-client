@@ -5,6 +5,7 @@ import { getPlexImageUrl, getAlbumTracks, getMetadata } from '../api/plexApi';
 import TrackList from '../components/TrackList';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackToTop from '../components/BackToTop';
+import FavoriteButton from '../components/FavoriteButton';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 import queueManager from '../utils/queueManager';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
@@ -333,20 +334,35 @@ const AlbumPage = () => {
 
           <Divider />
 
-          <Button
-            variant="contained"
-            fullWidth
-            endIcon={<ArrowDropDownIcon />}
-            onClick={handleOpenMenu}
-            sx={{
-              py: 1.5,
-              fontWeight: 600,
-              textTransform: 'none',
-              fontSize: '0.95rem'
-            }}
-          >
-            Album Actions
-          </Button>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Button
+              variant="contained"
+              fullWidth
+              endIcon={<ArrowDropDownIcon />}
+              onClick={handleOpenMenu}
+              sx={{
+                py: 1.5,
+                fontWeight: 600,
+                textTransform: 'none',
+                fontSize: '0.95rem'
+              }}
+            >
+              Album Actions
+            </Button>
+            {album && (
+              <FavoriteButton
+                type="album"
+                item={{
+                  ratingKey: albumId,
+                  title: album.title,
+                  thumb: album.thumb,
+                  subtitle: album.parentTitle,
+                  year: album.year || null,
+                  parentRatingKey: album.parentRatingKey ? String(album.parentRatingKey) : null,
+                }}
+              />
+            )}
+          </Stack>
 
           <Menu
             anchorEl={anchorEl}
