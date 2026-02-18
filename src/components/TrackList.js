@@ -168,8 +168,8 @@ function TrackList({ tracks, albumData, onPlayTrack, currentTrack, isPlaying, on
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: {
-                    xs: '50px 1fr 100px 60px 60px 60px',
-                    md: '50px 1fr 140px 100px 60px 60px 60px'
+                    xs: '50px 1fr 100px 60px 60px 60px 60px',
+                    md: '50px 1fr 140px 100px 60px 60px 60px 60px'
                   },
                   alignItems: 'center',
                   gap: 2,
