@@ -1,25 +1,22 @@
 /**
  * Audio Debugging Utility
- * 
- * This file contains functions to help diagnose audio streaming issues
- * with Plex API.
  */
-
-import { PLEX_URL, PLEX_TOKEN } from '../config';
 
 export const testPlexConnection = async () => {
   try {
-    const response = await fetch(`${PLEX_URL}?X-Plex-Token=${PLEX_TOKEN}`, {
-      method: 'GET',
+    const response = await fetch('/api/plex/test-connection', {
+      credentials: 'include'
     });
-    
+
     if (response.ok) {
-      console.log('✅ Plex server connection successful');
-      return true;
-    } else {
-      console.error('❌ Plex server connection failed', response.status, response.statusText);
-      return false;
+      const data = await response.json();
+      if (data.success) {
+        console.log('✅ Plex server connection successful:', data.serverName, data.version);
+        return true;
+      }
     }
+    console.error('❌ Plex server connection failed');
+    return false;
   } catch (error) {
     console.error('❌ Plex server connection error:', error);
     return false;
@@ -30,14 +27,15 @@ export const testAudioURL = async (url) => {
   try {
     const response = await fetch(url, {
       method: 'HEAD',
+      credentials: 'include'
     });
-    
+
     console.log('Audio URL test response:', {
       status: response.status,
       ok: response.ok,
       headers: Array.from(response.headers.entries())
     });
-    
+
     return response.ok;
   } catch (error) {
     console.error('Audio URL test error:', error);
@@ -50,7 +48,7 @@ export const logAudioElementInfo = (audioElement) => {
     console.error('No audio element provided');
     return;
   }
-  
+
   console.group('Audio Element Details');
   console.log('Current Time:', audioElement.currentTime);
   console.log('Duration:', audioElement.duration);
@@ -64,16 +62,10 @@ export const logAudioElementInfo = (audioElement) => {
 
 export const initAudioDiagnostics = () => {
   console.log('Audio diagnostics initialized');
-  
-  testPlexConnection().then(success => {
-    if (!success) {
-      console.error('Plex server connection test failed. Check your PLEX_URL and PLEX_TOKEN.');
-    }
-  });
-  
+
   window.debugPlexAudio = (audioElement) => {
     logAudioElementInfo(audioElement);
   };
-  
+
   console.log('You can debug audio element by calling window.debugPlexAudio(audioElement)');
 };
