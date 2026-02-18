@@ -4,6 +4,7 @@ import {
   Box, List, ListItem, ListItemButton, ListItemText, Typography
 } from '@mui/material';
 import AlbumCard from '../components/AlbumCard';
+import TrackList from '../components/TrackList';
 import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { usePlayback } from '../contexts/PlaybackContext';
@@ -214,17 +215,22 @@ export function FavoritePlaylists() {
   );
 }
 
-const formatDuration = (ms) => {
-  const minutes = Math.floor(ms / 60000);
-  const seconds = ((ms % 60000) / 1000).toFixed(0);
-  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-};
-
 export function FavoriteTracks() {
   const { favorites } = useFavorites();
-  const { onPlayTrack } = usePlayback();
+  const { onPlayTrack, currentTrack, isPlaying, onTogglePlayback } = usePlayback();
 
-  const tracks = favorites.filter(f => f.type === 'track');
+  const tracks = favorites
+    .filter(f => f.type === 'track')
+    .map(f => ({
+      ratingKey: f.rating_key,
+      title: f.title,
+      grandparentTitle: f.subtitle,
+      thumb: f.thumb,
+      parentThumb: f.thumb,
+      duration: f.duration,
+      parentRatingKey: f.parent_rating_key || null,
+      Media: f.part_key ? [{ Part: [{ key: f.part_key }] }] : [],
+    }));
 
   if (tracks.length === 0) {
     return <EmptyState message="No favorite tracks yet" />;
@@ -233,66 +239,13 @@ export function FavoriteTracks() {
   return (
     <>
       <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>Favorite Tracks</Typography>
-      <Box sx={{ width: '100%' }}>
-        {/* Header */}
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 200px 80px',
-            alignItems: 'center',
-            gap: 2,
-            px: 2,
-            py: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
-            Title
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
-            Artist
-          </Typography>
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', textAlign: 'right' }}>
-            Duration
-          </Typography>
-        </Box>
-        {tracks.map(track => (
-          <Box
-            key={track.rating_key}
-            onClick={() => {
-              if (track.part_key) {
-                onPlayTrack({
-                  ratingKey: track.rating_key,
-                  title: track.title,
-                  thumb: track.thumb,
-                  grandparentTitle: track.subtitle,
-                  duration: track.duration,
-                  parentRatingKey: track.parent_rating_key,
-                  Media: [{ Part: [{ key: track.part_key }] }],
-                });
-              }
-            }}
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 200px 80px',
-              alignItems: 'center',
-              gap: 2,
-              px: 2,
-              py: 1,
-              borderRadius: 1,
-              cursor: track.part_key ? 'pointer' : 'default',
-              '&:hover': { bgcolor: 'action.hover' },
-            }}
-          >
-            <Typography variant="body2" noWrap>{track.title}</Typography>
-            <Typography variant="body2" color="text.secondary" noWrap>{track.subtitle}</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-              {track.duration ? formatDuration(track.duration) : '—'}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
+      <TrackList
+        tracks={tracks}
+        onPlayTrack={onPlayTrack}
+        currentTrack={currentTrack}
+        isPlaying={isPlaying}
+        onTogglePlayback={onTogglePlayback}
+      />
     </>
   );
 }
