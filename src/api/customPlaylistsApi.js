@@ -27,7 +27,7 @@ export const addTrackToCustomPlaylist = async (playlistId, track) => {
   const res = await api.post(`/api/custom-playlists/${playlistId}/tracks`, {
     ratingKey: String(track.ratingKey),
     title: track.title,
-    artist: track.grandparentTitle || track.originalTitle,
+    artist: track.originalTitle || track.grandparentTitle,
     album: track.parentTitle,
     duration: track.duration,
     thumb: track.thumb || track.parentThumb,

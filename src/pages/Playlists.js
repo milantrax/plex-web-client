@@ -158,20 +158,32 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
     }
   };
 
-  const exportPlaylistAsM3U = () => {
+  const exportPlaylistAsM3U = async () => {
     if (!selected || viewTracks.length === 0) return;
-    const link = document.createElement('a');
+    let url, filename;
     if (selected.type === 'plex') {
-      link.href = `/api/plex/playlists/${selected.data.ratingKey}/export-m3u`;
-      link.download = `${selected.data.title.replace(/[^\w\s-]/g, '')}.m3u`;
+      url = `/api/plex/playlists/${selected.data.ratingKey}/export-m3u`;
+      filename = `${selected.data.title.replace(/[^\w\s-]/g, '')}.m3u`;
     } else {
-      link.href = `/api/custom-playlists/${selected.data.id}/export-m3u`;
-      link.download = `${selected.data.name.replace(/[^\w\s-]/g, '')}.m3u`;
+      url = `/api/custom-playlists/${selected.data.id}/export-m3u`;
+      filename = `${selected.data.name.replace(/[^\w\s-]/g, '')}.m3u`;
     }
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) throw new Error('Export failed');
+      const text = await response.text();
+      const blob = new Blob([text], { type: 'text/plain' });
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      showSnackbar('Failed to export playlist', 'error');
+    }
   };
 
   const isCurrentPlaylistPlaying = () => {
