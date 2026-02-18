@@ -284,6 +284,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
                   </Box>
                 }
                 primaryTypographyProps={{ fontWeight: 500 }}
+                secondaryTypographyProps={{ component: 'div' }}
               />
             </ListItemButton>
           </ListItem>
