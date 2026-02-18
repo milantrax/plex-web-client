@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
-  Box, List, ListItem, ListItemButton, ListItemText, Typography, Divider
+  Box, List, ListItem, ListItemButton, ListItemText, Typography
 } from '@mui/material';
 import AlbumCard from '../components/AlbumCard';
 import { SIDEBAR_WIDTH, PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
@@ -27,12 +27,7 @@ function FavoritesSidebar() {
       }}
       className="custom-scrollbar"
     >
-      <Box sx={{ px: 2, py: 1 }}>
-        <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', color: 'text.secondary' }}>
-          Favorites
-        </Typography>
-      </Box>
-      <Divider sx={{ mb: 1 }} />
+
       {sidebarItems.map(item => (
         <ListItem key={item.path} disablePadding>
           <NavLink to={item.path} style={{ textDecoration: 'none', width: '100%' }}>
