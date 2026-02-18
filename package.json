@@ -19,11 +19,15 @@
     "react-scripts": "^5.0.1",
     "web-vitals": "^2.1.4"
   },
+  "proxy": "http://localhost:3001",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "server": "cd server && node index.js",
+    "server:dev": "cd server && node --watch index.js",
+    "dev": "concurrently \"npm start\" \"npm run server:dev\""
   },
   "eslintConfig": {
     "extends": [
@@ -42,5 +46,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

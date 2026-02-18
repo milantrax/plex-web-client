@@ -24,3 +24,8 @@ yarn-debug.log*
 yarn-error.log*
 *.md
 !README.md
+
+# Server
+/server/node_modules
+/server/db/data/
+/server/.env

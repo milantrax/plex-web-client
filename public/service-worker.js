@@ -81,17 +81,17 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip cross-origin requests (except Plex server)
-  if (url.origin !== self.location.origin && !url.href.includes(':32400')) {
+  // Skip cross-origin requests
+  if (url.origin !== self.location.origin) {
     return;
   }
 
   // Determine caching strategy based on request type
   if (isPlexMediaRequest(url)) {
-    // Plex media (images, audio) - cache-first with 3-hour freshness
+    // Proxied media (images, audio) - cache-first with 3-hour freshness
     event.respondWith(cacheFirstWithRevalidation(request, MEDIA_CACHE, MAX_MEDIA_CACHE_SIZE));
   } else if (isPlexAPIRequest(url)) {
-    // Plex API requests - cache-first with 3-hour freshness
+    // Proxied API requests - cache-first with 3-hour freshness
     event.respondWith(cacheFirstWithRevalidation(request, RUNTIME_CACHE, MAX_RUNTIME_CACHE_SIZE));
   } else if (isStaticAsset(url)) {
     // Static assets - cache-first strategy (no revalidation needed)
@@ -103,26 +103,18 @@ self.addEventListener('fetch', (event) => {
 });
 
 /**
- * Check if request is for Plex media (images, audio)
+ * Check if request is for proxied Plex media (images, audio, downloads)
  */
 function isPlexMediaRequest(url) {
-  return url.href.includes(':32400') && (
-    url.pathname.includes('/photo/') ||
-    url.pathname.includes('/library/parts/') ||
-    url.pathname.includes('/music/') ||
-    url.searchParams.has('X-Plex-Token')
-  );
+  return url.pathname.startsWith('/api/media/');
 }
 
 /**
- * Check if request is for Plex API
+ * Check if request is for proxied Plex API data
+ * Note: /api/auth/* excluded (never cache auth endpoints)
  */
 function isPlexAPIRequest(url) {
-  return url.href.includes(':32400') && (
-    url.pathname.includes('/library/sections') ||
-    url.pathname.includes('/playlists') ||
-    url.pathname.includes('/search')
-  );
+  return url.pathname.startsWith('/api/plex/');
 }
 
 /**
