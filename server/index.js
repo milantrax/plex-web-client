@@ -11,6 +11,8 @@ const plexRoutes = require('./routes/plex');
 const mediaRoutes = require('./routes/media');
 const customPlaylistsRoutes = require('./routes/customPlaylists');
 const favoritesRoutes = require('./routes/favorites');
+const librarySyncRoutes = require('./routes/librarySync');
+const { startSyncScheduler } = require('./services/librarySyncService');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -45,6 +47,7 @@ app.use(session({
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/plex', plexRoutes);
+app.use('/api/plex/library', librarySyncRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api/custom-playlists', customPlaylistsRoutes);
 app.use('/api/favorites', favoritesRoutes);
@@ -62,6 +65,7 @@ app.use(errorHandler);
 
 // Start server after schema is ready
 runSchema().then(() => {
+  startSyncScheduler();
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });

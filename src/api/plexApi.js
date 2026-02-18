@@ -263,6 +263,25 @@ export const downloadTrack = async (track, albumTitle = '') => {
 };
 
 // ---------------------------------------------------------------------------
+// Library sync API
+// ---------------------------------------------------------------------------
+
+export const getLibrarySyncStatus = async () => {
+  try {
+    const res = await api.get('/api/plex/library/sync-status');
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching sync status:', error);
+    return null;
+  }
+};
+
+export const triggerLibrarySync = async () => {
+  const res = await api.post('/api/plex/library/sync');
+  return res.data;
+};
+
+// ---------------------------------------------------------------------------
 // Legacy cache export (no-ops – caching is now server-side)
 // ---------------------------------------------------------------------------
 

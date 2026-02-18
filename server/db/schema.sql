@@ -66,3 +66,45 @@ CREATE TABLE IF NOT EXISTS favorites (
 );
 
 CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
+
+-- Library cache tables
+CREATE TABLE IF NOT EXISTS library_albums (
+  id SERIAL PRIMARY KEY,
+  plex_url_hash VARCHAR(64) NOT NULL,
+  section_key VARCHAR(50) NOT NULL,
+  rating_key VARCHAR(255) NOT NULL,
+  title VARCHAR(500),
+  title_sort VARCHAR(500),
+  artist VARCHAR(500),
+  artist_sort VARCHAR(500),
+  year INTEGER,
+  studio VARCHAR(255),
+  thumb VARCHAR(1000),
+  genres TEXT[],
+  data JSONB NOT NULL,
+  synced_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(plex_url_hash, rating_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_library_albums_hash_section
+  ON library_albums(plex_url_hash, section_key);
+CREATE INDEX IF NOT EXISTS idx_library_albums_sort
+  ON library_albums(plex_url_hash, section_key, artist_sort, title_sort);
+CREATE INDEX IF NOT EXISTS idx_library_albums_year
+  ON library_albums(plex_url_hash, section_key, year);
+CREATE INDEX IF NOT EXISTS idx_library_albums_studio
+  ON library_albums(plex_url_hash, section_key, studio);
+CREATE INDEX IF NOT EXISTS idx_library_albums_genres
+  ON library_albums USING GIN(genres);
+
+CREATE TABLE IF NOT EXISTS library_sync_status (
+  id SERIAL PRIMARY KEY,
+  plex_url_hash VARCHAR(64) NOT NULL UNIQUE,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  status VARCHAR(20) DEFAULT 'idle',
+  total_albums INTEGER DEFAULT 0,
+  synced_albums INTEGER DEFAULT 0,
+  last_synced_at TIMESTAMP,
+  started_at TIMESTAMP,
+  error_message TEXT
+);

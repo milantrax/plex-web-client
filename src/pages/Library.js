@@ -1,7 +1,8 @@
 // src/pages/Library.js
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Box, Card, CardContent, FormControl, InputLabel, Select, MenuItem, Button, Typography, Stack } from '@mui/material';
-import { getSections, getSectionItems, getGenres, getYears, getLabels, getAlbumsByGenre, getAlbumsByYear, getAlbumsByLabel } from '../api/plexApi';
+import { Box, Card, CardContent, FormControl, InputLabel, Select, MenuItem, Button, Typography, Stack, Chip, LinearProgress, Tooltip, IconButton } from '@mui/material';
+import SyncIcon from '@mui/icons-material/Sync';
+import { getSections, getSectionItems, getGenres, getYears, getLabels, getAlbumsByGenre, getAlbumsByYear, getAlbumsByLabel, getLibrarySyncStatus, triggerLibrarySync } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackToTop from '../components/BackToTop';
@@ -18,7 +19,11 @@ function Library() {
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMorePages, setHasMorePages] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const ALBUMS_PER_PAGE = 100;
+  const ALBUMS_PER_PAGE = 300;
+
+  const [syncStatus, setSyncStatus] = useState(null);
+  const syncPollRef = useRef(null);
+  const musicSectionIdRef = useRef(null);
 
   const [genres, setGenres] = useState([]);
   const [years, setYears] = useState([]);
@@ -88,21 +93,57 @@ function Library() {
     }
   }, [loadMoreAlbums, loadingMore, hasMorePages]);
 
+  const prevSyncStatusRef = useRef(null);
+
+  const pollSyncStatus = useCallback(async () => {
+    const status = await getLibrarySyncStatus();
+    if (!status) return;
+
+    const wasJustSyncing = prevSyncStatusRef.current?.status === 'syncing';
+    prevSyncStatusRef.current = status;
+    setSyncStatus(status);
+
+    if (status.status === 'syncing') {
+      syncPollRef.current = setTimeout(pollSyncStatus, 3000);
+    } else if (status.status === 'done' && wasJustSyncing) {
+      const sectionId = musicSectionIdRef.current;
+      if (sectionId) {
+        try {
+          const albumData = await getSectionItems(sectionId, 9, 0, 300);
+          const albumsArray = Array.isArray(albumData) ? albumData : [];
+          setAlbums(albumsArray);
+          setCurrentPage(0);
+          setHasMorePages(albumsArray.length === 300);
+        } catch (_) {}
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    pollSyncStatus();
+    return () => clearTimeout(syncPollRef.current);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleManualSync = async () => {
+    try {
+      await triggerLibrarySync();
+      setSyncStatus(s => ({ ...s, status: 'syncing', syncedAlbums: 0 }));
+      clearTimeout(syncPollRef.current);
+      syncPollRef.current = setTimeout(pollSyncStatus, 2000);
+    } catch (_) {}
+  };
+
   useEffect(() => {
     const fetchMusicSection = async () => {
       setLoading(true);
       setError(null);
       try {
         const sections = await getSections();
-        // Ensure sections is an array
         const sectionsArray = Array.isArray(sections) ? sections : [];
 
-        // Debug: Log all sections to see what we're getting
         console.log('All sections:', sectionsArray);
         console.log('Section types:', sectionsArray.map(s => ({ title: s.title, type: s.type, key: s.key })));
 
-        // Find the first music section - try multiple type identifiers
-        // Different Plex versions may use 'artist', 'music', or have a specific scanner
         const musicSection = sectionsArray.find(sec =>
           sec.type === 'artist' ||
           sec.type === 'music' ||
@@ -113,6 +154,7 @@ function Library() {
         if (musicSection) {
           console.log('Found music section:', musicSection);
           setMusicSectionId(musicSection.key);
+          musicSectionIdRef.current = musicSection.key;
         } else {
            console.warn("No music library section found.");
            console.warn("Available sections:", sectionsArray.map(s => ({
@@ -122,13 +164,12 @@ function Library() {
              agent: s.agent
            })));
 
-           // If we have sections but none are music, show a more helpful error
            if (sectionsArray.length > 0) {
              setError(`No music library found. Available libraries: ${sectionsArray.map(s => `${s.title} (${s.type})`).join(', ')}`);
            } else {
              setError("No libraries found on your Plex server. Please check your Plex configuration.");
            }
-           setLoading(false); // Stop loading when there's an error
+           setLoading(false);
         }
       } catch (err) {
          console.error("Failed to fetch sections:", err);
@@ -144,7 +185,7 @@ function Library() {
    useEffect(() => {
      const fetchAlbums = async () => {
          if (!musicSectionId) {
-             setLoading(false); // Always stop loading if no section ID
+             setLoading(false);
              return;
          };
          setLoading(true);
@@ -329,6 +370,19 @@ function Library() {
       }}
       className="custom-scrollbar"
     >
+      {/* Sync status banner */}
+      {syncStatus && syncStatus.status === 'syncing' && (
+        <Box sx={{ mb: 2 }}>
+          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+            <SyncIcon fontSize="small" color="primary" sx={{ animation: 'spin 1.5s linear infinite', '@keyframes spin': { '0%': { transform: 'rotate(0deg)' }, '100%': { transform: 'rotate(360deg)' } } }} />
+            <Typography variant="body2" color="text.secondary">
+              Syncing library… {syncStatus.syncedAlbums.toLocaleString()} albums cached
+            </Typography>
+          </Stack>
+          <LinearProgress variant="indeterminate" sx={{ borderRadius: 1, height: 3 }} />
+        </Box>
+      )}
+
       <Card sx={{ mb: 3, boxShadow: 3 }}>
         <CardContent sx={{ p: 2.5 }}>
           <Stack direction="row" flexWrap="wrap" spacing={2} alignItems="center" justifyContent="space-between">
@@ -402,21 +456,45 @@ function Library() {
               )}
             </Stack>
 
-            <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
-              {selectedGenre || selectedYear || selectedLabel ? (
-                <span>
-                  {albums.length} album{albums.length !== 1 ? 's' : ''} found
-                  {selectedGenre && ` in ${genres.find(g => (g.tag || g.title) === selectedGenre)?.title || 'selected genre'}`}
-                  {selectedYear && ` from ${years.find(y => y.title === selectedYear)?.title || selectedYear}`}
-                  {selectedLabel && ` with label ${labels.find(l => (l.tag || l.title) === selectedLabel)?.title || 'selected label'}`}
-                </span>
-              ) : (
-                <span>
-                  {albums.length} album{albums.length !== 1 ? 's' : ''} loaded
-                  {hasMorePages && ' (scroll for more)'}
-                </span>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+                {selectedGenre || selectedYear || selectedLabel ? (
+                  <span>
+                    {albums.length} album{albums.length !== 1 ? 's' : ''} found
+                    {selectedGenre && ` in ${genres.find(g => (g.tag || g.title) === selectedGenre)?.title || 'selected genre'}`}
+                    {selectedYear && ` from ${years.find(y => y.title === selectedYear)?.title || selectedYear}`}
+                    {selectedLabel && ` with label ${labels.find(l => (l.tag || l.title) === selectedLabel)?.title || 'selected label'}`}
+                  </span>
+                ) : (
+                  <span>
+                    {albums.length} album{albums.length !== 1 ? 's' : ''} loaded
+                    {hasMorePages && ' (scroll for more)'}
+                  </span>
+                )}
+              </Typography>
+
+              {syncStatus?.lastSyncedAt && syncStatus.status !== 'syncing' && (
+                <Chip
+                  label={`Cached ${new Date(syncStatus.lastSyncedAt).toLocaleDateString()}`}
+                  size="small"
+                  variant="outlined"
+                  color="success"
+                  sx={{ fontSize: '0.7rem' }}
+                />
               )}
-            </Typography>
+
+              <Tooltip title={syncStatus?.status === 'syncing' ? 'Sync in progress…' : 'Re-sync library from Plex'}>
+                <span>
+                  <IconButton
+                    size="small"
+                    onClick={handleManualSync}
+                    disabled={syncStatus?.status === 'syncing'}
+                  >
+                    <SyncIcon fontSize="small" />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Stack>
           </Stack>
         </CardContent>
       </Card>
