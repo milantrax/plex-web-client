@@ -13,6 +13,7 @@ import {
   ListItem,
   ListItemButton,
   ListItemText,
+  ListItemIcon,
   useMediaQuery,
   useTheme,
   Divider,
@@ -24,11 +25,15 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LogoutIcon from '@mui/icons-material/Logout';
 import SearchBar from './SearchBar';
 import { useThemeMode } from '../theme/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 
 function NavBar({ onPlayTrack }) {
   const { mode, toggleTheme } = useThemeMode();
+  const { user, logout } = useAuth();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -54,6 +59,12 @@ function NavBar({ onPlayTrack }) {
   const handleSettingsClick = () => {
     navigate('/settings');
     handleSettingsMenuClose();
+  };
+
+  const handleLogout = async () => {
+    handleSettingsMenuClose();
+    await logout();
+    navigate('/login');
   };
 
   const navItems = [
@@ -172,7 +183,14 @@ function NavBar({ onPlayTrack }) {
               horizontal: 'right',
             }}
           >
+            {user && (
+              <Box sx={{ px: 2, py: 1, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography variant="caption" color="text.secondary">Signed in as</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{user.username}</Typography>
+              </Box>
+            )}
             <MenuItem onClick={handleSettingsClick}>
+              <ListItemIcon><SettingsIcon fontSize="small" /></ListItemIcon>
               <Typography>Settings</Typography>
             </MenuItem>
             <MenuItem>
@@ -187,6 +205,12 @@ function NavBar({ onPlayTrack }) {
                 label={mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
               />
             </MenuItem>
+            {user && (
+              <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+                <ListItemIcon><LogoutIcon fontSize="small" color="error" /></ListItemIcon>
+                <Typography>Sign out</Typography>
+              </MenuItem>
+            )}
           </Menu>
         </Box>
       </Toolbar>

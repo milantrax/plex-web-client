@@ -9,6 +9,7 @@ const { initializeDatabase, runSchema, getPool } = require('./db/database');
 const authRoutes = require('./routes/auth');
 const plexRoutes = require('./routes/plex');
 const mediaRoutes = require('./routes/media');
+const customPlaylistsRoutes = require('./routes/customPlaylists');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -44,6 +45,7 @@ app.use(session({
 app.use('/api/auth', authRoutes);
 app.use('/api/plex', plexRoutes);
 app.use('/api/media', mediaRoutes);
+app.use('/api/custom-playlists', customPlaylistsRoutes);
 
 // Serve React build in production
 if (process.env.NODE_ENV === 'production') {

@@ -17,3 +17,31 @@ CREATE TABLE IF NOT EXISTS session (
 );
 
 CREATE INDEX IF NOT EXISTS idx_session_expire ON session (expire);
+
+CREATE TABLE IF NOT EXISTS playlists (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  genre VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_playlists_user ON playlists(user_id);
+
+CREATE TABLE IF NOT EXISTS playlist_tracks (
+  id SERIAL PRIMARY KEY,
+  playlist_id INTEGER NOT NULL REFERENCES playlists(id) ON DELETE CASCADE,
+  rating_key VARCHAR(255) NOT NULL,
+  title VARCHAR(255),
+  artist VARCHAR(255),
+  album VARCHAR(255),
+  duration INTEGER,
+  thumb VARCHAR(512),
+  part_key VARCHAR(512),
+  position INTEGER NOT NULL DEFAULT 0,
+  added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(playlist_id, rating_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist ON playlist_tracks(playlist_id);

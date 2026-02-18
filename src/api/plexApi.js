@@ -1,964 +1,277 @@
 import axios from 'axios';
-import { PLEX_URL, PLEX_TOKEN } from '../config';
-import { storage } from '../utils/storage';
 
-/**
- * TODO: Node.js Proxy Migration
- * This API layer is designed to be easily swapped with a Node.js proxy server.
- * The storage abstraction layer allows for seamless migration:
- *
- * Current: React App → plexApi.js → Plex Server (direct)
- *                    ↓ IndexedDB cache
- *
- * Future:  React App → Node.js API Proxy → Plex Server
- *                    ↓ Server-side cache (Redis/Memory)
- *                    ↓ IndexedDB (offline support)
- *
- * When migrating, replace the axios calls below with calls to your Node.js API,
- * keeping the same function signatures and return types.
- */
-
-// Cache configuration
-const CACHE_CONFIG = {
-  defaultExpirationMinutes: 180,
-  keys: {
-    sections: 'plex_sections',
-    albums: 'plex_albums_',
-    tracks: 'plex_tracks_',
-    playlists: 'plex_playlists',
-    genres: 'plex_genres_',
-    albumsByGenre: 'plex_albums_by_genre_',
-    years: 'plex_years_',
-    albumsByYear: 'plex_albums_by_year_',
-    labels: 'plex_labels_',
-    albumsByLabel: 'plex_albums_by_label_',
-    search: 'plex_search_',
-    artists: 'plex_artists_',
-    artistAlbums: 'plex_artist_albums_'
-  }
-};
-
-// Cache helper functions using IndexedDB
-const cacheHelpers = {
-  /**
-   * Get item from IndexedDB cache
-   * @param {string} key - Cache key
-   * @param {number} expirationMinutes - Cache expiration in minutes
-   * @return {Promise<Object|null>} Cached data or null if not found or expired
-   */
-  async getFromCache(key, expirationMinutes = CACHE_CONFIG.defaultExpirationMinutes) {
-    return await storage.get(key, expirationMinutes, 'api');
-  },
-
-  /**
-   * Save item to IndexedDB cache
-   * @param {string} key - Cache key
-   * @param {Object} data - Data to cache
-   * @param {number} expirationMinutes - Cache expiration in minutes (for compatibility, stored but checked on get)
-   * @return {Promise<void>}
-   */
-  async saveToCache(key, data, expirationMinutes = CACHE_CONFIG.defaultExpirationMinutes) {
-    return await storage.set(key, data, 'api');
-  },
-
-  /**
-   * Clear all Plex related cache items from IndexedDB
-   * @return {Promise<void>}
-   */
-  async clearAllCache() {
-    return await storage.clear('api');
-  },
-
-  /**
-   * Clear specific cache by type
-   * @param {string} type - Cache type (e.g., 'sections', 'albums')
-   * @param {string} [id] - Optional ID for specific item cache
-   * @return {Promise<void>}
-   */
-  async clearCache(type, id = '') {
-    const keyPrefix = CACHE_CONFIG.keys[type];
-    if (!keyPrefix) return;
-
-    const key = `${keyPrefix}${id}`;
-
-    if (id) {
-      return await storage.remove(key, 'api');
-    } else {
-      // For clearing all of a type, we need to get all keys and remove matching ones
-      // This is a limitation of localforage, but for now we can just clear all API cache
-      return await storage.clear('api');
-    }
-  },
-
-  /**
-   * Get storage usage estimate
-   * @return {Promise<Object|null>} Storage info
-   */
-  async getStorageInfo() {
-    return await storage.getStorageEstimate();
-  }
-};
-
-// Export cache helpers for use in other components
-export const plexCache = cacheHelpers;
-
-export const plexApi = axios.create({
-  baseURL: PLEX_URL,
-  headers: {
-    'Accept': 'application/json',
-    'X-Plex-Token': PLEX_TOKEN,
-  },
+// Axios instance for all proxy API calls
+const api = axios.create({
+  withCredentials: true,
+  headers: { 'Accept': 'application/json' }
 });
 
-// Helper Functions
+// Redirect to /login on 401
+api.interceptors.response.use(
+  res => res,
+  err => {
+    if (err.response?.status === 401 && !window.location.pathname.startsWith('/login')) {
+      window.location.href = '/login';
+    }
+    return Promise.reject(err);
+  }
+);
+
+// ---------------------------------------------------------------------------
+// URL helpers – return proxy URLs, never expose Plex token to the browser
+// ---------------------------------------------------------------------------
+
 export const getPlexImageUrl = (thumbPath) => {
   if (!thumbPath) return null;
-  const url = new URL(PLEX_URL + thumbPath);
-  url.searchParams.append('X-Plex-Token', PLEX_TOKEN);
-  return url.toString();
+  return `/api/media/image?path=${encodeURIComponent(thumbPath)}`;
 };
 
 export const getPlexAudioUrl = (partKey) => {
   if (!partKey) return null;
-  
-  const url = new URL(`${PLEX_URL}${partKey}`);
-  url.searchParams.append('X-Plex-Token', PLEX_TOKEN);
-  
-  return url.toString();
+  return `/api/media/audio?path=${encodeURIComponent(partKey)}`;
 };
 
 export const getPlexTranscodeUrl = (partKey) => {
   if (!partKey) return null;
-  
-  const url = new URL(`${PLEX_URL}/audio/:/transcode/universal/start.mp3`);
-  url.searchParams.append('path', partKey);
-  url.searchParams.append('mediaIndex', '0');
-  url.searchParams.append('partIndex', '0');
-  url.searchParams.append('protocol', 'http');
-  url.searchParams.append('audioCodec', 'mp3');
-  url.searchParams.append('audioBitrate', '320');
-  url.searchParams.append('X-Plex-Token', PLEX_TOKEN);
-  
-  return url.toString();
-}
+  return `/api/media/transcode?path=${encodeURIComponent(partKey)}`;
+};
 
-// API Calls
-/**
- * Get all library sections
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Plex sections
- */
+export const getTrackDownloadUrl = (partKey, trackTitle = 'track') => {
+  if (!partKey) return null;
+  return `/api/media/download?path=${encodeURIComponent(partKey)}&filename=${encodeURIComponent(trackTitle)}`;
+};
+
+// ---------------------------------------------------------------------------
+// Data API calls – all go through the Node proxy
+// ---------------------------------------------------------------------------
+
 export const getSections = async (useCache = true) => {
-  const cacheKey = CACHE_CONFIG.keys.sections;
-
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 60);
-      if (cachedData) {
-        console.log('Using cached sections data:', cachedData);
-        return cachedData;
-      }
-    }
-
-    console.log('Fetching sections from Plex server...');
-    const response = await plexApi.get('/library/sections');
-    console.log('Sections response:', response.data);
-
-    const sections = response.data.MediaContainer.Directory || [];
-    console.log('Parsed sections:', sections);
-
-    await cacheHelpers.saveToCache(cacheKey, sections);
-
-    return sections;
+    const res = await api.get('/api/plex/sections', { params: { useCache } });
+    return res.data;
   } catch (error) {
-    console.error("Error fetching sections:", error);
+    console.error('Error fetching sections:', error);
     throw error;
   }
 };
 
-/**
- * Get items from a specific section (e.g., albums from a music section)
- * @param {string} sectionId - The section ID
- * @param {number} [type=9] - Content type (9 = Albums)
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Section items
- */
 export const getSectionItems = async (sectionId, type = 9, start = 0, size = null, useCache = true) => {
-  const cacheKey = `${CACHE_CONFIG.keys.albums}${sectionId}_${type}_${start}_${size}`;
-
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 180); // 3 hours to match Service Worker
-      if (cachedData) {
-        console.log(`Using cached section items for section ${sectionId} (start: ${start}, size: ${size})`);
-        return cachedData;
-      }
-    }
-
-    let url = `/library/sections/${sectionId}/all?type=${type}`;
-    if (start > 0) {
-      url += `&X-Plex-Container-Start=${start}`;
-    }
-    if (size) {
-      url += `&X-Plex-Container-Size=${size}`;
-    }
-
-    const response = await plexApi.get(url);
-    const items = response.data.MediaContainer.Metadata || [];
-
-    if (useCache) {
-      await cacheHelpers.saveToCache(cacheKey, items, 180); // 3 hours
-      console.log(`Cached section items for section ${sectionId} (start: ${start}, size: ${size})`);
-    }
-
-    return items;
+    const res = await api.get(`/api/plex/sections/${sectionId}/items`, {
+      params: { type, start, size, useCache }
+    });
+    return res.data?.Metadata || [];
   } catch (error) {
-    console.error(`Error fetching items for section ${sectionId}:`, error);
+    console.error(`Error fetching section items for ${sectionId}:`, error);
     throw error;
   }
 };
 
-/**
- * Get tracks for a specific album
- * @param {string} albumRatingKey - Album rating key
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Album tracks
- */
 export const getAlbumTracks = async (albumRatingKey, useCache = true) => {
-  const cacheKey = `${CACHE_CONFIG.keys.tracks}${albumRatingKey}`;
-
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 240);
-      if (cachedData) {
-        console.log(`Using cached tracks for album ${albumRatingKey}`);
-        return cachedData;
-      }
-    }
-
-    const response = await plexApi.get(`/library/metadata/${albumRatingKey}/children`);
-    const tracks = response.data.MediaContainer.Metadata || [];
-
-    await cacheHelpers.saveToCache(cacheKey, tracks, 240);
-
-    return tracks;
+    const res = await api.get(`/api/plex/albums/${albumRatingKey}/tracks`, { params: { useCache } });
+    return res.data?.Metadata || [];
   } catch (error) {
     console.error(`Error fetching tracks for album ${albumRatingKey}:`, error);
     throw error;
   }
 };
 
-/**
- * Get audio playlists
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Playlists
- */
 export const getPlaylists = async (useCache = true) => {
-  const cacheKey = CACHE_CONFIG.keys.playlists;
-
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 30);
-      if (cachedData) {
-        console.log('Using cached playlists data');
-        return cachedData;
-      }
-    }
-
-    const response = await plexApi.get('/playlists?playlistType=audio');
-    const playlists = response.data.MediaContainer.Metadata || [];
-
-    await cacheHelpers.saveToCache(cacheKey, playlists, 30);
-
-    return playlists;
+    const res = await api.get('/api/plex/playlists', { params: { useCache } });
+    return res.data;
   } catch (error) {
-    console.error("Error fetching playlists:", error);
+    console.error('Error fetching playlists:', error);
     throw error;
   }
 };
 
-/**
- * Get items from a specific playlist
- * @param {string} playlistRatingKey - Playlist rating key
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Playlist items
- */
 export const getPlaylistItems = async (playlistRatingKey, useCache = true) => {
-  const cacheKey = `plex_playlist_items_${playlistRatingKey}`;
-
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 30);
-      if (cachedData) {
-        console.log(`Using cached playlist items for playlist ${playlistRatingKey}`);
-        return cachedData;
-      }
-    }
-
-    const response = await plexApi.get(`/playlists/${playlistRatingKey}/items`);
-    const items = response.data.MediaContainer.Metadata || [];
-
-    await cacheHelpers.saveToCache(cacheKey, items, 30);
-
-    return items;
+    const res = await api.get(`/api/plex/playlists/${playlistRatingKey}/items`, { params: { useCache } });
+    return res.data?.Metadata || [];
   } catch (error) {
-    console.error(`Error fetching items for playlist ${playlistRatingKey}:`, error);
+    console.error(`Error fetching playlist items for ${playlistRatingKey}:`, error);
     throw error;
   }
 };
 
-/**
- * Get genres for a specific music section
- * @param {string} sectionId - Section ID
- * @param {number} [type=9] - Content type (9 = Album genres)
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Genres
- */
 export const getGenres = async (sectionId, type = 9, useCache = true) => {
-  const cacheKey = `${CACHE_CONFIG.keys.genres}${sectionId}_${type}`;
-  
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 240);
-      if (cachedData) {
-        console.log(`Using cached genres for section ${sectionId}`);
-        return cachedData;
-      }
-    }
-    
-    let genres = [];
-    try {
-      const response = await plexApi.get(`/library/sections/${sectionId}/genre?type=${type}`);
-      genres = response.data.MediaContainer.Directory || [];
-      console.log(`Found ${genres.length} genres from /genre endpoint`);
-    } catch (error) {
-      console.log('Standard genre endpoint failed, trying alternatives:', error.message);
-      
-      try {
-        const albumsResponse = await plexApi.get(`/library/sections/${sectionId}/all?type=${type}`);
-        const albums = albumsResponse.data.MediaContainer.Metadata || [];
-        console.log(`Got ${albums.length} albums to extract genres from`);
-        
-        const genreMap = new Map();
-        albums.forEach(album => {
-          console.log('Album sample:', {
-            title: album.title,
-            genre: album.genre,
-            Genre: album.Genre,
-            genres: album.genres,
-            allFields: Object.keys(album)
-          });
-          
-          let genreArray = album.Genre || album.genre || album.genres;
-          
-          if (genreArray) {
-            if (Array.isArray(genreArray)) {
-              genreArray.forEach(genre => {
-                const genreName = typeof genre === 'object' ? (genre.tag || genre.title || genre.name) : genre;
-                if (genreName) {
-                  if (genreMap.has(genreName)) {
-                    genreMap.set(genreName, genreMap.get(genreName) + 1);
-                  } else {
-                    genreMap.set(genreName, 1);
-                  }
-                }
-              });
-            } else if (typeof genreArray === 'string') {
-              if (genreMap.has(genreArray)) {
-                genreMap.set(genreArray, genreMap.get(genreArray) + 1);
-              } else {
-                genreMap.set(genreArray, 1);
-              }
-            }
-          }
-        });
-        
-        console.log('Genre map after processing:', genreMap);
-        
-        genres = Array.from(genreMap.entries()).map(([tag, count], index) => ({
-          id: tag,
-          tag: tag,
-          title: tag,
-          count: count
-        }));
-        
-        console.log(`Extracted ${genres.length} unique genres from albums`);
-      } catch (fallbackError) {
-        console.error('Genre extraction from albums also failed:', fallbackError);
-        throw fallbackError;
-      }
-    }
-    
-    await cacheHelpers.saveToCache(cacheKey, genres, 240);
-    
-    return genres;
+    const res = await api.get(`/api/plex/sections/${sectionId}/genres`, { params: { type, useCache } });
+    return res.data;
   } catch (error) {
     console.error(`Error fetching genres for section ${sectionId}:`, error);
     throw error;
   }
 };
 
-/**
- * Get albums by genre
- * @param {string} sectionId - Section ID
- * @param {string} genreId - Genre ID or genre name
- * @param {number} [type=9] - Content type (9 = Albums)
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Albums in the genre
- */
 export const getAlbumsByGenre = async (sectionId, genreId, type = 9, useCache = true) => {
-  const cacheKey = `${CACHE_CONFIG.keys.albumsByGenre}${sectionId}_${genreId}_${type}`;
-  
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 120);
-      if (cachedData) {
-        console.log(`Using cached albums for genre ${genreId} in section ${sectionId}`);
-        return cachedData;
-      }
-    }
-    
-    let albums = [];
-    try {
-      const response = await plexApi.get(`/library/sections/${sectionId}/all?type=${type}&genre=${genreId}`);
-      albums = response.data.MediaContainer.Metadata || [];
-      console.log(`Found ${albums.length} albums from genre filter endpoint`);
-    } catch (error) {
-      console.log('Standard genre filter failed, trying manual filtering:', error.message);
-      
-      try {
-        const albumsResponse = await plexApi.get(`/library/sections/${sectionId}/all?type=${type}`);
-        const allAlbums = albumsResponse.data.MediaContainer.Metadata || [];
-        
-        albums = allAlbums.filter(album => {
-          if (!album.Genre) return false;
-          return album.Genre.some(genre => 
-            genre.tag === genreId || 
-            genre.id === genreId ||
-            genreId.includes(genre.tag)
-          );
-        });
-        
-        console.log(`Manually filtered to ${albums.length} albums for genre ${genreId}`);
-      } catch (fallbackError) {
-        console.error('Manual genre filtering also failed:', fallbackError);
-        throw fallbackError;
-      }
-    }
-    
-    await cacheHelpers.saveToCache(cacheKey, albums, 120);
-    
-    return albums;
+    const res = await api.get(`/api/plex/sections/${sectionId}/albums-by-genre`, {
+      params: { genre: genreId, type, useCache }
+    });
+    return res.data?.Metadata || [];
   } catch (error) {
-    console.error(`Error fetching albums for genre ${genreId} in section ${sectionId}:`, error);
+    console.error(`Error fetching albums for genre ${genreId}:`, error);
     throw error;
   }
 };
 
-/**
- * Get years for a specific music section
- * @param {string} sectionId - Section ID
- * @param {number} [type=9] - Content type (9 = Album years)
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Years
- */
 export const getYears = async (sectionId, type = 9, useCache = true) => {
-  const cacheKey = `${CACHE_CONFIG.keys.years}${sectionId}_${type}`;
-  
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 240);
-      if (cachedData) {
-        console.log(`Using cached years for section ${sectionId}`);
-        return cachedData;
-      }
-    }
-    
-    let years = [];
-    try {
-      const response = await plexApi.get(`/library/sections/${sectionId}/year?type=${type}`);
-      years = response.data.MediaContainer.Directory || [];
-      console.log(`Found ${years.length} years from /year endpoint`);
-    } catch (error) {
-      console.log('Standard year endpoint failed, trying alternatives:', error.message);
-      
-      try {
-        const albumsResponse = await plexApi.get(`/library/sections/${sectionId}/all?type=${type}`);
-        const albums = albumsResponse.data.MediaContainer.Metadata || [];
-        console.log(`Got ${albums.length} albums to extract years from`);
-        
-        const yearMap = new Map();
-        albums.forEach(album => {
-          console.log('Album year sample:', {
-            title: album.title,
-            year: album.year,
-            originallyAvailableAt: album.originallyAvailableAt,
-            parentYear: album.parentYear,
-            allFields: Object.keys(album)
-          });
-          
-          let year = album.year || album.parentYear;
-          
-          if (!year && album.originallyAvailableAt) {
-            year = album.originallyAvailableAt.substring(0, 4);
-          }
-          
-          if (year) {
-            year = parseInt(year);
-            if (!isNaN(year) && year > 1900 && year <= new Date().getFullYear()) {
-              if (yearMap.has(year)) {
-                yearMap.set(year, yearMap.get(year) + 1);
-              } else {
-                yearMap.set(year, 1);
-              }
-            }
-          }
-        });
-        
-        console.log('Year map after processing:', yearMap);
-        
-        years = Array.from(yearMap.entries()).map(([year, count]) => ({
-          id: year.toString(),
-          title: year.toString(),
-          count: count
-        }));
-        
-        console.log(`Extracted ${years.length} unique years from albums`);
-      } catch (fallbackError) {
-        console.error('Year extraction from albums also failed:', fallbackError);
-        throw fallbackError;
-      }
-    }
-    
-    await cacheHelpers.saveToCache(cacheKey, years, 240);
-    
-    return years;
+    const res = await api.get(`/api/plex/sections/${sectionId}/years`, { params: { type, useCache } });
+    return res.data;
   } catch (error) {
     console.error(`Error fetching years for section ${sectionId}:`, error);
     throw error;
   }
 };
 
-/**
- * Get albums by year
- * @param {string} sectionId - Section ID
- * @param {string} year - Year
- * @param {number} [type=9] - Content type (9 = Albums)
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Albums in the year
- */
 export const getAlbumsByYear = async (sectionId, year, type = 9, useCache = true) => {
-  const cacheKey = `${CACHE_CONFIG.keys.albumsByYear}${sectionId}_${year}_${type}`;
-  
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 120);
-      if (cachedData) {
-        console.log(`Using cached albums for year ${year} in section ${sectionId}`);
-        return cachedData;
-      }
-    }
-    
-    let albums = [];
-    try {
-      const response = await plexApi.get(`/library/sections/${sectionId}/all?type=${type}&year=${year}`);
-      albums = response.data.MediaContainer.Metadata || [];
-      console.log(`Found ${albums.length} albums from year filter endpoint`);
-    } catch (error) {
-      console.log('Standard year filter failed, trying manual filtering:', error.message);
-      
-      try {
-        const albumsResponse = await plexApi.get(`/library/sections/${sectionId}/all?type=${type}`);
-        const allAlbums = albumsResponse.data.MediaContainer.Metadata || [];
-        
-        albums = allAlbums.filter(album => {
-          const albumYear = album.year || album.originallyAvailableAt?.substring(0, 4);
-          return albumYear === year || albumYear === parseInt(year);
-        });
-        
-        console.log(`Manually filtered to ${albums.length} albums for year ${year}`);
-      } catch (fallbackError) {
-        console.error('Manual year filtering also failed:', fallbackError);
-        throw fallbackError;
-      }
-    }
-    
-    await cacheHelpers.saveToCache(cacheKey, albums, 120);
-    
-    return albums;
-  } catch (error) {
-    console.error(`Error fetching albums for year ${year} in section ${sectionId}:`, error);
-    throw error;
-  }
-};
-
-/**
- * Search for albums and tracks across all music sections
- * @param {string} query - Search query string
- * @param {Object} options - Search options
- * @param {boolean} options.useCache - Whether to use cache (default: true)
- * @param {number} options.limit - Maximum number of results (default: 50)
- * @return {Promise<Object>} Object containing albums and tracks arrays
- */
-export const searchMusic = async (query, options = {}) => {
-  const { useCache = true, limit = 50 } = options;
-  
-  if (!query || query.trim().length < 2) {
-    return { albums: [], tracks: [] };
-  }
-  
-  try {
-    const cacheKey = `${CACHE_CONFIG.keys.search || 'plex_search_'}${encodeURIComponent(query.toLowerCase())}`;
-    
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 30);
-      if (cachedData) {
-        console.log(`Using cached search results for: ${query}`);
-        return cachedData;
-      }
-    }
-    
-    const sections = await getSections();
-    const musicSections = sections.filter(section => section.type === 'artist');
-    
-    const searchResults = { albums: [], tracks: [] };
-    
-    for (const section of musicSections) {
-      try {
-        const albumResponse = await plexApi.get(`/library/sections/${section.key}/search?type=9&query=${encodeURIComponent(query)}`);
-        const albums = albumResponse.data.MediaContainer.Metadata || [];
-        searchResults.albums.push(...albums);
-        
-        const trackResponse = await plexApi.get(`/library/sections/${section.key}/search?type=10&query=${encodeURIComponent(query)}`);
-        const tracks = trackResponse.data.MediaContainer.Metadata || [];
-        searchResults.tracks.push(...tracks);
-      } catch (sectionError) {
-        console.warn(`Error searching in section ${section.title}:`, sectionError);
-      }
-    }
-    
-    searchResults.albums = searchResults.albums
-      .filter((album, index, self) => index === self.findIndex(a => a.ratingKey === album.ratingKey))
-      .slice(0, limit);
-    
-    searchResults.tracks = searchResults.tracks
-      .filter((track, index, self) => index === self.findIndex(t => t.ratingKey === track.ratingKey))
-      .slice(0, limit);
-    
-    await cacheHelpers.saveToCache(cacheKey, searchResults, 30);
-    
-    return searchResults;
-  } catch (error) {
-    console.error("Error searching music:", error);
-    throw error;
-  }
-};
-
-/**
- * Search for albums that contain tracks matching the query
- * @param {string} query - Search query string
- * @param {Object} options - Search options
- * @param {boolean} options.useCache - Whether to use cache (default: true)
- * @return {Promise<Array>} Array of albums containing matching tracks
- */
-export const searchAlbumsWithMatchingTracks = async (query, options = {}) => {
-  const { useCache = true } = options;
-  
-  if (!query || query.trim().length < 2) {
-    return [];
-  }
-  
-  try {
-    const searchResults = await searchMusic(query, { useCache });
-    
-    const matchingAlbums = new Map();
-    
-    searchResults.albums.forEach(album => {
-      matchingAlbums.set(album.ratingKey, {
-        ...album,
-        matchType: 'album'
-      });
+    const res = await api.get(`/api/plex/sections/${sectionId}/albums-by-year`, {
+      params: { year, type, useCache }
     });
-    
-    for (const track of searchResults.tracks) {
-      if (track.parentRatingKey && !matchingAlbums.has(track.parentRatingKey)) {
-        try {
-          const albumResponse = await plexApi.get(`/library/metadata/${track.parentRatingKey}`);
-          const album = albumResponse.data.MediaContainer.Metadata[0];
-          
-          if (album) {
-            matchingAlbums.set(album.ratingKey, {
-              ...album,
-              matchType: 'track',
-              matchingTrack: track.title
-            });
-          }
-        } catch (albumError) {
-          console.warn(`Error fetching album for track ${track.title}:`, albumError);
-        }
-      }
-    }
-    
-    return Array.from(matchingAlbums.values());
+    return res.data?.Metadata || [];
   } catch (error) {
-    console.error("Error searching albums with matching tracks:", error);
+    console.error(`Error fetching albums for year ${year}:`, error);
     throw error;
   }
 };
 
-/**
- * Get the download URL for a track
- * @param {string} partKey - The part key from the track's Media.Part
- * @param {string} trackTitle - The title of the track for filename
- * @return {string} Direct download URL
- */
-export const getTrackDownloadUrl = (partKey, trackTitle = 'track') => {
-  if (!partKey) return null;
-  
-  const url = new URL(`${PLEX_URL}${partKey}`);
-  url.searchParams.append('X-Plex-Token', PLEX_TOKEN);
-  url.searchParams.append('download', '1');
-  
-  return url.toString();
-};
-
-/**
- * Download a track file
- * @param {Object} track - The track object containing Media and Part information
- * @param {string} albumTitle - The album title for filename
- * @return {Promise<void>}
- */
-export const downloadTrack = async (track, albumTitle = '') => {
-  try {
-    if (!track.Media || !track.Media[0] || !track.Media[0].Part || !track.Media[0].Part[0]) {
-      throw new Error('Track does not have valid media information');
-    }
-    
-    const partKey = track.Media[0].Part[0].key;
-    const downloadUrl = getTrackDownloadUrl(partKey, track.title);
-    
-    if (!downloadUrl) {
-      throw new Error('Unable to generate download URL');
-    }
-    
-    const artist = track.grandparentTitle || 'Unknown Artist';
-    const album = albumTitle || track.parentTitle || 'Unknown Album';
-    const trackNumber = track.index ? String(track.index).padStart(2, '0') : '00';
-    const title = track.title || 'Unknown Track';
-    
-    const cleanString = (str) => str.replace(/[<>:"/\\|?*]/g, '_');
-    const filename = `${cleanString(artist)} - ${cleanString(album)} - ${trackNumber} - ${cleanString(title)}.mp3`;
-    
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = filename;
-    link.style.display = 'none';
-    
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    console.log(`Downloaded: ${filename}`);
-  } catch (error) {
-    console.error('Error downloading track:', error);
-    throw error;
-  }
-};
-
-/**
- * Get labels for a specific music section
- * @param {string} sectionId - Section ID
- * @param {number} [type=9] - Content type (9 = Album labels)
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Labels
- */
 export const getLabels = async (sectionId, type = 9, useCache = true) => {
-  const cacheKey = `${CACHE_CONFIG.keys.labels}${sectionId}_${type}`;
-  
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 240);
-      if (cachedData) {
-        console.log(`Using cached labels for section ${sectionId}`);
-        return cachedData;
-      }
-    }
-    
-    let labels = [];
-    try {
-      const response = await plexApi.get(`/library/sections/${sectionId}/studio?type=${type}`);
-      labels = response.data.MediaContainer.Directory || [];
-      console.log(`Found ${labels.length} labels from /studio endpoint`);
-    } catch (error) {
-      console.log('Standard studio endpoint failed, trying alternatives:', error.message);
-      
-      try {
-        const albumsResponse = await plexApi.get(`/library/sections/${sectionId}/all?type=${type}`);
-        const albums = albumsResponse.data.MediaContainer.Metadata || [];
-        console.log(`Got ${albums.length} albums to extract labels from`);
-        
-        const labelMap = new Map();
-        albums.forEach(album => {
-          console.log('Album label sample:', {
-            title: album.title,
-            studio: album.studio,
-            label: album.label,
-            publisher: album.publisher,
-            recordLabel: album.recordLabel,
-            allFields: Object.keys(album)
-          });
-          
-          const labelValue = album.studio || album.label || album.publisher || album.recordLabel;
-          
-          if (labelValue) {
-            if (labelMap.has(labelValue)) {
-              labelMap.set(labelValue, labelMap.get(labelValue) + 1);
-            } else {
-              labelMap.set(labelValue, 1);
-            }
-          }
-        });
-        
-        console.log('Label map after processing:', labelMap);
-        
-        labels = Array.from(labelMap.entries()).map(([label, count]) => ({
-          id: label,
-          tag: label,
-          title: label,
-          count: count
-        }));
-        
-        console.log(`Extracted ${labels.length} unique labels from albums`);
-      } catch (fallbackError) {
-        console.error('Label extraction from albums also failed:', fallbackError);
-        throw fallbackError;
-      }
-    }
-    
-    await cacheHelpers.saveToCache(cacheKey, labels, 240);
-    
-    return labels;
+    const res = await api.get(`/api/plex/sections/${sectionId}/labels`, { params: { type, useCache } });
+    return res.data;
   } catch (error) {
     console.error(`Error fetching labels for section ${sectionId}:`, error);
     throw error;
   }
 };
 
-/**
- * Get albums by label
- * @param {string} sectionId - Section ID
- * @param {string} label - Label name
- * @param {number} [type=9] - Content type (9 = Albums)
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Albums with the label
- */
 export const getAlbumsByLabel = async (sectionId, label, type = 9, useCache = true) => {
-  const cacheKey = `${CACHE_CONFIG.keys.albumsByLabel}${sectionId}_${label}_${type}`;
-  
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 120);
-      if (cachedData) {
-        console.log(`Using cached albums for label ${label} in section ${sectionId}`);
-        return cachedData;
-      }
-    }
-    
-    let albums = [];
-    try {
-      const response = await plexApi.get(`/library/sections/${sectionId}/all?type=${type}&studio=${label}`);
-      albums = response.data.MediaContainer.Metadata || [];
-      console.log(`Found ${albums.length} albums from studio filter endpoint`);
-    } catch (error) {
-      console.log('Standard studio filter failed, trying manual filtering:', error.message);
-      
-      try {
-        const albumsResponse = await plexApi.get(`/library/sections/${sectionId}/all?type=${type}`);
-        const allAlbums = albumsResponse.data.MediaContainer.Metadata || [];
-        
-        albums = allAlbums.filter(album => {
-          const albumLabel = album.studio || album.label || album.publisher || album.recordLabel;
-          return albumLabel === label;
-        });
-        
-        console.log(`Manually filtered to ${albums.length} albums for label ${label}`);
-      } catch (fallbackError) {
-        console.error('Manual label filtering also failed:', fallbackError);
-        throw fallbackError;
-      }
-    }
-    
-    await cacheHelpers.saveToCache(cacheKey, albums, 120);
-
-    return albums;
+    const res = await api.get(`/api/plex/sections/${sectionId}/albums-by-label`, {
+      params: { label, type, useCache }
+    });
+    return res.data?.Metadata || [];
   } catch (error) {
-    console.error(`Error fetching albums for label ${label} in section ${sectionId}:`, error);
+    console.error(`Error fetching albums for label ${label}:`, error);
     throw error;
   }
 };
 
-/**
- * Get all artists from a music section
- * @param {string} sectionId - The section ID
- * @param {number} [start=0] - Start index for pagination
- * @param {number} [size=null] - Number of items to fetch
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Artists
- */
-export const getArtists = async (sectionId, start = 0, size = null, useCache = true) => {
-  const cacheKey = `${CACHE_CONFIG.keys.artists}${sectionId}_${start}_${size}`;
+export const searchMusic = async (query, options = {}) => {
+  const { useCache = true, limit = 50 } = options;
+
+  if (!query || query.trim().length < 2) {
+    return { albums: [], tracks: [] };
+  }
 
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 120);
-      if (cachedData) {
-        console.log(`Using cached artists for section ${sectionId}`);
-        return cachedData;
-      }
-    }
+    const res = await api.get('/api/plex/search', { params: { q: query, limit, useCache } });
+    return res.data;
+  } catch (error) {
+    console.error('Error searching music:', error);
+    throw error;
+  }
+};
 
-    let url = `/library/sections/${sectionId}/all?type=8`;
-    if (start) url += `&X-Plex-Container-Start=${start}`;
-    if (size) url += `&X-Plex-Container-Size=${size}`;
+export const searchAlbumsWithMatchingTracks = async (query, options = {}) => {
+  const { useCache = true } = options;
 
-    const response = await plexApi.get(url);
-    const artists = response.data.MediaContainer.Metadata || [];
+  if (!query || query.trim().length < 2) {
+    return [];
+  }
 
-    await cacheHelpers.saveToCache(cacheKey, artists, 120);
+  try {
+    const res = await api.get('/api/plex/search/albums', { params: { q: query, useCache } });
+    return res.data;
+  } catch (error) {
+    console.error('Error searching albums with matching tracks:', error);
+    throw error;
+  }
+};
 
-    return artists;
+export const getArtists = async (sectionId, start = 0, size = null, useCache = true) => {
+  try {
+    const res = await api.get(`/api/plex/sections/${sectionId}/artists`, {
+      params: { start, size, useCache }
+    });
+    return res.data?.Metadata || [];
   } catch (error) {
     console.error(`Error fetching artists for section ${sectionId}:`, error);
     throw error;
   }
 };
 
-/**
- * Get all albums for a specific artist
- * @param {string} artistRatingKey - The artist's rating key
- * @param {boolean} [useCache=true] - Whether to use cache if available
- * @returns {Promise<Array>} Artist's albums
- */
 export const getArtistAlbums = async (artistRatingKey, useCache = true) => {
-  const cacheKey = `${CACHE_CONFIG.keys.artistAlbums}${artistRatingKey}`;
-
   try {
-    if (useCache) {
-      const cachedData = await cacheHelpers.getFromCache(cacheKey, 120);
-      if (cachedData) {
-        console.log(`Using cached albums for artist ${artistRatingKey}`);
-        return cachedData;
-      }
-    }
-
-    const response = await plexApi.get(`/library/metadata/${artistRatingKey}/children`);
-    const albums = response.data.MediaContainer.Metadata || [];
-
-    await cacheHelpers.saveToCache(cacheKey, albums, 120);
-
-    return albums;
+    const res = await api.get(`/api/plex/artists/${artistRatingKey}/albums`, { params: { useCache } });
+    return res.data?.Metadata || [];
   } catch (error) {
     console.error(`Error fetching albums for artist ${artistRatingKey}:`, error);
     throw error;
   }
+};
+
+export const getMetadata = async (ratingKey, useCache = true) => {
+  try {
+    const res = await api.get(`/api/plex/metadata/${ratingKey}`, { params: { useCache } });
+    return res.data;
+  } catch (error) {
+    console.error(`Error fetching metadata for ${ratingKey}:`, error);
+    throw error;
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Download helper
+// ---------------------------------------------------------------------------
+
+export const downloadTrack = async (track, albumTitle = '') => {
+  try {
+    if (!track.Media?.[0]?.Part?.[0]) {
+      throw new Error('Track does not have valid media information');
+    }
+
+    const partKey = track.Media[0].Part[0].key;
+    const artist = track.grandparentTitle || 'Unknown Artist';
+    const album = albumTitle || track.parentTitle || 'Unknown Album';
+    const trackNumber = track.index ? String(track.index).padStart(2, '0') : '00';
+    const title = track.title || 'Unknown Track';
+
+    const cleanString = (str) => str.replace(/[<>:"/\\|?*]/g, '_');
+    const filename = `${cleanString(artist)} - ${cleanString(album)} - ${trackNumber} - ${cleanString(title)}.mp3`;
+
+    const downloadUrl = getTrackDownloadUrl(partKey, filename);
+    if (!downloadUrl) throw new Error('Unable to generate download URL');
+
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = filename;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error downloading track:', error);
+    throw error;
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Legacy cache export (no-ops – caching is now server-side)
+// ---------------------------------------------------------------------------
+
+export const plexCache = {
+  clearAllCache: async () => {
+    try {
+      await api.post('/api/plex/cache/clear');
+    } catch (_) {}
+  },
+  clearCache: async () => {},
+  getStorageInfo: async () => null
 };

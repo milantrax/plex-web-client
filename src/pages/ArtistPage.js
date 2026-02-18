@@ -2,12 +2,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography, Card, CardContent } from '@mui/material';
-import { getPlexImageUrl, getArtistAlbums } from '../api/plexApi';
-import axios from 'axios';
+import { getPlexImageUrl, getArtistAlbums, getMetadata } from '../api/plexApi';
 import AlbumCard from '../components/AlbumCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackToTop from '../components/BackToTop';
-import { PLEX_URL, PLEX_TOKEN } from '../config';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 
 const ArtistPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) => {
@@ -23,16 +21,10 @@ const ArtistPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) 
       try {
         setLoading(true);
 
-        const response = await axios.get(`${PLEX_URL}/library/metadata/${artistId}`, {
-          headers: {
-            'Accept': 'application/json',
-            'X-Plex-Token': PLEX_TOKEN,
-          }
-        });
+        const artistData = await getMetadata(artistId);
 
-        if (response.data && response.data.MediaContainer && response.data.MediaContainer.Metadata) {
-          setArtist(response.data.MediaContainer.Metadata[0]);
-
+        if (artistData) {
+          setArtist(artistData);
           const albumsData = await getArtistAlbums(artistId);
           setAlbums(albumsData);
         } else {

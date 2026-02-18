@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography, Card, CardContent, Divider, Stack, Button, Snackbar, Alert, Chip, Menu, MenuItem, ListItemIcon, ListItemText, Rating } from '@mui/material';
-import { getPlexImageUrl, getAlbumTracks } from '../api/plexApi';
-import axios from 'axios';
+import { getPlexImageUrl, getAlbumTracks, getMetadata } from '../api/plexApi';
 import TrackList from '../components/TrackList';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackToTop from '../components/BackToTop';
-import { PLEX_URL, PLEX_TOKEN } from '../config';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 import queueManager from '../utils/queueManager';
 import QueueMusicIcon from '@mui/icons-material/QueueMusic';
@@ -30,16 +28,10 @@ const AlbumPage = ({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) =
       try {
         setLoading(true);
 
-        const response = await axios.get(`${PLEX_URL}/library/metadata/${albumId}`, {
-          headers: {
-            'Accept': 'application/json',
-            'X-Plex-Token': PLEX_TOKEN,
-          }
-        });
+        const albumData = await getMetadata(albumId);
 
-        if (response.data && response.data.MediaContainer && response.data.MediaContainer.Metadata) {
-          setAlbum(response.data.MediaContainer.Metadata[0]);
-
+        if (albumData) {
+          setAlbum(albumData);
           const tracksData = await getAlbumTracks(albumId);
           setTracks(Array.isArray(tracksData) ? tracksData : []);
         } else {
