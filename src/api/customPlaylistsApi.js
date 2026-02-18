@@ -31,7 +31,8 @@ export const addTrackToCustomPlaylist = async (playlistId, track) => {
     album: track.parentTitle,
     duration: track.duration,
     thumb: track.thumb || track.parentThumb,
-    partKey
+    partKey,
+    parentRatingKey: track.parentRatingKey ? String(track.parentRatingKey) : null
   });
   return res.data;
 };

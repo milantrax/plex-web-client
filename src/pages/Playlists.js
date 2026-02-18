@@ -111,6 +111,7 @@ function Playlists({ onPlayTrack, currentTrack, isPlaying, onTogglePlayback }) {
         duration: t.duration,
         thumb: t.thumb,
         parentThumb: t.thumb,
+        parentRatingKey: t.parent_rating_key || null,
         _customTrackId: t.id,
         Media: t.part_key ? [{ Part: [{ key: t.part_key }] }] : []
       })));

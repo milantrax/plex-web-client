@@ -39,9 +39,12 @@ CREATE TABLE IF NOT EXISTS playlist_tracks (
   duration INTEGER,
   thumb VARCHAR(512),
   part_key VARCHAR(512),
+  parent_rating_key VARCHAR(255),
   position INTEGER NOT NULL DEFAULT 0,
   added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(playlist_id, rating_key)
 );
+
+ALTER TABLE playlist_tracks ADD COLUMN IF NOT EXISTS parent_rating_key VARCHAR(255);
 
 CREATE INDEX IF NOT EXISTS idx_playlist_tracks_playlist ON playlist_tracks(playlist_id);

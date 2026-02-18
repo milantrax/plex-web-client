@@ -80,7 +80,7 @@ router.get('/:id/tracks', async (req, res, next) => {
     }
 
     const tracks = await pool.query(
-      `SELECT id, rating_key, title, artist, album, duration, thumb, part_key, position, added_at
+      `SELECT id, rating_key, title, artist, album, duration, thumb, part_key, parent_rating_key, position, added_at
        FROM playlist_tracks
        WHERE playlist_id = $1
        ORDER BY position ASC, added_at ASC`,
@@ -96,7 +96,7 @@ router.get('/:id/tracks', async (req, res, next) => {
 // POST /api/custom-playlists/:id/tracks – add a track
 router.post('/:id/tracks', async (req, res, next) => {
   try {
-    const { ratingKey, title, artist, album, duration, thumb, partKey } = req.body;
+    const { ratingKey, title, artist, album, duration, thumb, partKey, parentRatingKey } = req.body;
 
     if (!ratingKey) {
       return res.status(400).json({ error: 'ratingKey is required' });
@@ -120,11 +120,11 @@ router.post('/:id/tracks', async (req, res, next) => {
 
     const result = await pool.query(
       `INSERT INTO playlist_tracks
-         (playlist_id, rating_key, title, artist, album, duration, thumb, part_key, position)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         (playlist_id, rating_key, title, artist, album, duration, thumb, part_key, parent_rating_key, position)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT (playlist_id, rating_key) DO NOTHING
        RETURNING *`,
-      [req.params.id, ratingKey, title, artist, album, duration, thumb, partKey, nextPos]
+      [req.params.id, ratingKey, title, artist, album, duration, thumb, partKey, parentRatingKey || null, nextPos]
     );
 
     if (result.rowCount === 0) {
