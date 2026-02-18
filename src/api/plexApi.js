@@ -90,7 +90,7 @@ export const getPlaylists = async (useCache = true) => {
 export const getPlaylistItems = async (playlistRatingKey, useCache = true) => {
   try {
     const res = await api.get(`/api/plex/playlists/${playlistRatingKey}/items`, { params: { useCache } });
-    return res.data?.Metadata || [];
+    return { title: res.data?.title || null, tracks: res.data?.Metadata || [] };
   } catch (error) {
     console.error(`Error fetching playlist items for ${playlistRatingKey}:`, error);
     throw error;

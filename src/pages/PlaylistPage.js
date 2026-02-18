@@ -48,17 +48,9 @@ const PlaylistPage = () => {
       setError(null);
       try {
         if (type === 'plex') {
-          const data = await getPlaylistItems(id);
-          const tracksArr = Array.isArray(data) ? data : [];
+          const { title: playlistTitle, tracks: tracksArr } = await getPlaylistItems(id);
           setTracks(tracksArr);
-          // title comes from the first track's grandparent or we use a generic label
-          // Actually for plex playlists the title isn't returned by getPlaylistItems
-          // We'll set a placeholder and update if available
-          if (tracksArr.length > 0 && tracksArr[0].playlistTitle) {
-            setTitle(tracksArr[0].playlistTitle);
-          } else {
-            setTitle('Plex Playlist');
-          }
+          setTitle(playlistTitle || 'Plex Playlist');
         } else {
           const { playlist, tracks: raw } = await getCustomPlaylistTracks(id);
           setTitle(playlist?.name || 'My Playlist');
