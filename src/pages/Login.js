@@ -40,7 +40,7 @@ const Login = () => {
       <Card sx={{ maxWidth: 400, width: '100%', boxShadow: 3 }}>
         <CardContent sx={{ p: 4 }}>
           <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: 'primary.main', textAlign: 'center' }}>
-            Plex
+            Plex Web Client
           </Typography>
           <Typography variant="h6" sx={{ fontWeight: 500, mb: 3, textAlign: 'center' }}>
             Sign in to your account
