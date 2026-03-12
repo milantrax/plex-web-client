@@ -91,7 +91,7 @@ function Library() {
       container.addEventListener('scroll', handleScroll);
       return () => container.removeEventListener('scroll', handleScroll);
     }
-  }, [loadMoreAlbums, loadingMore, hasMorePages]);
+  }, [loadMoreAlbums, loadingMore, hasMorePages, loading]);
 
   const prevSyncStatusRef = useRef(null);
 

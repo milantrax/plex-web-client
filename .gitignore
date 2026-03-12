@@ -29,3 +29,5 @@ yarn-error.log*
 /server/node_modules
 /server/db/data/
 /server/.env
+dist
+server-dist
