@@ -68,7 +68,7 @@ app.use('/api/favorites', favoritesRoutes);
 // In the Docker stack nginx serves the frontend, so there is no build here and
 // unmatched routes must fall through to the 404/error handler instead of
 // failing on a missing index.html.
-const buildDir = path.join(__dirname, '..', 'build');
+const buildDir = path.join(__dirname, '..', 'frontend', 'build');
 if (process.env.NODE_ENV === 'production' && fs.existsSync(buildDir)) {
   app.use(express.static(buildDir));
   app.get('*', (req, res) => {

@@ -35,33 +35,61 @@ git clone <repository-url>
 cd plex.org
 ```
 
-2. Install dependencies:
+2. Install dependencies for both workspaces:
 ```bash
-npm install
+cd frontend && npm install
+cd ../backend && npm install
 ```
 
 3. Set up environment variables (see [Environment Setup](#environment-setup) below)
 
-4. Start the development server:
+4. Start both the React dev server and the API:
 ```bash
-npm start
+cd frontend && npm run dev
 ```
 
-The app will open at [http://localhost:3000](http://localhost:3000)
+The app will open at [http://localhost:3000](http://localhost:3000) and proxies `/api` to the
+backend on port 3001. To run them separately, use `npm start` (frontend) and
+`npm run server:dev` (backend) from `frontend/`.
+
+## Project Structure
+
+```
+.
+├── frontend/          React app (CRA) + nginx config and Dockerfile
+│   ├── src/
+│   ├── public/
+│   └── package.json
+├── backend/           Express API, Postgres access, Plex proxy
+│   ├── routes/  services/  middleware/  db/
+│   └── package.json
+├── docker-compose.yml three-container stack: frontend -> backend -> db
+└── .env               Docker Compose configuration
+```
 
 ## Environment Setup
 
-This application requires environment variables to connect to your Plex Media Server. Create a `.env` file in the root directory of the project.
+Plex credentials are held by the backend, never the browser. Copy
+`backend/.env.example` to `backend/.env` and fill it in:
 
 ### Creating the .env File
 
-1. Create a new file named `.env` in the project root directory
-2. Add the following variables:
+1. `cp backend/.env.example backend/.env`
+2. Set the following variables:
 
 ```env
-REACT_APP_PLEX_URL=http://your-plex-server-ip:32400
-REACT_APP_PLEX_TOKEN=your-plex-token-here
+PORT=3001
+SESSION_SECRET=change-this-to-a-random-secret-in-production
+DATABASE_URL=postgresql://localhost:5432/plex
+DEFAULT_PLEX_URL=http://your-plex-server-ip:32400
+DEFAULT_PLEX_TOKEN=your-plex-token-here
 ```
+
+`DEFAULT_PLEX_*` are the fallback used by accounts that have no Plex server of
+their own saved. The frontend needs no Plex credentials.
+
+For the Docker stack, configuration lives in the root `.env` instead — see
+[Docker](#docker).
 
 **Important**:
 - Never commit the `.env` file to version control
@@ -154,8 +182,8 @@ backend and database are reachable only from inside the compose network; the
 `ports` mappings for them are commented out in `docker-compose.yml` if you need
 them for debugging.
 
-The API schema is created automatically on backend start (`server/db/schema.sql`).
-To seed an existing dump instead, uncomment the `migration.sql` mount under the
+The API schema is created automatically on backend start (`backend/db/schema.sql`).
+To seed from an existing SQL dump instead, uncomment the dump mount under the
 `db` service before the first start — it only runs while the `db_data` volume is
 empty.
 
@@ -177,7 +205,7 @@ docker compose down                 # stop (add -v to also drop the volumes)
 
 ## Available Scripts
 
-In the project directory, you can run:
+From the `frontend/` directory, you can run:
 
 ### `npm start`
 

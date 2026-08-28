@@ -12,8 +12,8 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
       # Runs only on a first-time init of an empty db_data volume.
-      # Uncomment to seed the database from the TablePlus dump in the repo root:
-      # - ./migration.sql:/docker-entrypoint-initdb.d/10-migration.sql:ro
+      # Uncomment (and adjust the path) to seed from a SQL dump:
+      # - ./dump.sql:/docker-entrypoint-initdb.d/10-dump.sql:ro
     networks:
       - data
     # Not published: only the backend talks to the database.
@@ -28,7 +28,7 @@ services:
 
   backend:
     build:
-      context: ./server
+      context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
@@ -58,7 +58,7 @@ services:
 
   frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
