@@ -184,7 +184,16 @@ async function syncAllStale() {
           )`
     );
     for (const row of result.rows) {
-      syncLibrary(row.user_id, row.plex_url, row.plex_token, { force: false })
+      // plex_url/plex_token are NULL for accounts on the default Plex server;
+      // fall back the same way getPlexCredentials() does, otherwise hashing a
+      // null URL throws and the scheduled sync never runs for them.
+      const plexUrl = row.plex_url || process.env.DEFAULT_PLEX_URL;
+      const plexToken = row.plex_token || process.env.DEFAULT_PLEX_TOKEN;
+      if (!plexUrl || !plexToken) {
+        console.warn(`[LibrarySync] Skipping user ${row.user_id}: no Plex credentials`);
+        continue;
+      }
+      syncLibrary(row.user_id, plexUrl, plexToken, { force: false })
         .catch(err => console.error('[LibrarySync] Scheduled sync error:', err.message));
     }
   } catch (err) {

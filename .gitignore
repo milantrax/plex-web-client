@@ -31,3 +31,8 @@ yarn-error.log*
 /server/.env
 dist
 server-dist
+
+.env.docker
+
+# Database dumps (contain password hashes and Plex tokens)
+*.dump

@@ -5,6 +5,7 @@ const PgSession = require('connect-pg-simple')(session);
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const fs = require('fs');
 const { initializeDatabase, runSchema, getPool } = require('./db/database');
 const authRoutes = require('./routes/auth');
 const plexRoutes = require('./routes/plex');
@@ -17,6 +18,12 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Behind a reverse proxy (nginx in the Docker stack) so secure cookies and
+// req.ip resolve against the forwarded headers.
+if (process.env.TRUST_PROXY) {
+  app.set('trust proxy', Number(process.env.TRUST_PROXY));
+}
 
 // Initialize database
 const pool = initializeDatabase();
@@ -37,12 +44,17 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE !== undefined
+      ? process.env.COOKIE_SECURE === 'true'
+      : process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     sameSite: 'lax'
   }
 }));
+
+// Health check (used by the container healthcheck / compose depends_on)
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -52,11 +64,15 @@ app.use('/api/media', mediaRoutes);
 app.use('/api/custom-playlists', customPlaylistsRoutes);
 app.use('/api/favorites', favoritesRoutes);
 
-// Serve React build in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '..', 'build')));
+// Serve React build in production, when one is present next to the server.
+// In the Docker stack nginx serves the frontend, so there is no build here and
+// unmatched routes must fall through to the 404/error handler instead of
+// failing on a missing index.html.
+const buildDir = path.join(__dirname, '..', 'build');
+if (process.env.NODE_ENV === 'production' && fs.existsSync(buildDir)) {
+  app.use(express.static(buildDir));
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'build', 'index.html'));
+    res.sendFile(path.join(buildDir, 'index.html'));
   });
 }
 

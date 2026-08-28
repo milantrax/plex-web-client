@@ -1,0 +1,9 @@
+node_modules
+.env
+.env.*
+!.env.example
+db/data
+.DS_Store
+**/.DS_Store
+Dockerfile
+.dockerignore

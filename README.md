@@ -132,6 +132,49 @@ REACT_APP_PLEX_URL=http://192.168.1.100:32400
 REACT_APP_PLEX_TOKEN=abc123xyz789token456
 ```
 
+## Docker
+
+The stack runs as three containers — `frontend` (nginx serving the built React
+app) → `backend` (Express API) → `db` (PostgreSQL) — on two networks, so the
+frontend cannot reach the database directly.
+
+```bash
+# 1. Configure (copy the Docker settings into the root .env and edit them)
+cat .env.docker.example >> .env
+
+# 2. Build and start
+docker compose up -d --build
+
+# 3. Open the app
+open http://localhost:8088
+```
+
+Only the frontend publishes a port (`FRONTEND_PORT`, default `8088`). The
+backend and database are reachable only from inside the compose network; the
+`ports` mappings for them are commented out in `docker-compose.yml` if you need
+them for debugging.
+
+The API schema is created automatically on backend start (`server/db/schema.sql`).
+To seed an existing dump instead, uncomment the `migration.sql` mount under the
+`db` service before the first start — it only runs while the `db_data` volume is
+empty.
+
+### Volumes
+
+| Volume | Mounted at | Purpose |
+| --- | --- | --- |
+| `db_data` | `db:/var/lib/postgresql/data` | PostgreSQL data |
+| `media_cache` | `backend:/app/cache` | Reserved for on-disk album art / artist image caching; exposed to the backend as `MEDIA_CACHE_DIR`. Nothing writes to it yet. |
+
+### Useful commands
+
+```bash
+docker compose logs -f backend      # tail backend logs
+docker compose exec db psql -U plex # database shell
+docker compose up -d --build backend # rebuild one service
+docker compose down                 # stop (add -v to also drop the volumes)
+```
+
 ## Available Scripts
 
 In the project directory, you can run:
