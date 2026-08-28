@@ -167,8 +167,8 @@ app) → `backend` (Express API) → `db` (PostgreSQL) — on two networks, so t
 frontend cannot reach the database directly.
 
 ```bash
-# 1. Configure (copy the Docker settings into the root .env and edit them)
-cat .env.docker.example >> .env
+# 1. Configure
+cp .env.example .env    # then edit: Plex URL/token, SESSION_SECRET
 
 # 2. Build and start
 docker compose up -d --build
