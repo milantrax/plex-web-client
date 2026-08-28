@@ -1,0 +1,10 @@
+node_modules
+build
+.env
+.env.*
+!.env.example
+.DS_Store
+**/.DS_Store
+Dockerfile
+.dockerignore
+coverage

@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules
 /.pnp
 .pnp.js
 
@@ -10,9 +10,10 @@
 
 # testing
 /coverage
+/frontend/coverage
 
 # production
-/build
+/frontend/build
 
 # misc
 .DS_Store
@@ -25,4 +26,13 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-node_modules
+*.md
+!README.md
+
+# Backend
+/backend/db/data/
+/backend/.env
+
+# Database dumps (contain password hashes and Plex tokens)
+migration.sql
+*.dump

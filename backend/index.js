@@ -1,0 +1,91 @@
+require('dotenv').config();
+const express = require('express');
+const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
+const helmet = require('helmet');
+const morgan = require('morgan');
+const path = require('path');
+const fs = require('fs');
+const { initializeDatabase, runSchema, getPool } = require('./db/database');
+const authRoutes = require('./routes/auth');
+const plexRoutes = require('./routes/plex');
+const mediaRoutes = require('./routes/media');
+const customPlaylistsRoutes = require('./routes/customPlaylists');
+const favoritesRoutes = require('./routes/favorites');
+const librarySyncRoutes = require('./routes/librarySync');
+const { startSyncScheduler } = require('./services/librarySyncService');
+const errorHandler = require('./middleware/errorHandler');
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Behind a reverse proxy (nginx in the Docker stack) so secure cookies and
+// req.ip resolve against the forwarded headers.
+if (process.env.TRUST_PROXY) {
+  app.set('trust proxy', Number(process.env.TRUST_PROXY));
+}
+
+// Initialize database
+const pool = initializeDatabase();
+
+// Middleware
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(morgan('dev'));
+app.use(express.json());
+
+// Session configuration
+app.use(session({
+  store: new PgSession({
+    pool,
+    tableName: 'session',
+    createTableIfMissing: true
+  }),
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.COOKIE_SECURE !== undefined
+      ? process.env.COOKIE_SECURE === 'true'
+      : process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    sameSite: 'lax'
+  }
+}));
+
+// Health check (used by the container healthcheck / compose depends_on)
+app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/plex', plexRoutes);
+app.use('/api/plex/library', librarySyncRoutes);
+app.use('/api/media', mediaRoutes);
+app.use('/api/custom-playlists', customPlaylistsRoutes);
+app.use('/api/favorites', favoritesRoutes);
+
+// Serve React build in production, when one is present next to the server.
+// In the Docker stack nginx serves the frontend, so there is no build here and
+// unmatched routes must fall through to the 404/error handler instead of
+// failing on a missing index.html.
+const buildDir = path.join(__dirname, '..', 'frontend', 'build');
+if (process.env.NODE_ENV === 'production' && fs.existsSync(buildDir)) {
+  app.use(express.static(buildDir));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(buildDir, 'index.html'));
+  });
+}
+
+// Error handler
+app.use(errorHandler);
+
+// Start server after schema is ready
+runSchema().then(() => {
+  startSyncScheduler();
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}).catch(err => {
+  console.error('Failed to initialize database schema:', err);
+  process.exit(1);
+});
