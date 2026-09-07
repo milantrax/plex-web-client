@@ -1,11 +1,17 @@
 import { Router } from 'express';
 import { hashPassword, comparePassword } from '../utils/crypto';
-import { getUserById, getUserByUsername, createUser, updatePlexCredentials } from '../services/userService';
+import { getUserById, getUserByEmail, getUserByUsername, createUser, updatePlexCredentials } from '../services/userService';
 import { requireAuth, sessionUserId } from '../middleware/auth';
 import { clearUserCache } from '../services/cacheService';
 import type { PublicUser } from '../services/userService';
 
 const router = Router();
+
+/**
+ * Deliberately loose: enough to catch a typo like a missing @ or a stray
+ * space, without rejecting the many addresses a stricter pattern gets wrong.
+ */
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** The user representation sent to the client; the Plex token is masked. */
 function toProfile(user: PublicUser) {
@@ -24,23 +30,35 @@ router.post('/register', async (req, res, next) => {
   try {
     const { username, password, email } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+    if (!username || !password || !email) {
+      return res.status(400).json({ error: 'Username, email and password are required' });
     }
     if (username.length < 3) {
       return res.status(400).json({ error: 'Username must be at least 3 characters' });
     }
+    if (!EMAIL_PATTERN.test(email.trim())) {
+      return res.status(400).json({ error: 'Enter a valid email address' });
+    }
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
+
+    const normalizedEmail = email.trim().toLowerCase();
 
     const existing = await getUserByUsername(username);
     if (existing) {
       return res.status(409).json({ error: 'Username already taken' });
     }
 
+    // Checked up front so a duplicate is a 409 rather than the unique
+    // constraint surfacing as a 500.
+    const existingEmail = await getUserByEmail(normalizedEmail);
+    if (existingEmail) {
+      return res.status(409).json({ error: 'An account with that email already exists' });
+    }
+
     const passwordHash = await hashPassword(password);
-    const userId = await createUser(username, email, passwordHash);
+    const userId = await createUser(username, normalizedEmail, passwordHash);
 
     req.session.userId = userId;
 
@@ -54,20 +72,22 @@ router.post('/register', async (req, res, next) => {
 // POST /api/auth/login
 router.post('/login', async (req, res, next) => {
   try {
-    const { username, password } = req.body;
+    const { email, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user = await getUserByUsername(username);
+    const user = await getUserByEmail(email.trim());
+    // The same message either way, so the response cannot be used to probe
+    // which addresses have an account.
     if (!user) {
-      return res.status(401).json({ error: 'Invalid username or password' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     const valid = await comparePassword(password, user.password_hash);
     if (!valid) {
-      return res.status(401).json({ error: 'Invalid username or password' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
 
     req.session.userId = user.id;

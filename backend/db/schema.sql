@@ -1,13 +1,27 @@
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   username VARCHAR(255) UNIQUE NOT NULL,
-  email VARCHAR(255) UNIQUE,
+  email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   plex_url TEXT,
   plex_token TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Sign-in is by email, so it has to be present. Databases created when email
+-- was optional are tightened here, but only once every row has one: a NULL
+-- left behind would otherwise fail this statement and block startup. Any
+-- account still missing an email cannot sign in until one is set.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM users WHERE email IS NULL) THEN
+    RAISE NOTICE 'users.email left nullable: % row(s) have no email and cannot sign in',
+      (SELECT COUNT(*) FROM users WHERE email IS NULL);
+  ELSE
+    ALTER TABLE users ALTER COLUMN email SET NOT NULL;
+  END IF;
+END $$;
 
 -- Sessions are served from Redis and mirrored here, so that a Redis outage
 -- leaves logins intact. See services/sessionStore.ts.

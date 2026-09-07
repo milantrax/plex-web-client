@@ -6,8 +6,8 @@ export interface AuthContextValue {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (username: string, password: string) => Promise<User>;
-  register: (username: string, password: string, email?: string) => Promise<User>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (username: string, password: string, email: string) => Promise<User>;
   logout: () => Promise<void>;
   updateProfile: (plexUrl: string | null, plexToken: string | null) => Promise<User>;
 }
@@ -30,13 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = useCallback(async (username: string, password: string) => {
-    const res = await api.post<User>('/api/auth/login', { username, password });
+  const login = useCallback(async (email: string, password: string) => {
+    const res = await api.post<User>('/api/auth/login', { email, password });
     setUser(res.data);
     return res.data;
   }, []);
 
-  const register = useCallback(async (username: string, password: string, email?: string) => {
+  const register = useCallback(async (username: string, password: string, email: string) => {
     const res = await api.post<User>('/api/auth/register', { username, password, email });
     setUser(res.data);
     return res.data;
