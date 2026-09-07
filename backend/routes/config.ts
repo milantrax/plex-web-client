@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
@@ -32,6 +33,19 @@ function resolveDefaultTheme(): DefaultTheme {
 // this sits outside requireAuth. It exposes nothing account-specific.
 router.get('/', (req, res) => {
   res.json({ defaultTheme: resolveDefaultTheme() });
+});
+
+// GET /api/config/plex — the fallback Plex server used by accounts that have
+// not set one of their own, so the settings form can show it as a placeholder.
+//
+// Behind requireAuth: the URL points at the operator's own network, which is
+// not something to hand out to anonymous callers. The token is never sent
+// either way — only whether one is configured.
+router.get('/plex', requireAuth, (req, res) => {
+  res.json({
+    defaultPlexUrl: process.env.DEFAULT_PLEX_URL || null,
+    hasDefaultToken: !!process.env.DEFAULT_PLEX_TOKEN
+  });
 });
 
 export default router;

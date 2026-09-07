@@ -1,196 +1,70 @@
-import React, { useState } from 'react';
-import {
-  Box, Typography, TextField, Button, Alert, Chip, Stack,
-  InputAdornment, IconButton, Divider, CircularProgress
-} from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
+import React from 'react';
+import { Box, Typography, Stack, Button, Divider } from '@mui/material';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { getApiErrorMessage } from '../utils/errors';
 
-interface SaveStatus {
-  success: boolean;
-  message: string;
+/** One label/value row of the account summary. */
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <Box>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ fontWeight: 600, textTransform: 'uppercase', display: 'block' }}
+      >
+        {label}
+      </Typography>
+      <Typography variant="body2">{value}</Typography>
+    </Box>
+  );
 }
 
-/** The payload of GET /api/plex/test-connection. */
-interface TestResult {
-  success: boolean;
-  serverName?: string;
-  version?: string;
-  error?: string;
+function formatJoined(createdAt?: string): string | null {
+  if (!createdAt) return null;
+  const date = new Date(createdAt);
+  return Number.isNaN(date.getTime())
+    ? null
+    : date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
 const AccountSettings = () => {
-  const { user, updateProfile } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  const [plexUrl, setPlexUrl] = useState(user?.plexUrl || '');
-  const [plexToken, setPlexToken] = useState('');
-  const [showToken, setShowToken] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<SaveStatus | null>(null);
-  const [testResult, setTestResult] = useState<TestResult | null>(null);
+  const joined = formatJoined(user?.createdAt);
 
-  const handleTestConnection = async () => {
-    setTesting(true);
-    setTestResult(null);
-
-    try {
-      const res = await fetch('/api/plex/test-connection', { credentials: 'include' });
-      const data = await res.json();
-      setTestResult(data);
-    } catch {
-      setTestResult({ success: false, error: 'Network error' });
-    } finally {
-      setTesting(false);
-    }
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    setSaveStatus(null);
-
-    try {
-      await updateProfile(
-        plexUrl.trim() || null,
-        plexToken.trim() || null
-      );
-      setPlexToken('');
-      setSaveStatus({ success: true, message: 'Settings saved successfully' });
-    } catch (err) {
-      setSaveStatus({ success: false, message: getApiErrorMessage(err, 'Failed to save settings') });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleResetToDefault = async () => {
-    setSaving(true);
-    try {
-      await updateProfile(null, null);
-      setPlexUrl('');
-      setPlexToken('');
-      setSaveStatus({ success: true, message: 'Reset to default server' });
-    } catch {
-      setSaveStatus({ success: false, message: 'Failed to reset' });
-    } finally {
-      setSaving(false);
-    }
+  const handleSignOut = async () => {
+    await logout();
+    navigate('/login');
   };
 
   return (
-    <Box sx={{ mb: 4 }}>
+    <Box>
       <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
         Account
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-        Signed in as <strong>{user?.username}</strong>
-        {user?.email && ` (${user.email})`}
+        The details this app knows about you.
       </Typography>
-
-      <Divider sx={{ mb: 3 }} />
-
-      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-        Plex Server
-      </Typography>
-
-      {!user?.hasCustomPlex && (
-        <Chip
-          label="Using default server"
-          size="small"
-          color="info"
-          variant="outlined"
-          sx={{ mb: 2 }}
-        />
-      )}
-
-      {saveStatus && (
-        <Alert
-          severity={saveStatus.success ? 'success' : 'error'}
-          sx={{ mb: 2 }}
-          onClose={() => setSaveStatus(null)}
-        >
-          {saveStatus.message}
-        </Alert>
-      )}
 
       <Stack spacing={2}>
-        <TextField
-          label="Plex Server URL"
-          placeholder="http://192.168.1.100:32400"
-          fullWidth
-          value={plexUrl}
-          onChange={(e) => setPlexUrl(e.target.value)}
-          helperText="Leave empty to use the default server"
-          size="small"
-        />
-
-        <TextField
-          label="Plex Token"
-          type={showToken ? 'text' : 'password'}
-          placeholder={user?.hasCustomPlex ? '••••••••' : 'Enter token to override default'}
-          fullWidth
-          value={plexToken}
-          onChange={(e) => setPlexToken(e.target.value)}
-          helperText="Leave empty to keep the current token"
-          size="small"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={() => setShowToken(!showToken)} size="small">
-                  {showToken ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
-
-        {testResult && (
-          <Alert
-            severity={testResult.success ? 'success' : 'error'}
-            icon={testResult.success ? <CheckCircleIcon /> : <ErrorIcon />}
-          >
-            {testResult.success
-              ? `Connected: ${testResult.serverName} (v${testResult.version})`
-              : `Connection failed: ${testResult.error}`}
-          </Alert>
-        )}
-
-        <Stack direction="row" spacing={1.5} flexWrap="wrap" gap={1}>
-          <Button
-            variant="contained"
-            onClick={handleSave}
-            disabled={saving}
-            sx={{ fontWeight: 600, textTransform: 'none' }}
-          >
-            {saving ? <CircularProgress size={18} color="inherit" /> : 'Save'}
-          </Button>
-
-          <Button
-            variant="outlined"
-            onClick={handleTestConnection}
-            disabled={testing}
-            sx={{ fontWeight: 600, textTransform: 'none' }}
-          >
-            {testing ? <CircularProgress size={18} color="inherit" /> : 'Test Connection'}
-          </Button>
-
-          {user?.hasCustomPlex && (
-            <Button
-              variant="text"
-              color="inherit"
-              onClick={handleResetToDefault}
-              disabled={saving}
-              sx={{ fontWeight: 600, textTransform: 'none', color: 'text.secondary' }}
-            >
-              Reset to Default
-            </Button>
-          )}
-        </Stack>
+        <Field label="Email" value={user?.email || '—'} />
+        <Field label="Display name" value={user?.username || '—'} />
+        {joined && <Field label="Member since" value={joined} />}
       </Stack>
+
+      <Divider sx={{ my: 3 }} />
+
+      <Button
+        variant="outlined"
+        color="error"
+        startIcon={<LogoutIcon />}
+        onClick={handleSignOut}
+        sx={{ fontWeight: 600, textTransform: 'none' }}
+      >
+        Sign out
+      </Button>
     </Box>
   );
 };

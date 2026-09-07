@@ -43,9 +43,14 @@ const AlbumCardSettings = () => {
   return (
     <Box sx={{ maxWidth: 400 }}>
       <Stack spacing={3}>
-        <Typography variant="h5" component="h3" sx={{ fontWeight: 700 }}>
-          Album Card Settings
-        </Typography>
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>
+            Album Cards
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            How large album artwork appears across the library.
+          </Typography>
+        </Box>
 
         <Box>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>

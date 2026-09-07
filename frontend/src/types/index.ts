@@ -185,6 +185,7 @@ export interface User {
   /** Masked placeholder ('••••••••') when a token is set, otherwise null. */
   plexToken?: string | null;
   hasCustomPlex?: boolean;
+  createdAt?: string;
 }
 
 // ---------------------------------------------------------------------------
