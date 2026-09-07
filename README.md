@@ -14,7 +14,7 @@ Light theme
 - **Playlists**: Access and play your Plex playlists
 - **Genres**: Explore music by genre
 - **Search**: Quick search across your music library
-- **Queue Management**: Build and manage your playback queue
+- **Playback**: Now Playing header — album art, track and transport controls — above the queue, following whatever started playing
 - **Audio Player**: Full-featured audio player with play/pause, next/previous controls
 - **Keyboard Shortcuts**: Spacebar to play/pause, Shift+Arrow keys for navigation
 - **Accounts**: Sign in with your email address; the display name is shown in the app
