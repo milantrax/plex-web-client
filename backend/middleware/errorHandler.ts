@@ -1,4 +1,14 @@
-function errorHandler(err, req, res, _next) {
+import type { NextFunction, Request, Response } from 'express';
+
+/** The extra fields an error may carry by the time it reaches this handler. */
+interface HandledError extends Error {
+  status?: number;
+  code?: string;
+  isAxiosError?: boolean;
+  response?: { status?: number };
+}
+
+function errorHandler(err: HandledError, req: Request, res: Response, _next: NextFunction): void {
   console.error('Server error:', err.message);
 
   // A failed request to Plex is an upstream failure, not a client auth failure.
@@ -10,9 +20,10 @@ function errorHandler(err, req, res, _next) {
 
   if (isUpstream) {
     const upstream = err.response?.status;
-    return res.status(502).json({
+    res.status(502).json({
       error: `Plex request failed${upstream ? ` (HTTP ${upstream})` : `: ${err.code || err.message}`}`
     });
+    return;
   }
 
   res.status(err.status || 500).json({
@@ -20,4 +31,4 @@ function errorHandler(err, req, res, _next) {
   });
 }
 
-module.exports = errorHandler;
+export default errorHandler;

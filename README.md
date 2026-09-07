@@ -1,6 +1,6 @@
 # Plex Web Client
 
-A React-based web client for streaming music from your local Plex Media Server. Browse your music library, manage playlists, explore genres, and enjoy seamless audio playback with an intuitive interface.
+A React + TypeScript web client for streaming music from your local Plex Media Server. Browse your music library, manage playlists, explore genres, and enjoy seamless audio playback with an intuitive interface.
 
 Dark theme:
 ![Plex Web Client](screenshot.png)
@@ -52,16 +52,27 @@ The app will open at [http://localhost:3000](http://localhost:3000) and proxies 
 backend on port 3001. To run them separately, use `npm start` (frontend) and
 `npm run server:dev` (backend) from `frontend/`.
 
+Both workspaces are TypeScript. The frontend type-checks as part of
+`react-scripts build` (or on its own with `npm run typecheck`). The backend runs
+its sources directly through `tsx` in development (`npm run dev`); for
+production it compiles to `backend/dist` with `npm run build` and is started
+with `npm start`.
+
 ## Project Structure
 
 ```
 .
-├── frontend/          React app (CRA) + nginx config and Dockerfile
+├── frontend/          React app (CRA, TypeScript) + nginx config and Dockerfile
 │   ├── src/
+│   │   └── types/     shared Plex, favorites, playlist and queue types
 │   ├── public/
+│   ├── tsconfig.json
 │   └── package.json
-├── backend/           Express API, Postgres access, Plex proxy
-│   ├── routes/  services/  middleware/  db/
+├── backend/           Express API (TypeScript), Postgres access, Plex proxy
+│   ├── routes/  services/  middleware/  db/  utils/
+│   ├── types/         shared API, Plex and database row types
+│   ├── dist/          compiled output (git-ignored, created by npm run build)
+│   ├── tsconfig.json
 │   └── package.json
 ├── docker-compose.yml three-container stack: frontend -> backend -> db
 └── .env               Docker Compose configuration

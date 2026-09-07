@@ -1,7 +1,10 @@
-const router = require('express').Router();
-const { requireAuth } = require('../middleware/auth');
-const { getPool } = require('../db/database');
-const { getPlexCredentials } = require('../services/userService');
+import { Router } from 'express';
+import { requireAuth, sessionUserId } from '../middleware/auth';
+import { getPool } from '../db/database';
+import { getPlexCredentials } from '../services/userService';
+import type { CustomPlaylistRow, PlaylistTrackRow, TrackReorderEntry } from '../types';
+
+const router = Router();
 
 router.use(requireAuth);
 
@@ -17,7 +20,7 @@ router.get('/', async (req, res, next) => {
        WHERE p.user_id = $1
        GROUP BY p.id
        ORDER BY p.created_at DESC`,
-      [req.session.userId]
+      [sessionUserId(req)]
     );
     res.json(result.rows);
   } catch (error) {
@@ -38,7 +41,7 @@ router.post('/', async (req, res, next) => {
       `INSERT INTO playlists (user_id, name, genre)
        VALUES ($1, $2, $3)
        RETURNING id, name, genre, created_at, updated_at`,
-      [req.session.userId, name.trim(), genre?.trim() || null]
+      [sessionUserId(req), name.trim(), genre?.trim() || null]
     );
 
     res.status(201).json({ ...result.rows[0], track_count: 0 });
@@ -53,7 +56,7 @@ router.delete('/:id', async (req, res, next) => {
     const pool = getPool();
     const result = await pool.query(
       'DELETE FROM playlists WHERE id = $1 AND user_id = $2 RETURNING id',
-      [req.params.id, req.session.userId]
+      [req.params.id, sessionUserId(req)]
     );
 
     if (result.rowCount === 0) {
@@ -71,15 +74,15 @@ router.get('/:id/tracks', async (req, res, next) => {
   try {
     const pool = getPool();
 
-    const playlist = await pool.query(
+    const playlist = await pool.query<Pick<CustomPlaylistRow, 'id' | 'name' | 'genre'>>(
       'SELECT id, name, genre FROM playlists WHERE id = $1 AND user_id = $2',
-      [req.params.id, req.session.userId]
+      [req.params.id, sessionUserId(req)]
     );
     if (playlist.rowCount === 0) {
       return res.status(404).json({ error: 'Playlist not found' });
     }
 
-    const tracks = await pool.query(
+    const tracks = await pool.query<PlaylistTrackRow>(
       `SELECT id, rating_key, title, artist, album, duration, thumb, part_key, parent_rating_key, position, added_at
        FROM playlist_tracks
        WHERE playlist_id = $1
@@ -106,13 +109,13 @@ router.post('/:id/tracks', async (req, res, next) => {
 
     const playlist = await pool.query(
       'SELECT id FROM playlists WHERE id = $1 AND user_id = $2',
-      [req.params.id, req.session.userId]
+      [req.params.id, sessionUserId(req)]
     );
     if (playlist.rowCount === 0) {
       return res.status(404).json({ error: 'Playlist not found' });
     }
 
-    const posResult = await pool.query(
+    const posResult = await pool.query<{ next_pos: number }>(
       'SELECT COALESCE(MAX(position), -1) + 1 AS next_pos FROM playlist_tracks WHERE playlist_id = $1',
       [req.params.id]
     );
@@ -155,7 +158,7 @@ router.patch('/:id/tracks/reorder', async (req, res, next) => {
 
     const playlist = await pool.query(
       'SELECT id FROM playlists WHERE id = $1 AND user_id = $2',
-      [req.params.id, req.session.userId]
+      [req.params.id, sessionUserId(req)]
     );
     if (playlist.rowCount === 0) {
       return res.status(404).json({ error: 'Playlist not found' });
@@ -164,7 +167,7 @@ router.patch('/:id/tracks/reorder', async (req, res, next) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      for (const { id, position } of order) {
+      for (const { id, position } of order as TrackReorderEntry[]) {
         await client.query(
           'UPDATE playlist_tracks SET position = $1 WHERE id = $2 AND playlist_id = $3',
           [position, id, req.params.id]
@@ -197,7 +200,7 @@ router.delete('/:id/tracks/:trackId', async (req, res, next) => {
          AND pt.id = $2
          AND p.id = $3
        RETURNING pt.id`,
-      [req.session.userId, req.params.trackId, req.params.id]
+      [sessionUserId(req), req.params.trackId, req.params.id]
     );
 
     if (result.rowCount === 0) {
@@ -215,15 +218,15 @@ router.get('/:id/export-m3u', async (req, res, next) => {
   try {
     const pool = getPool();
 
-    const playlist = await pool.query(
+    const playlist = await pool.query<Pick<CustomPlaylistRow, 'id' | 'name'>>(
       'SELECT id, name FROM playlists WHERE id = $1 AND user_id = $2',
-      [req.params.id, req.session.userId]
+      [req.params.id, sessionUserId(req)]
     );
     if (playlist.rowCount === 0) {
       return res.status(404).json({ error: 'Playlist not found' });
     }
 
-    const tracks = await pool.query(
+    const tracks = await pool.query<Pick<PlaylistTrackRow, 'title' | 'artist' | 'duration' | 'part_key'>>(
       `SELECT title, artist, duration, part_key
        FROM playlist_tracks
        WHERE playlist_id = $1
@@ -231,7 +234,7 @@ router.get('/:id/export-m3u', async (req, res, next) => {
       [req.params.id]
     );
 
-    const { plexUrl, plexToken } = await getPlexCredentials(req.session.userId);
+    const { plexUrl, plexToken } = await getPlexCredentials(sessionUserId(req));
 
     let m3u = '#EXTM3U\n';
     for (const track of tracks.rows) {
@@ -253,4 +256,4 @@ router.get('/:id/export-m3u', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

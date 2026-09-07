@@ -1,19 +1,39 @@
-const router = require('express').Router();
-const { requireAuth } = require('../middleware/auth');
-const { getPlexCredentials } = require('../services/userService');
-const plexService = require('../services/plexService');
-const cache = require('../services/cacheService');
-const librarySyncService = require('../services/librarySyncService');
-const { getPool } = require('../db/database');
+import { Router } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import { requireAuth, sessionUserId } from '../middleware/auth';
+import { getPlexCredentials } from '../services/userService';
+import * as plexService from '../services/plexService';
+import * as cache from '../services/cacheService';
+import * as librarySyncService from '../services/librarySyncService';
+import { getPool } from '../db/database';
+import type {
+  AlbumWithMatchingTracks,
+  FilterEntry,
+  PlexMetadata,
+  SearchResults
+} from '../types';
 
-async function withCache(req, res, next, cacheType, params, fetchFn) {
+const router = Router();
+
+/** Fetches from Plex with the per-user response cache in front of it. */
+async function withCache<T>(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+  cacheType: string,
+  params: cache.CacheParams,
+  fetchFn: (plexUrl: string, plexToken: string) => Promise<T>
+): Promise<void> {
   try {
-    const userId = req.session.userId;
+    const userId = sessionUserId(req);
     const useCache = req.query.useCache !== 'false';
 
     if (useCache) {
-      const cached = cache.get(userId, cacheType, params);
-      if (cached) return res.json(cached);
+      const cached = cache.get<T>(userId, cacheType, params);
+      if (cached) {
+        res.json(cached);
+        return;
+      }
     }
 
     const { plexUrl, plexToken } = await getPlexCredentials(userId);
@@ -25,14 +45,19 @@ async function withCache(req, res, next, cacheType, params, fetchFn) {
   }
 }
 
-async function getUrlHash(userId) {
+async function getUrlHash(userId: number) {
   const { plexUrl, plexToken } = await getPlexCredentials(userId);
   return { urlHash: librarySyncService.hashPlexUrl(plexUrl), plexUrl, plexToken };
 }
 
-async function dbGetAlbums(urlHash, sectionKey, limit, offset) {
+async function dbGetAlbums(
+  urlHash: string,
+  sectionKey: string,
+  limit: number,
+  offset: number
+): Promise<PlexMetadata[]> {
   const pool = getPool();
-  const rows = await pool.query(
+  const rows = await pool.query<{ data: PlexMetadata }>(
     `SELECT data FROM library_albums
       WHERE plex_url_hash = $1 AND section_key = $2
       ORDER BY artist_sort ASC, title_sort ASC
@@ -42,18 +67,29 @@ async function dbGetAlbums(urlHash, sectionKey, limit, offset) {
   return rows.rows.map(r => r.data);
 }
 
-async function dbCountAlbums(urlHash, sectionKey) {
+async function dbCountAlbums(urlHash: string, sectionKey: string): Promise<number> {
   const pool = getPool();
-  const result = await pool.query(
+  const result = await pool.query<{ cnt: number }>(
     'SELECT COUNT(*)::int AS cnt FROM library_albums WHERE plex_url_hash = $1 AND section_key = $2',
     [urlHash, String(sectionKey)]
   );
   return result.rows[0].cnt;
 }
 
-async function dbGetAlbumsByFilter(urlHash, sectionKey, { genre, year, label }) {
+interface AlbumFilter {
+  genre?: string;
+  year?: string;
+  label?: string;
+}
+
+async function dbGetAlbumsByFilter(
+  urlHash: string,
+  sectionKey: string,
+  { genre, year, label }: AlbumFilter
+): Promise<PlexMetadata[] | null> {
   const pool = getPool();
-  let query, params;
+  let query: string;
+  let params: unknown[];
 
   if (genre !== undefined) {
     query = `SELECT data FROM library_albums
@@ -74,13 +110,13 @@ async function dbGetAlbumsByFilter(urlHash, sectionKey, { genre, year, label }) 
     return null;
   }
 
-  const result = await pool.query(query, params);
+  const result = await pool.query<{ data: PlexMetadata }>(query, params);
   return result.rows.map(r => r.data);
 }
 
-async function dbGetGenres(urlHash, sectionKey) {
+async function dbGetGenres(urlHash: string, sectionKey: string): Promise<FilterEntry[]> {
   const pool = getPool();
-  const result = await pool.query(
+  const result = await pool.query<{ genre: string }>(
     `SELECT DISTINCT unnest(genres) AS genre
        FROM library_albums
       WHERE plex_url_hash = $1 AND section_key = $2
@@ -91,9 +127,9 @@ async function dbGetGenres(urlHash, sectionKey) {
   return result.rows.map(r => ({ id: r.genre, key: r.genre, tag: r.genre, title: r.genre }));
 }
 
-async function dbGetYears(urlHash, sectionKey) {
+async function dbGetYears(urlHash: string, sectionKey: string): Promise<FilterEntry[]> {
   const pool = getPool();
-  const result = await pool.query(
+  const result = await pool.query<{ year: number }>(
     `SELECT DISTINCT year
        FROM library_albums
       WHERE plex_url_hash = $1 AND section_key = $2
@@ -104,9 +140,9 @@ async function dbGetYears(urlHash, sectionKey) {
   return result.rows.map(r => ({ id: r.year, key: String(r.year), title: String(r.year) }));
 }
 
-async function dbGetLabels(urlHash, sectionKey) {
+async function dbGetLabels(urlHash: string, sectionKey: string): Promise<FilterEntry[]> {
   const pool = getPool();
-  const result = await pool.query(
+  const result = await pool.query<{ studio: string }>(
     `SELECT DISTINCT studio
        FROM library_albums
       WHERE plex_url_hash = $1 AND section_key = $2
@@ -122,11 +158,11 @@ router.use(requireAuth);
 // GET /api/plex/test-connection
 router.get('/test-connection', async (req, res, next) => {
   try {
-    const { plexUrl, plexToken } = await getPlexCredentials(req.session.userId);
+    const { plexUrl, plexToken } = await getPlexCredentials(sessionUserId(req));
     const result = await plexService.testConnection(plexUrl, plexToken);
     res.json(result);
   } catch (error) {
-    res.json({ success: false, error: error.message });
+    res.json({ success: false, error: (error as Error).message });
   }
 });
 
@@ -144,9 +180,9 @@ router.get('/sections/:sectionId/items', async (req, res, next) => {
   try {
     const { sectionId } = req.params;
     const { type = 9, start = 0, size } = req.query;
-    const limit = size ? parseInt(size) : 300;
-    const offset = parseInt(start);
-    const userId = req.session.userId;
+    const limit = size ? parseInt(String(size)) : 300;
+    const offset = parseInt(String(start));
+    const userId = sessionUserId(req);
 
     const { urlHash, plexUrl, plexToken } = await getUrlHash(userId);
 
@@ -169,7 +205,7 @@ router.get('/sections/:sectionId/items', async (req, res, next) => {
     }
 
     const data = await plexService.getSectionItems(plexUrl, plexToken, sectionId, {
-      type: parseInt(type), start: offset, size: limit,
+      type: parseInt(String(type)), start: offset, size: limit,
     });
     cache.set(userId, 'sectionItems', cacheParams, data);
     res.json(data);
@@ -183,7 +219,7 @@ router.get('/sections/:sectionId/genres', async (req, res, next) => {
   try {
     const { sectionId } = req.params;
     const { type = 9 } = req.query;
-    const userId = req.session.userId;
+    const userId = sessionUserId(req);
 
     const { urlHash, plexUrl, plexToken } = await getUrlHash(userId);
 
@@ -193,7 +229,7 @@ router.get('/sections/:sectionId/genres', async (req, res, next) => {
     }
 
     withCache(req, res, next, 'genres', { sectionId, type }, (url, token) =>
-      plexService.getGenres(url, token, sectionId, parseInt(type))
+      plexService.getGenres(url, token, sectionId, parseInt(String(type)))
     );
   } catch (err) {
     next(err);
@@ -205,7 +241,7 @@ router.get('/sections/:sectionId/years', async (req, res, next) => {
   try {
     const { sectionId } = req.params;
     const { type = 9 } = req.query;
-    const userId = req.session.userId;
+    const userId = sessionUserId(req);
 
     const { urlHash, plexUrl, plexToken } = await getUrlHash(userId);
 
@@ -215,7 +251,7 @@ router.get('/sections/:sectionId/years', async (req, res, next) => {
     }
 
     withCache(req, res, next, 'years', { sectionId, type }, (url, token) =>
-      plexService.getYears(url, token, sectionId, parseInt(type))
+      plexService.getYears(url, token, sectionId, parseInt(String(type)))
     );
   } catch (err) {
     next(err);
@@ -227,7 +263,7 @@ router.get('/sections/:sectionId/labels', async (req, res, next) => {
   try {
     const { sectionId } = req.params;
     const { type = 9 } = req.query;
-    const userId = req.session.userId;
+    const userId = sessionUserId(req);
 
     const { urlHash, plexUrl, plexToken } = await getUrlHash(userId);
 
@@ -237,7 +273,7 @@ router.get('/sections/:sectionId/labels', async (req, res, next) => {
     }
 
     withCache(req, res, next, 'labels', { sectionId, type }, (url, token) =>
-      plexService.getLabels(url, token, sectionId, parseInt(type))
+      plexService.getLabels(url, token, sectionId, parseInt(String(type)))
     );
   } catch (err) {
     next(err);
@@ -249,17 +285,17 @@ router.get('/sections/:sectionId/albums-by-genre', async (req, res, next) => {
   try {
     const { sectionId } = req.params;
     const { genre, type = 9 } = req.query;
-    const userId = req.session.userId;
+    const userId = sessionUserId(req);
 
     const { urlHash, plexUrl, plexToken } = await getUrlHash(userId);
 
     if (await librarySyncService.hasDbData(urlHash)) {
-      const albums = await dbGetAlbumsByFilter(urlHash, sectionId, { genre });
+      const albums = await dbGetAlbumsByFilter(urlHash, sectionId, { genre: genre as string });
       return res.json({ Metadata: albums });
     }
 
     withCache(req, res, next, 'albumsByGenre', { sectionId, genre, type }, (url, token) =>
-      plexService.getAlbumsByGenre(url, token, sectionId, genre, parseInt(type))
+      plexService.getAlbumsByGenre(url, token, sectionId, genre as string, parseInt(String(type)))
     );
   } catch (err) {
     next(err);
@@ -271,17 +307,17 @@ router.get('/sections/:sectionId/albums-by-year', async (req, res, next) => {
   try {
     const { sectionId } = req.params;
     const { year, type = 9 } = req.query;
-    const userId = req.session.userId;
+    const userId = sessionUserId(req);
 
     const { urlHash, plexUrl, plexToken } = await getUrlHash(userId);
 
     if (await librarySyncService.hasDbData(urlHash)) {
-      const albums = await dbGetAlbumsByFilter(urlHash, sectionId, { year });
+      const albums = await dbGetAlbumsByFilter(urlHash, sectionId, { year: year as string });
       return res.json({ Metadata: albums });
     }
 
     withCache(req, res, next, 'albumsByYear', { sectionId, year, type }, (url, token) =>
-      plexService.getAlbumsByYear(url, token, sectionId, year, parseInt(type))
+      plexService.getAlbumsByYear(url, token, sectionId, year as string, parseInt(String(type)))
     );
   } catch (err) {
     next(err);
@@ -293,17 +329,17 @@ router.get('/sections/:sectionId/albums-by-label', async (req, res, next) => {
   try {
     const { sectionId } = req.params;
     const { label, type = 9 } = req.query;
-    const userId = req.session.userId;
+    const userId = sessionUserId(req);
 
     const { urlHash, plexUrl, plexToken } = await getUrlHash(userId);
 
     if (await librarySyncService.hasDbData(urlHash)) {
-      const albums = await dbGetAlbumsByFilter(urlHash, sectionId, { label });
+      const albums = await dbGetAlbumsByFilter(urlHash, sectionId, { label: label as string });
       return res.json({ Metadata: albums });
     }
 
     withCache(req, res, next, 'albumsByLabel', { sectionId, label, type }, (url, token) =>
-      plexService.getAlbumsByLabel(url, token, sectionId, label, parseInt(type))
+      plexService.getAlbumsByLabel(url, token, sectionId, label as string, parseInt(String(type)))
     );
   } catch (err) {
     next(err);
@@ -336,13 +372,13 @@ router.get('/playlists/:ratingKey/items', (req, res, next) => {
 // GET /api/plex/search
 router.get('/search', async (req, res, next) => {
   try {
-    const userId = req.session.userId;
+    const userId = sessionUserId(req);
     const { q, limit } = req.query;
     const useCache = req.query.useCache !== 'false';
 
     const cacheParams = { q, limit };
     if (useCache) {
-      const cached = cache.get(userId, 'search', cacheParams);
+      const cached = cache.get<SearchResults>(userId, 'search', cacheParams);
       if (cached) return res.json(cached);
     }
 
@@ -350,19 +386,19 @@ router.get('/search', async (req, res, next) => {
     const sections = await plexService.getSections(plexUrl, plexToken);
     const musicSections = sections.filter(s => s.type === 'artist');
 
-    const results = { albums: [], tracks: [] };
+    const results: SearchResults = { albums: [], tracks: [] };
     for (const section of musicSections) {
       const [albums, tracks] = await Promise.all([
-        plexService.searchMusic(plexUrl, plexToken, section.key, q, 9),
-        plexService.searchMusic(plexUrl, plexToken, section.key, q, 10)
+        plexService.searchMusic(plexUrl, plexToken, section.key, q as string, 9),
+        plexService.searchMusic(plexUrl, plexToken, section.key, q as string, 10)
       ]);
       results.albums.push(...albums);
       results.tracks.push(...tracks);
     }
 
     if (limit) {
-      results.albums = results.albums.slice(0, parseInt(limit));
-      results.tracks = results.tracks.slice(0, parseInt(limit));
+      results.albums = results.albums.slice(0, parseInt(String(limit)));
+      results.tracks = results.tracks.slice(0, parseInt(String(limit)));
     }
 
     cache.set(userId, 'search', cacheParams, results);
@@ -375,13 +411,13 @@ router.get('/search', async (req, res, next) => {
 // GET /api/plex/search/albums
 router.get('/search/albums', async (req, res, next) => {
   try {
-    const userId = req.session.userId;
+    const userId = sessionUserId(req);
     const { q } = req.query;
     const useCache = req.query.useCache !== 'false';
 
     const cacheParams = { q, type: 'albumsWithTracks' };
     if (useCache) {
-      const cached = cache.get(userId, 'search', cacheParams);
+      const cached = cache.get<AlbumWithMatchingTracks[]>(userId, 'search', cacheParams);
       if (cached) return res.json(cached);
     }
 
@@ -389,18 +425,18 @@ router.get('/search/albums', async (req, res, next) => {
     const sections = await plexService.getSections(plexUrl, plexToken);
     const musicSections = sections.filter(s => s.type === 'artist');
 
-    const albumMap = new Map();
+    const albumMap = new Map<string, AlbumWithMatchingTracks>();
     for (const section of musicSections) {
-      const albums = await plexService.searchMusic(plexUrl, plexToken, section.key, q, 9);
+      const albums = await plexService.searchMusic(plexUrl, plexToken, section.key, q as string, 9);
       albums.forEach(album => {
         albumMap.set(album.ratingKey, { ...album, matchingTracks: [] });
       });
 
-      const tracks = await plexService.searchMusic(plexUrl, plexToken, section.key, q, 10);
+      const tracks = await plexService.searchMusic(plexUrl, plexToken, section.key, q as string, 10);
       for (const track of tracks) {
-        const albumKey = track.parentRatingKey;
+        const albumKey = track.parentRatingKey as string;
         if (albumMap.has(albumKey)) {
-          albumMap.get(albumKey).matchingTracks.push(track);
+          albumMap.get(albumKey)!.matchingTracks.push(track);
         } else {
           const albumMeta = await plexService.getMetadata(plexUrl, plexToken, albumKey);
           if (albumMeta) {
@@ -424,8 +460,8 @@ router.get('/sections/:sectionId/artists', (req, res, next) => {
   const { start = 0, size } = req.query;
   withCache(req, res, next, 'artists', { sectionId, start, size }, (url, token) =>
     plexService.getArtists(url, token, sectionId, {
-      start: parseInt(start),
-      size: size ? parseInt(size) : null
+      start: parseInt(String(start)),
+      size: size ? parseInt(String(size)) : null
     })
   );
 });
@@ -449,7 +485,7 @@ router.get('/metadata/:ratingKey', (req, res, next) => {
 // GET /api/plex/playlists/:ratingKey/export-m3u
 router.get('/playlists/:ratingKey/export-m3u', async (req, res, next) => {
   try {
-    const { plexUrl, plexToken } = await getPlexCredentials(req.session.userId);
+    const { plexUrl, plexToken } = await getPlexCredentials(sessionUserId(req));
     const container = await plexService.getPlaylistItems(plexUrl, plexToken, req.params.ratingKey);
     const tracks = container.Metadata || [];
 
@@ -473,4 +509,4 @@ router.get('/playlists/:ratingKey/export-m3u', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

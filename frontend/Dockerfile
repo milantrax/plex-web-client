@@ -8,11 +8,14 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
+COPY tsconfig.json ./
 COPY public ./public
 COPY src ./src
 
 # CRA calls the API with relative paths (/api/...), so no API URL is baked in;
-# nginx proxies /api to the backend container at runtime.
+# nginx proxies /api to the backend container at runtime. tsconfig.json is
+# copied above so the build type-checks against the committed config rather
+# than one CRA generates on the fly.
 RUN npm run build
 
 # ---- runtime -------------------------------------------------------------

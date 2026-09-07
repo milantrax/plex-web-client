@@ -1,17 +1,30 @@
-const crypto = require('crypto');
-const { getPool } = require('../db/database');
-const plexService = require('./plexService');
+import crypto from 'crypto';
+import { getPool } from '../db/database';
+import * as plexService from './plexService';
+import type { LibrarySyncStatusRow } from '../types';
 
 const SYNC_BATCH_SIZE = 500;
 const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-function hashPlexUrl(url) {
+export interface SyncOptions {
+  force?: boolean;
+}
+
+/** One row of the stale-sync sweep: a sync job plus its owner's credentials. */
+interface StaleSyncRow {
+  plex_url_hash: string;
+  user_id: number;
+  plex_url: string | null;
+  plex_token: string | null;
+}
+
+export function hashPlexUrl(url: string): string {
   return crypto.createHash('sha256').update(url).digest('hex').slice(0, 32);
 }
 
-async function getSyncStatus(plexUrlHash) {
+export async function getSyncStatus(plexUrlHash: string): Promise<LibrarySyncStatusRow | null> {
   const pool = getPool();
-  const result = await pool.query(
+  const result = await pool.query<LibrarySyncStatusRow>(
     'SELECT * FROM library_sync_status WHERE plex_url_hash = $1',
     [plexUrlHash]
   );
@@ -21,16 +34,21 @@ async function getSyncStatus(plexUrlHash) {
 // Returns true when the DB has data from at least one completed sync.
 // During a running re-sync the previous data is still available, so
 // this returns true once last_synced_at is set.
-async function hasDbData(plexUrlHash) {
+export async function hasDbData(plexUrlHash: string): Promise<boolean> {
   const pool = getPool();
-  const result = await pool.query(
+  const result = await pool.query<Pick<LibrarySyncStatusRow, 'last_synced_at'>>(
     'SELECT last_synced_at FROM library_sync_status WHERE plex_url_hash = $1',
     [plexUrlHash]
   );
   return result.rows.length > 0 && result.rows[0].last_synced_at !== null;
 }
 
-async function syncLibrary(userId, plexUrl, plexToken, { force = false } = {}) {
+export async function syncLibrary(
+  userId: number,
+  plexUrl: string,
+  plexToken: string,
+  { force = false }: SyncOptions = {}
+): Promise<void> {
   const pool = getPool();
   const urlHash = hashPlexUrl(plexUrl);
 
@@ -113,7 +131,7 @@ async function syncLibrary(userId, plexUrl, plexToken, { force = false } = {}) {
               album.titleSort || album.title || null,
               album.parentTitle || null,
               album.parentTitleSort || album.parentTitle || null,
-              album.year ? parseInt(album.year) : null,
+              album.year ? parseInt(String(album.year)) : null,
               album.studio || null,
               album.thumb || null,
               genres,
@@ -145,18 +163,23 @@ async function syncLibrary(userId, plexUrl, plexToken, { force = false } = {}) {
 
     console.log(`[LibrarySync] Done – synced ${totalSynced} albums for hash=${urlHash}`);
   } catch (err) {
-    console.error('[LibrarySync] Sync failed:', err.message);
+    const message = (err as Error).message;
+    console.error('[LibrarySync] Sync failed:', message);
     await pool.query(
       `UPDATE library_sync_status
           SET status = 'error', error_message = $1
         WHERE plex_url_hash = $2`,
-      [err.message, urlHash]
+      [message, urlHash]
     );
     throw err;
   }
 }
 
-async function triggerSyncIfNeeded(userId, plexUrl, plexToken) {
+export async function triggerSyncIfNeeded(
+  userId: number,
+  plexUrl: string,
+  plexToken: string
+): Promise<void> {
   try {
     await syncLibrary(userId, plexUrl, plexToken, { force: false });
   } catch (_) {
@@ -164,16 +187,20 @@ async function triggerSyncIfNeeded(userId, plexUrl, plexToken) {
   }
 }
 
-async function triggerForcedSync(userId, plexUrl, plexToken) {
+export async function triggerForcedSync(
+  userId: number,
+  plexUrl: string,
+  plexToken: string
+): Promise<void> {
   try {
     await syncLibrary(userId, plexUrl, plexToken, { force: true });
   } catch (_) {}
 }
 
-async function syncAllStale() {
+async function syncAllStale(): Promise<void> {
   const pool = getPool();
   try {
-    const result = await pool.query(
+    const result = await pool.query<StaleSyncRow>(
       `SELECT s.plex_url_hash, s.user_id, u.plex_url, u.plex_token
          FROM library_sync_status s
          JOIN users u ON u.id = s.user_id
@@ -197,11 +224,11 @@ async function syncAllStale() {
         .catch(err => console.error('[LibrarySync] Scheduled sync error:', err.message));
     }
   } catch (err) {
-    console.error('[LibrarySync] Failed to query stale sync jobs:', err.message);
+    console.error('[LibrarySync] Failed to query stale sync jobs:', (err as Error).message);
   }
 }
 
-function startSyncScheduler() {
+export function startSyncScheduler(): void {
   setTimeout(() => {
     syncAllStale().catch(() => {});
   }, 30_000);
@@ -212,13 +239,3 @@ function startSyncScheduler() {
 
   console.log('[LibrarySync] Scheduler started (24h interval)');
 }
-
-module.exports = {
-  hashPlexUrl,
-  hasDbData,
-  getSyncStatus,
-  syncLibrary,
-  triggerSyncIfNeeded,
-  triggerForcedSync,
-  startSyncScheduler,
-};

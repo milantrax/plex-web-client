@@ -1,6 +1,8 @@
-const router = require('express').Router();
-const { requireAuth } = require('../middleware/auth');
-const { getPool } = require('../db/database');
+import { Router } from 'express';
+import { requireAuth, sessionUserId } from '../middleware/auth';
+import { getPool } from '../db/database';
+
+const router = Router();
 
 router.use(requireAuth);
 
@@ -12,7 +14,7 @@ router.get('/', async (req, res, next) => {
     let query = `SELECT id, type, rating_key, title, thumb, subtitle, year, duration, part_key, parent_rating_key, added_at
                  FROM favorites
                  WHERE user_id = $1`;
-    const params = [req.session.userId];
+    const params: unknown[] = [sessionUserId(req)];
     if (type) {
       query += ` AND type = $2`;
       params.push(type);
@@ -39,7 +41,7 @@ router.post('/', async (req, res, next) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT (user_id, type, rating_key) DO NOTHING
        RETURNING *`,
-      [req.session.userId, type, String(ratingKey), title || null, thumb || null, subtitle || null,
+      [sessionUserId(req), type, String(ratingKey), title || null, thumb || null, subtitle || null,
        year || null, duration || null, partKey || null, parentRatingKey ? String(parentRatingKey) : null]
     );
 
@@ -59,7 +61,7 @@ router.delete('/:type/:ratingKey', async (req, res, next) => {
     const pool = getPool();
     const result = await pool.query(
       'DELETE FROM favorites WHERE user_id = $1 AND type = $2 AND rating_key = $3 RETURNING id',
-      [req.session.userId, req.params.type, req.params.ratingKey]
+      [sessionUserId(req), req.params.type, req.params.ratingKey]
     );
 
     if (result.rowCount === 0) {
@@ -72,4 +74,4 @@ router.delete('/:type/:ratingKey', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;
