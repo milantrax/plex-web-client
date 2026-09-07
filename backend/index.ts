@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import session from 'express-session';
 import { RedisStore } from 'connect-redis';
+import connectPgSimple from 'connect-pg-simple';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
@@ -15,7 +16,10 @@ import favoritesRoutes from './routes/favorites';
 import librarySyncRoutes from './routes/librarySync';
 import { startSyncScheduler } from './services/librarySyncService';
 import { connectRedis, redis } from './services/redisClient';
+import { ResilientSessionStore } from './services/sessionStore';
 import errorHandler from './middleware/errorHandler';
+
+const PgSession = connectPgSimple(session);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -27,20 +31,23 @@ if (process.env.TRUST_PROXY) {
 }
 
 // Initialize database
-initializeDatabase();
+const pool = initializeDatabase();
+
+// Redis is optional, so this does not block startup.
+connectRedis();
 
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Session configuration. Sessions live in Redis so they are shared by every
-// API instance and survive a restart of the API itself.
+// Session configuration. Redis serves the sessions; Postgres mirrors them so a
+// Redis outage cannot log everyone out. See services/sessionStore.ts.
 app.use(session({
-  store: new RedisStore({
-    client: redis,
-    prefix: 'plex:sess:'
-  }),
+  store: new ResilientSessionStore(
+    new RedisStore({ client: redis, prefix: 'plex:sess:' }),
+    new PgSession({ pool, tableName: 'session', createTableIfMissing: true })
+  ),
   secret: process.env.SESSION_SECRET as string,
   resave: false,
   saveUninitialized: false,
@@ -87,14 +94,14 @@ if (process.env.NODE_ENV === 'production' && buildDir) {
 // Error handler
 app.use(errorHandler);
 
-// Start server once the schema is ready and Redis is reachable. Redis holds
-// the sessions, so there is nothing useful to serve without it.
-Promise.all([runSchema(), connectRedis()]).then(() => {
+// Start the server once the schema is ready. Redis is not waited on: the API
+// is fully functional without it, just without the cache in front of Plex.
+runSchema().then(() => {
   startSyncScheduler();
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
 }).catch(err => {
-  console.error('Failed to start server:', err);
+  console.error('Failed to initialize database schema:', err);
   process.exit(1);
 });

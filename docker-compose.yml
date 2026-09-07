@@ -55,7 +55,8 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgresql://${POSTGRES_USER:-plex}:${POSTGRES_PASSWORD:-plex}@db:5432/${POSTGRES_DB:-plex}
-      # Backs both the session store and the Plex response cache.
+      # Caches Plex responses and serves sessions. Optional: without it the
+      # API falls back to Plex directly and to the Postgres session mirror.
       REDIS_URL: redis://redis:6379
       SESSION_SECRET: ${SESSION_SECRET:-change-this-to-a-random-secret-in-production}
       # Sessions run over plain HTTP by default; set to true once TLS is in front.
@@ -77,8 +78,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      # required:false — the API starts and serves without Redis, so a Redis
+      # that is slow or missing must not hold it back.
       redis:
         condition: service_healthy
+        required: false
 
   frontend:
     build:
@@ -101,7 +105,7 @@ networks:
 
 volumes:
   db_data:
-  # Sessions and the cached Plex responses.
+  # Cached Plex responses and the fast path for sessions (mirrored in Postgres).
   redis_data:
   # Reserved for caching album art and artist images on disk; mounted at
   # /app/cache in the backend and exposed as MEDIA_CACHE_DIR.
