@@ -8,11 +8,10 @@ import { createClient, type RedisClientType } from 'redis';
  * down rather than queueing until it comes back, so an outage surfaces as a
  * fast error instead of a hung request.
  *
- * Redis is a hard dependency of the API, on a par with Postgres: it holds the
- * sessions, and express-session runs ahead of every route, so while Redis is
- * unreachable authenticated requests fail with 500 and the cache's own
- * fallback never comes into play. The client reconnects on its own, and
- * requests recover as soon as it does — no restart needed.
+ * Redis is optional: the API starts without it, the cache treats every failure
+ * as a miss and re-fetches from Plex, and the session store falls back to its
+ * Postgres mirror. Connecting therefore happens in the background, and the
+ * client reconnects on its own once Redis returns.
  */
 export const redis: RedisClientType = createClient({
   url: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
@@ -38,9 +37,17 @@ redis.on('reconnecting', () => {
   console.warn('[Redis] Reconnecting…');
 });
 
-/** Opens the connection. Called once at startup, before the server listens. */
-export async function connectRedis(): Promise<void> {
-  await redis.connect();
+/**
+ * Starts connecting without blocking startup.
+ *
+ * A rejection here only means Redis was not up at boot; node-redis keeps
+ * retrying per `reconnectStrategy`, so the cache and the fast session path
+ * come to life on their own once it is reachable.
+ */
+export function connectRedis(): void {
+  redis.connect().catch((err: Error) => {
+    console.warn(`[Redis] Not reachable at startup (${err.message}) — serving without cache until it returns`);
+  });
 }
 
 /** True when commands can currently be issued. */

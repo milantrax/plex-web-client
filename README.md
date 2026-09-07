@@ -81,24 +81,34 @@ with `npm start`.
 
 ## Caching and Sessions
 
-Redis backs two things:
+Redis serves two things:
 
-- **Login sessions** (`plex:sess:*`), so they are shared by every API instance
-  and survive a restart of the API.
 - **Plex API responses** (`plex:cache:user_<id>:*`), with a per-endpoint TTL
   set in `backend/services/cacheService.ts` — an hour for library sections,
   30 minutes for searches, and so on. Changing a user's Plex credentials drops
   just that user's cached entries.
+- **Login sessions** (`plex:sess:*`), shared by every API instance.
 
 Set `REDIS_URL` to point at the server; the Compose stack wires it to the
 bundled `redis` service and keeps the data in the `redis_data` volume with
-`appendonly` enabled, so sessions and cache survive a Redis restart too.
+`appendonly` enabled, so the cache and sessions survive a Redis restart.
 
-Redis is a hard dependency, on a par with Postgres: the API refuses to start
-without it, and while it is unreachable authenticated requests fail rather than
-degrading, because the session lookup runs ahead of every route. The client
-reconnects by itself, and requests recover as soon as it is back — no restart
-needed.
+### Redis is optional
+
+The app stays fully functional without it, just slower:
+
+- The API starts whether or not Redis is reachable, and reconnects on its own
+  once it returns — no restart needed.
+- Cache reads and writes treat any failure as a miss, so requests fall through
+  to Plex.
+- Sessions are served from Redis but mirrored into the Postgres `session`
+  table on every login. If Redis cannot answer, the session is read from
+  Postgres and written back to Redis once it recovers, so an outage neither
+  logs anyone out nor blocks new logins. Logging out clears both stores.
+
+That mirror is why `backend/services/sessionStore.ts` exists: express-session
+consults its store ahead of every route, so a store that throws would take the
+whole authenticated API down with it.
 
 Note the library sync is separate: it mirrors album metadata into Postgres
 (`library_albums`) and is unaffected by clearing the Redis cache.

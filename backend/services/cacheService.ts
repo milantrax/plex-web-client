@@ -7,8 +7,9 @@ import { redis } from './redisClient';
  * failed write is dropped, so a cache problem degrades to a fetch from Plex
  * rather than a failed request, and callers never handle a cache error.
  *
- * Note this does not make the API survive a Redis outage — the Redis-backed
- * session store fails first, ahead of any route. See services/redisClient.ts.
+ * Combined with the session store's Postgres mirror, this keeps the whole API
+ * serving through a Redis outage — slower, because every request goes to Plex,
+ * but correct. See services/sessionStore.ts.
  */
 
 /** Namespace for cache entries, keeping them clear of the session keys. */
