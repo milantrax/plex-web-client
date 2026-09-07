@@ -26,7 +26,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await register(username, password, email || undefined);
+      await register(username, password, email);
       navigate('/');
     } catch (err) {
       setError(getApiErrorMessage(err, 'Registration failed'));
@@ -63,7 +63,7 @@ const Register = () => {
 
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
-              label="Username"
+              label="Display name"
               fullWidth
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -71,14 +71,18 @@ const Register = () => {
               autoFocus
               required
               inputProps={{ minLength: 3 }}
+              helperText="Shown in the app; not used to sign in"
             />
             <TextField
-              label="Email (optional)"
+              label="Email"
               type="email"
               fullWidth
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               sx={{ mb: 2 }}
+              required
+              autoComplete="email"
+              helperText="You'll sign in with this address"
             />
             <TextField
               label="Password"

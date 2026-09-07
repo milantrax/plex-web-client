@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { getApiErrorMessage } from '../utils/errors';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      await login(username, password);
+      await login(email, password);
       navigate('/');
     } catch (err) {
       setError(getApiErrorMessage(err, 'Login failed'));
@@ -55,13 +55,15 @@ const Login = () => {
 
           <Box component="form" onSubmit={handleSubmit}>
             <TextField
-              label="Username"
+              label="Email"
+              type="email"
               fullWidth
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               sx={{ mb: 2 }}
               autoFocus
               required
+              autoComplete="email"
             />
             <TextField
               label="Password"
@@ -71,6 +73,7 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
               sx={{ mb: 3 }}
               required
+              autoComplete="current-password"
             />
             <Button
               type="submit"

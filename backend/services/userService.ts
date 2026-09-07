@@ -27,6 +27,13 @@ export async function getUserById(userId: number): Promise<PublicUser | null> {
   return result.rows[0] || null;
 }
 
+/** Looks up the sign-in account. Email is matched case-insensitively. */
+export async function getUserByEmail(email: string): Promise<UserRow | null> {
+  const pool = getPool();
+  const result = await pool.query<UserRow>('SELECT * FROM users WHERE LOWER(email) = LOWER($1)', [email]);
+  return result.rows[0] || null;
+}
+
 export async function getUserByUsername(username: string): Promise<UserRow | null> {
   const pool = getPool();
   const result = await pool.query<UserRow>('SELECT * FROM users WHERE username = $1', [username]);
@@ -35,13 +42,13 @@ export async function getUserByUsername(username: string): Promise<UserRow | nul
 
 export async function createUser(
   username: string,
-  email: string | null | undefined,
+  email: string,
   passwordHash: string
 ): Promise<number> {
   const pool = getPool();
   const result = await pool.query<{ id: number }>(
     'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id',
-    [username, email || null, passwordHash]
+    [username, email, passwordHash]
   );
   return result.rows[0].id;
 }

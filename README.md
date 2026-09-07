@@ -17,6 +17,7 @@ Light theme
 - **Queue Management**: Build and manage your playback queue
 - **Audio Player**: Full-featured audio player with play/pause, next/previous controls
 - **Keyboard Shortcuts**: Spacebar to play/pause, Shift+Arrow keys for navigation
+- **Accounts**: Sign in with your email address; the display name is shown in the app
 - **Settings**: Customize album card sizes and other preferences
 - **Cache Management**: Plex API responses cached in Redis, shared across API instances
 
