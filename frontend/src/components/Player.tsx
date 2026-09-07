@@ -47,8 +47,13 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ currentTrack, onPlayStat
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [trackInfo, setTrackInfo] = useState<TrackInfo | null>(null);
-  const [useTranscode, setUseTranscode] = useState(false);
+  // The ratingKey of the one track the transcode fallback applies to. Holding a
+  // key rather than a boolean keeps the fallback per-track: a file the browser
+  // cannot decode used to latch transcoding on for the rest of the session, so
+  // every later track went to the transcoder too.
+  const [transcodeFor, setTranscodeFor] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const useTranscode = !!currentTrack && transcodeFor === currentTrack.ratingKey;
   const [audioError, setAudioError] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -66,7 +71,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ currentTrack, onPlayStat
         currentTrack.Media[0].Part && currentTrack.Media[0].Part!.length > 0) {
 
       const partKey = currentTrack.Media[0].Part![0].key;
-      const streamUrl = useTranscode ? getPlexTranscodeUrl(partKey) : getPlexAudioUrl(partKey);
+      const streamUrl = useTranscode ? getPlexTranscodeUrl(currentTrack.ratingKey) : getPlexAudioUrl(partKey);
 
       console.log("Setting audio source:", streamUrl);
       setAudioSrc(streamUrl);
@@ -194,7 +199,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ currentTrack, onPlayStat
 
     if (!useTranscode && currentTrack) {
       console.log("Direct playback failed, trying transcoding...");
-      setUseTranscode(true);
+      setTranscodeFor(currentTrack.ratingKey);
     }
   };
 
@@ -409,7 +414,7 @@ const Player = forwardRef<PlayerHandle, PlayerProps>(({ currentTrack, onPlayStat
 
           {audioError && (
             <IconButton
-              onClick={() => setUseTranscode(!useTranscode)}
+              onClick={() => setTranscodeFor(useTranscode ? null : currentTrack?.ratingKey ?? null)}
               color="inherit"
               size="small"
               title={`Try ${useTranscode ? 'Direct Play' : 'Transcode'}`}

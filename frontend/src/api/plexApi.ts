@@ -54,9 +54,13 @@ export const getPlexAudioUrl = (partKey?: string | null): string | null => {
   return `/api/media/audio?path=${encodeURIComponent(partKey)}`;
 };
 
-export const getPlexTranscodeUrl = (partKey?: string | null): string | null => {
-  if (!partKey) return null;
-  return `/api/media/transcode?path=${encodeURIComponent(partKey)}`;
+/**
+ * Takes the track's ratingKey, not its part key: Plex's transcoder addresses
+ * the metadata item, and refuses a part key with a 400.
+ */
+export const getPlexTranscodeUrl = (ratingKey?: string | null): string | null => {
+  if (!ratingKey) return null;
+  return `/api/media/transcode?ratingKey=${encodeURIComponent(ratingKey)}`;
 };
 
 export const getTrackDownloadUrl = (partKey?: string | null, trackTitle = 'track'): string | null => {
