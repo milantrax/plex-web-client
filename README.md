@@ -18,6 +18,7 @@ Light theme
 - **Audio Player**: Full-featured audio player with play/pause, next/previous controls
 - **Keyboard Shortcuts**: Spacebar to play/pause, Shift+Arrow keys for navigation
 - **Accounts**: Sign in with your email address; the display name is shown in the app
+- **Theming**: Follows your device's light/dark setting until you pick one yourself
 - **Settings**: Customize album card sizes and other preferences
 - **Cache Management**: Plex API responses cached in Redis, shared across API instances
 
@@ -113,6 +114,20 @@ whole authenticated API down with it.
 
 Note the library sync is separate: it mirrors album metadata into Postgres
 (`library_albums`) and is unaffected by clearing the Redis cache.
+
+## Theme
+
+A browser with no theme of its own follows the device's light/dark setting, and
+keeps following it as that setting changes. `DEFAULT_THEME` (`light`, `dark`,
+or `system` — the default) overrides that starting point for the deployment;
+an unrecognised value logs a warning and falls back to `system`.
+
+Choosing a theme in the app stores it for that browser and always wins over
+both. "Match system" in the settings menu clears the choice and hands control
+back to the device.
+
+The server exposes its default at `GET /api/config`, which is unauthenticated
+because the login screen needs it before anyone has signed in.
 
 ## Environment Setup
 

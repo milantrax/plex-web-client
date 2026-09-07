@@ -65,6 +65,9 @@ services:
       TRUST_PROXY: ${TRUST_PROXY:-1}
       DEFAULT_PLEX_URL: ${DEFAULT_PLEX_URL:-}
       DEFAULT_PLEX_TOKEN: ${DEFAULT_PLEX_TOKEN:-}
+      # Starting theme for browsers that have not chosen one: light, dark, or
+      # system (the default) to follow the viewer's device.
+      DEFAULT_THEME: ${DEFAULT_THEME:-system}
       # Where a future on-disk album art / artist image cache should live.
       MEDIA_CACHE_DIR: /app/cache
     volumes:

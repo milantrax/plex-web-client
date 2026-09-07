@@ -27,6 +27,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import SearchBar from './SearchBar';
 import { useThemeMode } from '../theme/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -39,7 +40,7 @@ interface NavItem {
 }
 
 function NavBar() {
-  const { mode, toggleTheme } = useThemeMode();
+  const { mode, toggleTheme, followsSystem, useSystemTheme } = useThemeMode();
   const { user, logout } = useAuth();
   const { onPlayTrack } = usePlaybackActions();
   const theme = useTheme();
@@ -214,6 +215,12 @@ function NavBar() {
                 label={mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
               />
             </MenuItem>
+            {!followsSystem && (
+              <MenuItem onClick={useSystemTheme}>
+                <ListItemIcon><SettingsBrightnessIcon fontSize="small" /></ListItemIcon>
+                <Typography variant="body2">Match system</Typography>
+              </MenuItem>
+            )}
             {user && (
               <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
                 <ListItemIcon><LogoutIcon fontSize="small" color="error" /></ListItemIcon>
@@ -306,6 +313,14 @@ function NavBar() {
               label={mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
             />
           </ListItem>
+          {!followsSystem && (
+            <ListItem disablePadding>
+              <ListItemButton onClick={useSystemTheme}>
+                <ListItemIcon><SettingsBrightnessIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Match system" />
+              </ListItemButton>
+            </ListItem>
+          )}
         </List>
       </Drawer>
     </AppBar>

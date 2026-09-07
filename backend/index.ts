@@ -14,6 +14,7 @@ import mediaRoutes from './routes/media';
 import customPlaylistsRoutes from './routes/customPlaylists';
 import favoritesRoutes from './routes/favorites';
 import librarySyncRoutes from './routes/librarySync';
+import configRoutes from './routes/config';
 import { startSyncScheduler } from './services/librarySyncService';
 import { connectRedis, redis } from './services/redisClient';
 import { ResilientSessionStore } from './services/sessionStore';
@@ -65,6 +66,8 @@ app.use(session({
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 
 // API Routes
+// Unauthenticated: the client reads this before the login screen renders.
+app.use('/api/config', configRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/plex', plexRoutes);
 app.use('/api/plex/library', librarySyncRoutes);
