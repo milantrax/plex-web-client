@@ -1,8 +1,23 @@
-const router = require('express').Router();
-const { hashPassword, comparePassword } = require('../utils/crypto');
-const { getUserById, getUserByUsername, createUser, updatePlexCredentials } = require('../services/userService');
-const { requireAuth } = require('../middleware/auth');
-const { clearUserCache } = require('../services/cacheService');
+import { Router } from 'express';
+import { hashPassword, comparePassword } from '../utils/crypto';
+import { getUserById, getUserByUsername, createUser, updatePlexCredentials } from '../services/userService';
+import { requireAuth, sessionUserId } from '../middleware/auth';
+import { clearUserCache } from '../services/cacheService';
+import type { PublicUser } from '../services/userService';
+
+const router = Router();
+
+/** The user representation sent to the client; the Plex token is masked. */
+function toProfile(user: PublicUser) {
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    plexUrl: user.plex_url,
+    plexToken: user.plex_token ? '••••••••' : null,
+    hasCustomPlex: !!(user.plex_url || user.plex_token)
+  };
+}
 
 // POST /api/auth/register
 router.post('/register', async (req, res, next) => {
@@ -30,14 +45,7 @@ router.post('/register', async (req, res, next) => {
     req.session.userId = userId;
 
     const user = await getUserById(userId);
-    res.status(201).json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      plexUrl: user.plex_url,
-      plexToken: user.plex_token ? '••••••••' : null,
-      hasCustomPlex: !!(user.plex_url || user.plex_token)
-    });
+    res.status(201).json(toProfile(user!));
   } catch (error) {
     next(error);
   }
@@ -64,14 +72,7 @@ router.post('/login', async (req, res, next) => {
 
     req.session.userId = user.id;
 
-    res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      plexUrl: user.plex_url,
-      plexToken: user.plex_token ? '••••••••' : null,
-      hasCustomPlex: !!(user.plex_url || user.plex_token)
-    });
+    res.json(toProfile(user));
   } catch (error) {
     next(error);
   }
@@ -91,19 +92,12 @@ router.post('/logout', requireAuth, (req, res) => {
 // GET /api/auth/profile
 router.get('/profile', requireAuth, async (req, res, next) => {
   try {
-    const user = await getUserById(req.session.userId);
+    const user = await getUserById(sessionUserId(req));
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      plexUrl: user.plex_url,
-      plexToken: user.plex_token ? '••••••••' : null,
-      hasCustomPlex: !!(user.plex_url || user.plex_token)
-    });
+    res.json(toProfile(user));
   } catch (error) {
     next(error);
   }
@@ -114,21 +108,16 @@ router.put('/profile', requireAuth, async (req, res, next) => {
   try {
     const { plexUrl, plexToken } = req.body;
 
-    await updatePlexCredentials(req.session.userId, plexUrl, plexToken);
-    clearUserCache(req.session.userId);
+    const userId = sessionUserId(req);
 
-    const user = await getUserById(req.session.userId);
-    res.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      plexUrl: user.plex_url,
-      plexToken: user.plex_token ? '••••••••' : null,
-      hasCustomPlex: !!(user.plex_url || user.plex_token)
-    });
+    await updatePlexCredentials(userId, plexUrl, plexToken);
+    clearUserCache(userId);
+
+    const user = await getUserById(userId);
+    res.json(toProfile(user!));
   } catch (error) {
     next(error);
   }
 });
 
-module.exports = router;
+export default router;

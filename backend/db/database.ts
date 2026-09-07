@@ -1,10 +1,10 @@
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+import { Pool } from 'pg';
+import fs from 'fs';
+import path from 'path';
 
-let pool;
+let pool: Pool | undefined;
 
-function initializeDatabase() {
+export function initializeDatabase(): Pool {
   pool = new Pool({
     connectionString: process.env.DATABASE_URL
   });
@@ -16,14 +16,12 @@ function initializeDatabase() {
   return pool;
 }
 
-async function runSchema() {
+export async function runSchema(): Promise<void> {
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
-  await pool.query(schema);
+  await pool!.query(schema);
 }
 
-function getPool() {
+export function getPool(): Pool {
   if (!pool) throw new Error('Database not initialized');
   return pool;
 }
-
-module.exports = { initializeDatabase, runSchema, getPool };

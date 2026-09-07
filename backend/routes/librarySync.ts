@@ -1,7 +1,9 @@
-const router = require('express').Router();
-const { requireAuth } = require('../middleware/auth');
-const { getPlexCredentials } = require('../services/userService');
-const librarySyncService = require('../services/librarySyncService');
+import { Router } from 'express';
+import { requireAuth, sessionUserId } from '../middleware/auth';
+import { getPlexCredentials } from '../services/userService';
+import * as librarySyncService from '../services/librarySyncService';
+
+const router = Router();
 
 router.use(requireAuth);
 
@@ -9,7 +11,7 @@ router.use(requireAuth);
 // Returns current sync state for the authenticated user's Plex server.
 router.get('/sync-status', async (req, res, next) => {
   try {
-    const { plexUrl } = await getPlexCredentials(req.session.userId);
+    const { plexUrl } = await getPlexCredentials(sessionUserId(req));
     const urlHash = librarySyncService.hashPlexUrl(plexUrl);
     const status = await librarySyncService.getSyncStatus(urlHash);
 
@@ -34,7 +36,8 @@ router.get('/sync-status', async (req, res, next) => {
 // Trigger a forced full re-sync in the background. Returns 202 immediately.
 router.post('/sync', async (req, res, next) => {
   try {
-    const { plexUrl, plexToken } = await getPlexCredentials(req.session.userId);
+    const userId = sessionUserId(req);
+    const { plexUrl, plexToken } = await getPlexCredentials(userId);
     const urlHash = librarySyncService.hashPlexUrl(plexUrl);
     const existing = await librarySyncService.getSyncStatus(urlHash);
 
@@ -43,7 +46,7 @@ router.post('/sync', async (req, res, next) => {
     }
 
     // Fire-and-forget
-    librarySyncService.triggerForcedSync(req.session.userId, plexUrl, plexToken);
+    librarySyncService.triggerForcedSync(userId, plexUrl, plexToken);
 
     res.status(202).json({ message: 'Sync started' });
   } catch (err) {
@@ -51,4 +54,4 @@ router.post('/sync', async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;
