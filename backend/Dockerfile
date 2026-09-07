@@ -24,6 +24,7 @@ RUN npm ci
 
 COPY tsconfig.json ./
 COPY db ./db
+COPY docs ./docs
 COPY middleware ./middleware
 COPY routes ./routes
 COPY services ./services

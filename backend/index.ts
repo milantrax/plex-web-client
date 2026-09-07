@@ -15,6 +15,7 @@ import customPlaylistsRoutes from './routes/customPlaylists';
 import favoritesRoutes from './routes/favorites';
 import librarySyncRoutes from './routes/librarySync';
 import configRoutes from './routes/config';
+import docsRoutes, { apiDocsEnabled } from './routes/docs';
 import { startSyncScheduler } from './services/librarySyncService';
 import { connectRedis, redis } from './services/redisClient';
 import { ResilientSessionStore } from './services/sessionStore';
@@ -68,6 +69,15 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 // API Routes
 // Unauthenticated: the client reads this before the login screen renders.
 app.use('/api/config', configRoutes);
+
+// Interactive API reference. Mounted ahead of the routes it documents so the
+// wildcard-free paths below cannot shadow it.
+if (apiDocsEnabled) {
+  app.use('/api/docs', docsRoutes);
+} else {
+  console.log('[Docs] /api/docs disabled by API_DOCS_ENABLED=false');
+}
+
 app.use('/api/auth', authRoutes);
 app.use('/api/plex', plexRoutes);
 app.use('/api/plex/library', librarySyncRoutes);
