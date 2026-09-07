@@ -8,6 +8,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import queueManager from '../utils/queueManager';
 import LoadingSpinner from '../components/LoadingSpinner';
 import BackToTop from '../components/BackToTop';
+import NowPlaying from '../components/NowPlaying';
 import { getPlexImageUrl } from '../api/plexApi';
 import { PLAYER_HEIGHT, NAVBAR_HEIGHT } from '../theme/theme';
 import { usePlayback } from '../contexts/PlaybackContext';
@@ -27,16 +28,16 @@ function Queue() {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Reloads on mount and whenever the track changes, so the queue reflects any
+  // track the player advanced to on its own.
   useEffect(() => {
     loadQueue();
-  }, []);
-
-  useEffect(() => {
-    loadQueue();
-  }, [currentTrack]);
+  }, [currentTrack]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadQueue = async () => {
-    setLoading(true);
+    // `loading` starts true and is only ever cleared, so a reload triggered by
+    // a track change refreshes the list in place instead of replacing the page
+    // — and the Now Playing header above it does not flicker.
     try {
       const queueData = await queueManager.getQueue();
       const stats = await queueManager.getQueueStats();
@@ -200,10 +201,15 @@ function Queue() {
       }}
       className="custom-scrollbar"
     >
+      <NowPlaying queue={queue} />
+
       <Card sx={{ mb: 3, boxShadow: 3 }}>
         <CardContent sx={{ p: 2.5 }}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2}>
             <Stack direction="row" spacing={2} alignItems="center">
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                Queue
+              </Typography>
               <Typography sx={{ fontWeight: 500 }}>
                 {queueStats.totalTracks} tracks
               </Typography>
