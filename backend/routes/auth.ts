@@ -21,7 +21,8 @@ function toProfile(user: PublicUser) {
     email: user.email,
     plexUrl: user.plex_url,
     plexToken: user.plex_token ? '••••••••' : null,
-    hasCustomPlex: !!(user.plex_url || user.plex_token)
+    hasCustomPlex: !!(user.plex_url || user.plex_token),
+    createdAt: user.created_at
   };
 }
 

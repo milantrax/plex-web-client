@@ -24,3 +24,20 @@ export const getAppConfig = async (): Promise<AppConfig> => {
     return { defaultTheme: 'system' };
   }
 };
+
+/** The fallback Plex server, for showing as a placeholder in the settings form. */
+export interface PlexDefaults {
+  defaultPlexUrl: string | null;
+  /** Whether a fallback token is configured. The token itself is never sent. */
+  hasDefaultToken: boolean;
+}
+
+export const getPlexDefaults = async (): Promise<PlexDefaults> => {
+  try {
+    const res = await api.get<PlexDefaults>('/api/config/plex');
+    return res.data;
+  } catch (error) {
+    console.error('Error fetching Plex defaults:', error);
+    return { defaultPlexUrl: null, hasDefaultToken: false };
+  }
+};

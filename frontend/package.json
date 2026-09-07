@@ -58,5 +58,12 @@
     "@types/react-dom": "^19.2.7",
     "concurrently": "^9.2.1",
     "typescript": "^5.9.3"
+  },
+  "jest": {
+    "moduleNameMapper": {
+      "^react-router-dom$": "<rootDir>/node_modules/react-router-dom/dist/index.js",
+      "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js",
+      "^react-router$": "<rootDir>/node_modules/react-router/dist/development/index.js"
+    }
   }
 }

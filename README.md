@@ -19,7 +19,7 @@ Light theme
 - **Keyboard Shortcuts**: Spacebar to play/pause, Shift+Arrow keys for navigation
 - **Accounts**: Sign in with your email address; the display name is shown in the app
 - **Theming**: Follows your device's light/dark setting until you pick one yourself
-- **Settings**: Customize album card sizes and other preferences
+- **Settings**: Tabbed into Library (Plex server + token help), Appearance and Account
 - **Cache Management**: Plex API responses cached in Redis, shared across API instances
 
 ## Prerequisites
@@ -128,6 +128,11 @@ back to the device.
 
 The server exposes its default at `GET /api/config`, which is unauthenticated
 because the login screen needs it before anyone has signed in.
+
+`GET /api/config/plex` returns the fallback Plex server so the Library tab can
+show it as placeholder text. That one requires a session — the URL points at
+the operator's own network — and never returns the token, only whether one is
+configured.
 
 ## Environment Setup
 
