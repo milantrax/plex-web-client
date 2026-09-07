@@ -111,7 +111,7 @@ router.put('/profile', requireAuth, async (req, res, next) => {
     const userId = sessionUserId(req);
 
     await updatePlexCredentials(userId, plexUrl, plexToken);
-    clearUserCache(userId);
+    await clearUserCache(userId);
 
     const user = await getUserById(userId);
     res.json(toProfile(user!));
