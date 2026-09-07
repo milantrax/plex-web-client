@@ -1,8 +1,12 @@
-name: plex-player
+# The Compose project name. Changing it renames the containers but NOT the
+# volumes at the bottom of this file, which are pinned so a rename never
+# orphans the database.
+name: ${PROJECT_NAME:-plex}
 
 services:
   db:
     image: postgres:16-alpine
+    container_name: ${PROJECT_NAME:-plex}-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-plex}
@@ -28,6 +32,7 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: ${PROJECT_NAME:-plex}-redis
     restart: unless-stopped
     # appendonly keeps sessions and cached responses across a container
     # restart; without it a restart logs every user out.
@@ -45,8 +50,8 @@ services:
       timeout: 5s
       retries: 10
       start_period: 10s
-
   backend:
+    container_name: ${PROJECT_NAME:-plex}-backend
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -88,8 +93,8 @@ services:
       redis:
         condition: service_healthy
         required: false
-
   frontend:
+    container_name: ${PROJECT_NAME:-plex}-frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -101,6 +106,11 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    labels:
+      # nginx runs inside this container's network namespace, so the domain is claimed here.
+      # http-port pins OrbStack to nginx on 80 rather than php-fpm on 9000.
+      dev.orbstack.domains: ${SITE_DOMAIN:-plex.orb.local}
+      dev.orbstack.http-port: "80"
 
 networks:
   # frontend <-> backend
@@ -108,10 +118,20 @@ networks:
   # backend <-> db and redis (frontend is not attached, so it can reach neither)
   data:
 
+# Named explicitly rather than left to Compose's "<project>_<volume>" default.
+# Without this the volumes are keyed to the project name, so editing
+# PROJECT_NAME (or SITE_DOMAIN, if it feeds the project name) silently starts
+# the stack on an empty database and every account appears to be gone.
+#
+# These names are therefore fixed and must not be tied to PROJECT_NAME. Renaming
+# them means migrating the data across by hand, so treat them as permanent.
 volumes:
   db_data:
+    name: plex_db_data
   # Cached Plex responses and the fast path for sessions (mirrored in Postgres).
   redis_data:
+    name: plex_redis_data
   # Reserved for caching album art and artist images on disk; mounted at
   # /app/cache in the backend and exposed as MEDIA_CACHE_DIR.
   media_cache:
+    name: plex_media_cache
