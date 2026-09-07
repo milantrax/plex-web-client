@@ -80,8 +80,7 @@ const PlaylistPage = () => {
   const handlePlayPlaylist = async () => {
     setAnchorEl(null);
     if (!tracks.length) return;
-    await queueManager.clearQueue();
-    const result = await queueManager.addMultipleToQueue(tracks, { title });
+    const result = await queueManager.replaceWith(tracks, { title });
     if (result.success && onPlayTrack) {
       // The queue was just filled with the playlist; keep it.
       onPlayTrack(tracks[0], { replaceQueue: false });

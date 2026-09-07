@@ -179,6 +179,24 @@ class QueueManager {
   }
 
   /**
+   * Replace the whole queue with the given tracks.
+   *
+   * What "play this album/playlist" does: the previous queue is dropped and
+   * these become the queue, in track order.
+   *
+   * @param tracks - The tracks to queue
+   * @param albumData - Album context stored with each entry
+   * @returns Result with success status and count of added tracks
+   */
+  async replaceWith(
+    tracks: PlexTrack[],
+    albumData: QueueAlbumInput | null = null
+  ): Promise<AddMultipleResult> {
+    await this.clearQueue();
+    return this.addMultipleToQueue(tracks, albumData);
+  }
+
+  /**
    * Remove a track from the queue by queue item ID
    * @param queueItemId - ID of the queue item to remove
    * @returns Success status
