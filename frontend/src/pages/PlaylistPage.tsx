@@ -83,7 +83,8 @@ const PlaylistPage = () => {
     await queueManager.clearQueue();
     const result = await queueManager.addMultipleToQueue(tracks, { title });
     if (result.success && onPlayTrack) {
-      onPlayTrack(tracks[0]);
+      // The queue was just filled with the playlist; keep it.
+      onPlayTrack(tracks[0], { replaceQueue: false });
       showSnackbar(`Playing: ${title}`);
     }
   };

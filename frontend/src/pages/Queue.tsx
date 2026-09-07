@@ -136,7 +136,8 @@ function Queue() {
     }
 
     if (onPlayTrack) {
-      onPlayTrack(track);
+      // Playing from inside the queue moves through it; it must not wipe it.
+      onPlayTrack(track, { replaceQueue: false });
     }
   };
 
@@ -202,33 +203,6 @@ function Queue() {
       className="custom-scrollbar"
     >
       <NowPlaying queue={queue} />
-
-      <Card sx={{ mb: 3, boxShadow: 3 }}>
-        <CardContent sx={{ p: 2.5 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2}>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                Queue
-              </Typography>
-              <Typography sx={{ fontWeight: 500 }}>
-                {queueStats.totalTracks} tracks
-              </Typography>
-              <Typography color="text.secondary">
-                Total: {queueStats.totalDurationFormatted}
-              </Typography>
-            </Stack>
-            {queue.length > 0 && (
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleClearQueue}
-              >
-                Clear All
-              </Button>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
 
       {queue.length === 0 ? (
         <Box sx={{ textAlign: 'center', py: 10 }}>
@@ -381,6 +355,33 @@ function Queue() {
           </Table>
         </TableContainer>
       )}
+
+      <Card sx={{ mt: 3, boxShadow: 3 }}>
+        <CardContent sx={{ p: 2.5 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" spacing={2}>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                Queue
+              </Typography>
+              <Typography sx={{ fontWeight: 500 }}>
+                {queueStats.totalTracks} tracks
+              </Typography>
+              <Typography color="text.secondary">
+                Total: {queueStats.totalDurationFormatted}
+              </Typography>
+            </Stack>
+            {queue.length > 0 && (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleClearQueue}
+              >
+                Clear All
+              </Button>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
 
       <BackToTop scrollContainerRef={scrollContainerRef} />
     </Box>

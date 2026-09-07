@@ -125,7 +125,8 @@ const AlbumPage = () => {
 
       // Start playing the first track
       if (onPlayTrack && firstTrack) {
-        onPlayTrack(firstTrack);
+        // The queue was just filled with the album; keep it.
+        onPlayTrack(firstTrack, { replaceQueue: false });
         setSnackbar({
           open: true,
           message: `Playing album: ${album?.title}`,
