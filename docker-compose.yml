@@ -68,6 +68,8 @@ services:
       # Starting theme for browsers that have not chosen one: light, dark, or
       # system (the default) to follow the viewer's device.
       DEFAULT_THEME: ${DEFAULT_THEME:-system}
+      # Set to false to stop serving the interactive API reference at /api/docs.
+      API_DOCS_ENABLED: ${API_DOCS_ENABLED:-true}
       # Where a future on-disk album art / artist image cache should live.
       MEDIA_CACHE_DIR: /app/cache
     volumes:

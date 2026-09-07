@@ -20,6 +20,7 @@ Light theme
 - **Accounts**: Sign in with your email address; the display name is shown in the app
 - **Theming**: Follows your device's light/dark setting until you pick one yourself
 - **Settings**: Tabbed into Library (Plex server + token help), Appearance and Account
+- **API Docs**: Interactive OpenAPI reference at `/api/docs`
 - **Cache Management**: Plex API responses cached in Redis, shared across API instances
 
 ## Prerequisites
@@ -80,6 +81,21 @@ with `npm start`.
 ├── docker-compose.yml four-container stack: frontend -> backend -> db + redis
 └── .env               Docker Compose configuration
 ```
+
+## API Reference
+
+Interactive documentation is served at
+[http://localhost:8088/api/docs](http://localhost:8088/api/docs) — every
+endpoint with its parameters, request bodies and responses, and a **Try it
+out** button on each. It runs against the same origin using your browser's
+session cookie, so once you are signed in the calls just work; there is no
+token to paste.
+
+The raw OpenAPI 3 document is at `/api/docs/openapi.json`, for generating
+clients or importing into other tooling.
+
+The page needs no session, since it describes the shape of the API and returns
+none of its data. Set `API_DOCS_ENABLED=false` to leave it unmounted.
 
 ## Caching and Sessions
 
