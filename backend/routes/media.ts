@@ -6,6 +6,13 @@ import type { Readable } from 'stream';
 
 const router = Router();
 
+/**
+ * Identifies this app to Plex. The transcoder 400s if either is missing, so
+ * these are not decorative.
+ */
+const PLEX_CLIENT_IDENTIFIER = 'plex-web-player';
+const PLEX_PLATFORM = 'Web';
+
 /** The status a failed upstream request should be reported with. */
 function upstreamStatus(error: unknown): number {
   const response = (error as { response?: { status?: number } })?.response;
@@ -66,21 +73,31 @@ router.get('/audio', async (req, res) => {
   }
 });
 
-// GET /api/media/transcode?path=
+// GET /api/media/transcode?ratingKey=
+//
+// The fallback for a track the browser cannot decode natively — Plex serves
+// APE as application/octet-stream, for instance — remuxed by Plex to MP3.
+//
+// Plex's universal transcoder is picky in two ways it does not explain: `path`
+// must address the track's *metadata* item, not its media part, and the request
+// is refused unless X-Plex-Client-Identifier and X-Plex-Platform both identify
+// the caller. Miss either and every request comes back as a bare 400 with an
+// HTML body, which reaches the browser as "the element has no supported
+// sources". mediaIndex/partIndex/session are accepted but not required.
 router.get('/transcode', async (req, res) => {
-  const { path: partKey } = req.query;
-  if (!partKey) return res.status(400).end();
+  const { ratingKey } = req.query;
+  if (!ratingKey) return res.status(400).end();
 
   try {
     const { plexUrl, plexToken } = await getPlexCredentials(sessionUserId(req));
 
     const url = new URL(`${plexUrl}/audio/:/transcode/universal/start.mp3`);
-    url.searchParams.append('path', String(partKey));
-    url.searchParams.append('mediaIndex', '0');
-    url.searchParams.append('partIndex', '0');
+    url.searchParams.append('path', `/library/metadata/${ratingKey}`);
     url.searchParams.append('protocol', 'http');
     url.searchParams.append('audioCodec', 'mp3');
     url.searchParams.append('audioBitrate', '320');
+    url.searchParams.append('X-Plex-Client-Identifier', PLEX_CLIENT_IDENTIFIER);
+    url.searchParams.append('X-Plex-Platform', PLEX_PLATFORM);
     url.searchParams.append('X-Plex-Token', plexToken);
 
     const headers: Record<string, string> = {};
