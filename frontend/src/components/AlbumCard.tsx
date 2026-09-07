@@ -2,6 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlexImageUrl, getAlbumTracks } from '../api/plexApi';
+import queueManager from '../utils/queueManager';
 import { getAlbumCardWidth } from '../utils/settingsStorage';
 import {
   Card,
@@ -22,7 +23,7 @@ import type { AlbumCardWidthChangedEvent, PlexAlbum, PlexTrack } from '../types'
 export interface AlbumCardProps {
   album: PlexAlbum;
   /** Not supplied for artist cards, which render no play overlay. */
-  onPlayTrack?: (track: PlexTrack) => void;
+  onPlayTrack?: (track: PlexTrack, options?: { replaceQueue?: boolean }) => void;
   currentTrack?: PlexTrack | null;
   isPlaying?: boolean;
   onTogglePlayback?: () => void;
@@ -83,10 +84,15 @@ function AlbumCard({ album, onPlayTrack, currentTrack, isPlaying, onTogglePlayba
       console.log(`Fetching tracks for album: ${album.title} (Key: ${album.ratingKey})`);
       const tracks = await getAlbumTracks(album.ratingKey);
       if (tracks && tracks.length > 0) {
-        const firstPlayableTrack = tracks.find(t => t.Media && t.Media.length > 0 && t.Media[0].Part && t.Media[0].Part!.length > 0);
+        const ordered = [...tracks].sort((a, b) => (a.index || 0) - (b.index || 0));
+        const firstPlayableTrack = ordered.find(t => t.Media && t.Media.length > 0 && t.Media[0].Part && t.Media[0].Part!.length > 0);
         if (firstPlayableTrack) {
-          console.log(`Playing first track: ${firstPlayableTrack.title}`);
-          onPlayTrack?.(firstPlayableTrack);
+          console.log(`Playing album from: ${firstPlayableTrack.title}`);
+          // Playing an album queues the whole album, not just the opening
+          // track, so the rest follows on without another click. The queue is
+          // built first, then the track is started against it.
+          await queueManager.replaceWith(ordered, album);
+          onPlayTrack?.(firstPlayableTrack, { replaceQueue: false });
         } else {
           console.warn(`No playable tracks found in album: ${album.title}`);
           alert(`No playable tracks found in album: ${album.title}`);

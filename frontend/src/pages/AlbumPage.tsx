@@ -110,11 +110,8 @@ const AlbumPage = () => {
 
     console.log('Playing album - clearing queue and adding tracks');
 
-    // Clear existing queue
-    await queueManager.clearQueue();
-
-    // Add all album tracks
-    const result = await queueManager.addMultipleToQueue(tracks, album);
+    // Replace the queue with this album
+    const result = await queueManager.replaceWith(tracks, album);
 
     console.log('Play album result:', result);
 
