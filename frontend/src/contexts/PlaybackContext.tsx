@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useMemo, createContext, useContext, ReactNode, RefObject, Dispatch, SetStateAction } from 'react';
 import queueManager from '../utils/queueManager';
-import type { PlexTrack } from '../types';
+import type { PlexTrack, QueueAlbumInput } from '../types';
 import type { PlayerHandle } from '../components/Player';
 
 export interface PlaybackState {
@@ -8,8 +8,23 @@ export interface PlaybackState {
   isPlaying: boolean;
 }
 
+export interface PlayTrackOptions {
+  /**
+   * Whether starting this track begins a fresh queue.
+   *
+   * Defaults to true: picking a track out of an album, playlist or search
+   * result starts a new queue holding just that track, and anything queued
+   * afterwards plays after it.
+   *
+   * Pass false when the queue is already the thing being played — starting a
+   * whole album or playlist, or picking a track out of the queue itself —
+   * so the surrounding tracks are not thrown away.
+   */
+  replaceQueue?: boolean;
+}
+
 export interface PlaybackActions {
-  onPlayTrack: (track: PlexTrack) => void;
+  onPlayTrack: (track: PlexTrack, options?: PlayTrackOptions) => void;
   onTogglePlayback: () => void;
   onPlayStateChange: (playing: boolean) => void;
   onTrackEnded: (endedTrack: PlexTrack) => Promise<void>;
@@ -17,6 +32,20 @@ export interface PlaybackActions {
   onPlayPrevious: (previousTrack: PlexTrack) => void;
   setCurrentTrack: Dispatch<SetStateAction<PlexTrack | null>>;
   playerRef: RefObject<PlayerHandle | null>;
+}
+
+/**
+ * The album details a queue entry carries for display, taken from the track
+ * itself so callers do not each have to pass the album alongside it.
+ */
+function albumContextFromTrack(track: PlexTrack): QueueAlbumInput {
+  return {
+    title: track.parentTitle,
+    artist: track.originalTitle || track.grandparentTitle,
+    thumb: track.parentThumb || track.thumb,
+    ratingKey: track.parentRatingKey ?? undefined,
+    year: track.parentYear
+  };
 }
 
 // Split into two contexts so components that only need stable actions
@@ -29,7 +58,16 @@ export function PlaybackProvider({ children }: { children: ReactNode }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const playerRef = useRef<PlayerHandle | null>(null);
 
-  const handlePlayTrack = useCallback((track: PlexTrack) => {
+  const handlePlayTrack = useCallback(async (track: PlexTrack, options: PlayTrackOptions = {}) => {
+    const { replaceQueue = true } = options;
+
+    if (replaceQueue) {
+      // The queue is rebuilt before the track is set, so the player sees the
+      // new queue when it works out whether a next/previous track exists.
+      await queueManager.clearQueue();
+      await queueManager.addToQueue(track, albumContextFromTrack(track));
+    }
+
     setCurrentTrack(track);
     setIsPlaying(true);
   }, []);
