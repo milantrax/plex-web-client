@@ -18,7 +18,7 @@ Light theme
 - **Audio Player**: Full-featured audio player with play/pause, next/previous controls
 - **Keyboard Shortcuts**: Spacebar to play/pause, Shift+Arrow keys for navigation
 - **Settings**: Customize album card sizes and other preferences
-- **Cache Management**: Efficient caching of Plex API responses
+- **Cache Management**: Plex API responses cached in Redis, shared across API instances
 
 ## Prerequisites
 
@@ -26,6 +26,7 @@ Light theme
 - npm or yarn
 - A Plex Media Server with a music library (from local NAS for example)
 - Access to your Plex server (local network or remote)
+- PostgreSQL and Redis (both provided by the Docker Compose stack)
 
 ## Installation
 
@@ -74,9 +75,33 @@ with `npm start`.
 │   ├── dist/          compiled output (git-ignored, created by npm run build)
 │   ├── tsconfig.json
 │   └── package.json
-├── docker-compose.yml three-container stack: frontend -> backend -> db
+├── docker-compose.yml four-container stack: frontend -> backend -> db + redis
 └── .env               Docker Compose configuration
 ```
+
+## Caching and Sessions
+
+Redis backs two things:
+
+- **Login sessions** (`plex:sess:*`), so they are shared by every API instance
+  and survive a restart of the API.
+- **Plex API responses** (`plex:cache:user_<id>:*`), with a per-endpoint TTL
+  set in `backend/services/cacheService.ts` — an hour for library sections,
+  30 minutes for searches, and so on. Changing a user's Plex credentials drops
+  just that user's cached entries.
+
+Set `REDIS_URL` to point at the server; the Compose stack wires it to the
+bundled `redis` service and keeps the data in the `redis_data` volume with
+`appendonly` enabled, so sessions and cache survive a Redis restart too.
+
+Redis is a hard dependency, on a par with Postgres: the API refuses to start
+without it, and while it is unreachable authenticated requests fail rather than
+degrading, because the session lookup runs ahead of every route. The client
+reconnects by itself, and requests recover as soon as it is back — no restart
+needed.
+
+Note the library sync is separate: it mirrors album metadata into Postgres
+(`library_albums`) and is unaffected by clearing the Redis cache.
 
 ## Environment Setup
 

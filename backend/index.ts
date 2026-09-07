@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import session from 'express-session';
-import connectPgSimple from 'connect-pg-simple';
+import { RedisStore } from 'connect-redis';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
@@ -14,9 +14,8 @@ import customPlaylistsRoutes from './routes/customPlaylists';
 import favoritesRoutes from './routes/favorites';
 import librarySyncRoutes from './routes/librarySync';
 import { startSyncScheduler } from './services/librarySyncService';
+import { connectRedis, redis } from './services/redisClient';
 import errorHandler from './middleware/errorHandler';
-
-const PgSession = connectPgSimple(session);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -28,19 +27,19 @@ if (process.env.TRUST_PROXY) {
 }
 
 // Initialize database
-const pool = initializeDatabase();
+initializeDatabase();
 
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Session configuration
+// Session configuration. Sessions live in Redis so they are shared by every
+// API instance and survive a restart of the API itself.
 app.use(session({
-  store: new PgSession({
-    pool,
-    tableName: 'session',
-    createTableIfMissing: true
+  store: new RedisStore({
+    client: redis,
+    prefix: 'plex:sess:'
   }),
   secret: process.env.SESSION_SECRET as string,
   resave: false,
@@ -88,13 +87,14 @@ if (process.env.NODE_ENV === 'production' && buildDir) {
 // Error handler
 app.use(errorHandler);
 
-// Start server after schema is ready
-runSchema().then(() => {
+// Start server once the schema is ready and Redis is reachable. Redis holds
+// the sessions, so there is nothing useful to serve without it.
+Promise.all([runSchema(), connectRedis()]).then(() => {
   startSyncScheduler();
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
 }).catch(err => {
-  console.error('Failed to initialize database schema:', err);
+  console.error('Failed to start server:', err);
   process.exit(1);
 });

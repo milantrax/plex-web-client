@@ -26,6 +26,26 @@ services:
       retries: 10
       start_period: 20s
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # appendonly keeps sessions and cached responses across a container
+    # restart; without it a restart logs every user out.
+    command: ["redis-server", "--appendonly", "yes", "--save", "60", "1000"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - data
+    # Not published: only the backend talks to Redis.
+    # ports:
+    #   - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
   backend:
     build:
       context: ./backend
@@ -35,6 +55,8 @@ services:
       NODE_ENV: production
       PORT: 3001
       DATABASE_URL: postgresql://${POSTGRES_USER:-plex}:${POSTGRES_PASSWORD:-plex}@db:5432/${POSTGRES_DB:-plex}
+      # Backs both the session store and the Plex response cache.
+      REDIS_URL: redis://redis:6379
       SESSION_SECRET: ${SESSION_SECRET:-change-this-to-a-random-secret-in-production}
       # Sessions run over plain HTTP by default; set to true once TLS is in front.
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
@@ -55,6 +77,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
   frontend:
     build:
@@ -72,11 +96,13 @@ services:
 networks:
   # frontend <-> backend
   web:
-  # backend <-> db (frontend is not attached, so it cannot reach the database)
+  # backend <-> db and redis (frontend is not attached, so it can reach neither)
   data:
 
 volumes:
   db_data:
+  # Sessions and the cached Plex responses.
+  redis_data:
   # Reserved for caching album art and artist images on disk; mounted at
   # /app/cache in the backend and exposed as MEDIA_CACHE_DIR.
   media_cache:

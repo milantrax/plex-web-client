@@ -29,7 +29,7 @@ async function withCache<T>(
     const useCache = req.query.useCache !== 'false';
 
     if (useCache) {
-      const cached = cache.get<T>(userId, cacheType, params);
+      const cached = await cache.get<T>(userId, cacheType, params);
       if (cached) {
         res.json(cached);
         return;
@@ -38,7 +38,7 @@ async function withCache<T>(
 
     const { plexUrl, plexToken } = await getPlexCredentials(userId);
     const data = await fetchFn(plexUrl, plexToken);
-    cache.set(userId, cacheType, params, data);
+    await cache.set(userId, cacheType, params, data);
     res.json(data);
   } catch (error) {
     next(error);
@@ -200,14 +200,14 @@ router.get('/sections/:sectionId/items', async (req, res, next) => {
     const cacheParams = { sectionId, type, start, size };
     const useCache = req.query.useCache !== 'false';
     if (useCache) {
-      const cached = cache.get(userId, 'sectionItems', cacheParams);
+      const cached = await cache.get(userId, 'sectionItems', cacheParams);
       if (cached) return res.json(cached);
     }
 
     const data = await plexService.getSectionItems(plexUrl, plexToken, sectionId, {
       type: parseInt(String(type)), start: offset, size: limit,
     });
-    cache.set(userId, 'sectionItems', cacheParams, data);
+    await cache.set(userId, 'sectionItems', cacheParams, data);
     res.json(data);
   } catch (err) {
     next(err);
@@ -378,7 +378,7 @@ router.get('/search', async (req, res, next) => {
 
     const cacheParams = { q, limit };
     if (useCache) {
-      const cached = cache.get<SearchResults>(userId, 'search', cacheParams);
+      const cached = await cache.get<SearchResults>(userId, 'search', cacheParams);
       if (cached) return res.json(cached);
     }
 
@@ -401,7 +401,7 @@ router.get('/search', async (req, res, next) => {
       results.tracks = results.tracks.slice(0, parseInt(String(limit)));
     }
 
-    cache.set(userId, 'search', cacheParams, results);
+    await cache.set(userId, 'search', cacheParams, results);
     res.json(results);
   } catch (error) {
     next(error);
@@ -417,7 +417,7 @@ router.get('/search/albums', async (req, res, next) => {
 
     const cacheParams = { q, type: 'albumsWithTracks' };
     if (useCache) {
-      const cached = cache.get<AlbumWithMatchingTracks[]>(userId, 'search', cacheParams);
+      const cached = await cache.get<AlbumWithMatchingTracks[]>(userId, 'search', cacheParams);
       if (cached) return res.json(cached);
     }
 
@@ -447,7 +447,7 @@ router.get('/search/albums', async (req, res, next) => {
     }
 
     const results = Array.from(albumMap.values());
-    cache.set(userId, 'search', cacheParams, results);
+    await cache.set(userId, 'search', cacheParams, results);
     res.json(results);
   } catch (error) {
     next(error);
