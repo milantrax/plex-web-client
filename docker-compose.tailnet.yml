@@ -1,0 +1,42 @@
+# Tailnet override: the local stack, also reachable from other devices on the
+# same Tailscale network. For this Mac only, never for a server.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.tailnet.yml up -d --build
+#
+# Or put COMPOSE_FILE=docker-compose.yml:docker-compose.tailnet.yml in .env and
+# plain `docker compose` uses both files.
+#
+# Then, from any device signed in to the tailnet:
+#
+#   http://<TAILNET_IP>:5080               the app, by address
+#   http://<TAILNET_HOST>:5080             the app, by MagicDNS name
+#
+# Additive only: localhost:8088 and plex.orb.local keep working exactly as before.
+#
+# The port is bound to the Tailscale address alone, not to 0.0.0.0, so it
+# answers on the tailnet and nowhere else: not on the LAN, not on a cafe's Wi-Fi.
+# Tailscale has to be connected when the stack starts, or Docker has no such
+# address to bind to. `tailscale ip -4` prints the value for TAILNET_IP; it is
+# fixed for the life of the node.
+#
+# Plain HTTP is fine here because WireGuard encrypts every packet between the two
+# devices. The session cookie is not `Secure` (COOKIE_SECURE=false), so it
+# survives on a plain HTTP tailnet origin as well as behind HTTPS.
+#
+# For HTTPS with a real certificate (by MagicDNS name only, not by IP), let
+# Tailscale terminate TLS in front of the stack. The target must be 8088: 5080 is
+# bound to the Tailscale address, so nothing answers on 127.0.0.1:5080.
+#
+#   tailscale serve --bg --https=5443 http://127.0.0.1:8088
+#   -> https://<TAILNET_HOST>:5443        remove with: tailscale serve --https=5443 off
+#
+# Port blocks on this Mac's Tailscale address, one per project, so each stays
+# easy to remember: X080 for the web app, X443 for its HTTPS front.
+#
+#   4000-4099   budgeteer
+#   5000-5099   player.plex (5000 itself is macOS AirPlay Receiver, hence 5080)
+
+services:
+  frontend:
+    ports:
+      - "${TAILNET_IP:?set TAILNET_IP in .env, see tailscale ip -4}:${TAILNET_WEB_PORT:-5080}:80"
